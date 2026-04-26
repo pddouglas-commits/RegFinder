@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>RegFinder Prototype</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+<style>
+    @import url('https://fonts.cdnfonts.com/css/charles-wright');
+
+    body { 
+        font-family: sans-serif; background: #1a1a1a; color: white;
+        display: flex; flex-direction: column; align-items: center;
+        justify-content: flex-start; height: 100svh; width: 100vw;
+        margin: 0; padding-top: 5px; overflow: hidden; position: fixed;
+        touch-action: none;
+    }
+
+    .header-stats { display: flex; flex-direction: column; align-items: center; margin-bottom: 5px; width: 100%; }
+    .timer-row { display: flex; gap: 15px; font-family: monospace; font-size: 12px; color: #aaa; }
+    #grand-total { font-size: 42px; font-weight: bold; color: #f1c40f; margin: 0; line-height: 1; }
+
+    #progress-tracker { 
+        display: flex; flex-wrap: wrap; justify-content: center; gap: 3px;
+        background: #222; padding: 6px; border-radius: 8px; 
+        font-size: 11px; margin: 5px auto; max-width: 90%;
+    }
+
+    h2 { font-size: 0.8rem; margin: 5px 0; color: #555; text-transform: uppercase; letter-spacing: 1px; }
+    .plate-input-container { display: flex; flex-direction: row; gap: 8px; margin-bottom: 10px; }
+
+    .slot { 
+        width: 50px; height: 65px; 
+        background: #f1c40f; 
+        border: 2px solid #000;
+        border-radius: 6px; 
+        font-size: 34px; 
+        line-height: 65px; 
+        text-align: center;
+        color: #000;
+        font-family: 'Charles Wright', sans-serif;
+        font-weight: bold;
+	box-shadow: inset 0 -4px 0 rgba(0,0,0,0.2), 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .slot.active { border-color: #fff; box-shadow: 0 0 10px #f1c40f; }
+
+    #result-card { 
+        width: 92%; padding: 12px; background: #2c3e50; border-radius: 12px;
+        text-align: center; margin-top: 5px; border: 1px solid #34495e; display: none;
+    }
+    
+    #res-town { margin: 5px 0; font-size: 1.2rem; }
+    .word-badge { background: #f1c40f; color: black; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 12px; margin: 5px; display: inline-block; }
+    .classic-badge { background: #3498db; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 12px; margin: 5px; display: inline-block; }
+
+    input#hidden-input { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+
+    /* --- Animations --- */
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+
+    @keyframes flash-green {
+        0% { background-color: #2c3e50; }
+        50% { background-color: #27ae60; }
+        100% { background-color: #2c3e50; }
+    }
+
+    @keyframes flash-red {
+        0% { background-color: #2c3e50; }
+        50% { background-color: #c0392b; }
+        100% { background-color: #2c3e50; }
+    }
+
+    .flash-success { animation: flash-green 0.5s ease-out; }
+    .flash-error { animation: flash-red 0.5s ease-out; }
+</style>
+
+</head>
+<body>
+<div id="splash-screen" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#1a1a1a; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:2000;">
+    <h1 style="color:#f1c40f; margin-bottom:10px;">RegFinder</h1>
+    <p style="color:#aaa; margin-bottom:30px;">The Alphabet Sprint</p>
+    <button onclick="initApp()" style="padding:15px 40px; background:#f1c40f; border:none; border-radius:30px; font-weight:bold; font-size:1.2rem; cursor:pointer;">START SPRINT</button>
+</div>
+
+<div class="header-stats">
+<button onclick="location.reload()" style="position:absolute; top:10px; right:10px; background:none; border:1px solid #444; color:#666; border-radius:4px; font-size:10px; padding:4px 8px;">RESTART</button>
+
+    <div class="timer-row">
+        <div>TIME: <span id="game-timer" style="color: white;">00:00</span></div>
+        <div>CHAIN: <span id="timer-display" style="color: #e74c3c;">60s</span> <span id="chain-display" style="color: #3498db;">(0/3)</span></div>
+    </div>
+    <div id="grand-total">0</div>
+</div>
+
+<div id="progress-tracker"></div>
+
+<h2>SPOT THE REG</h2>
+
+<div class="plate-input-container" onclick="focusInput()">
+    <div id="slot0" class="slot active"></div>
+    <div id="slot1" class="slot"></div>
+    <div id="slot2" class="slot"></div>
+    <div id="slot3" class="slot"></div>
+</div>
+
+<input type="text" id="hidden-input" maxlength="4" autocomplete="off" autocorrect="off" spellcheck="false" autocapitalize="characters" inputmode="text">
+
+<div id="result-card">
+    <div id="score-display" style="font-size: 20px; color: #f1c40f; font-weight: bold; margin-bottom: 5px;"></div>
+    <h3 id="res-town">Town</h3>
+    <p id="res-region" style="display:none;">Region</p>
+    <div id="badges"></div>
+</div>
+
+<script>
+
+function initApp() {
+    // Trigger everything that requires a user gesture
+    if (navigator.wakeLock) navigator.wakeLock.request('screen').catch(e => {});
+    
+    document.documentElement.requestFullscreen().then(() => {
+        if (screen.orientation && screen.orientation.lock) {
+            screen.orientation.lock('portrait').catch(e => console.log("Lock failed", e));
+        }
+    }).catch(e => {});
+
+    // Hide splash and focus input
+    document.getElementById('splash-screen').style.display = 'none';
+    focusInput();
+}
+
+    let plateData = {};
+    let totalSessionScore = 0;
+    let lastScoredPlate = "";
+    const alphabet = "ABCDEFGHJKLMNOPRSTUVWXY".split(""); 
+    let foundLetters = new Set();
+    let currentTargetOptions = []; 
+    let gameDirection = null; 
+    let isGameActive = false;
+    let gameStartTime, gameInterval, chainTimer, chainTimeLeft = 0, chainCount = 0;
+
+    const slots = [document.getElementById('slot0'), document.getElementById('slot1'), document.getElementById('slot2'), document.getElementById('slot3')];
+    const hiddenInput = document.getElementById('hidden-input');
+    const resultCard = document.getElementById('result-card');
+
+    const trackerContainer = document.getElementById('progress-tracker');
+    alphabet.forEach(l => {
+        const span = document.createElement('span');
+        span.id = `track-${l}`;
+        span.innerText = l;
+        span.style.color = "#444";
+        span.style.padding = "2px";
+        trackerContainer.appendChild(span);
+    });
+
+    fetch('RegFinder.json?v=' + Date.now()).then(r => r.json()).then(data => { 
+        plateData = data; 
+        console.log("Database Loaded");
+    });
+
+    function focusInput() { 
+        hiddenInput.focus({ preventScroll: true }); 
+        window.scrollTo(0, 0); 
+    }
+
+    hiddenInput.addEventListener('input', (e) => {
+        const val = e.target.value.toUpperCase();
+        slots.forEach((s, i) => s.innerText = val[i] || "");
+        if (val.length === 4) {
+            const match = plateData[val];
+            match ? processPlate(match, val) : showUnknown();
+        } else {
+            resultCard.style.display = 'none';
+        }
+    });
+
+    function processPlate(data, plateId) {
+        const firstLetter = plateId[0];
+        if (!isGameActive) { startGame(firstLetter, data, plateId); return; }
+
+        if (currentTargetOptions.includes(firstLetter) && plateId !== lastScoredPlate) {
+            if (gameDirection === null) {
+                const startLetter = Array.from(foundLetters)[0];
+                const startIdx = alphabet.indexOf(startLetter);
+                const currentIdx = alphabet.indexOf(firstLetter);
+                gameDirection = (currentIdx > startIdx) ? 'forward' : 'backward';
+                if (startLetter === 'A' && firstLetter === 'Y') gameDirection = 'backward';
+                if (startLetter === 'Y' && firstLetter === 'A') gameDirection = 'forward';
+            }
+            completeLetter(firstLetter, data, plateId);
+       } else {
+    const msg = currentTargetOptions.length > 0 ? `NEED ${currentTargetOptions.join(' or ')}` : "COMPLETE!";
+    resultCard.classList.remove('flash-success', 'flash-error');
+    void resultCard.offsetWidth;
+    resultCard.classList.add('flash-error');
+    
+    displayResultData(data, 0, msg);
+    setTimeout(clearInput, 1000);
+}
+    }
+
+    function startGame(letter, data, plateId) {
+        isGameActive = true;
+// 1. Keep screen on
+    if (navigator.wakeLock) navigator.wakeLock.request('screen').catch(e => {});
+
+    // 2. Request Fullscreen and THEN lock orientation
+    document.documentElement.requestFullscreen().then(() => {
+        if (screen.orientation && screen.orientation.lock) {
+            screen.orientation.lock('portrait').catch(err => {
+                console.log("Orientation lock failed: ", err);
+            });
+        }
+    }).catch(e => {});
+        gameStartTime = Date.now();
+        gameInterval = setInterval(updateGameTimer, 1000);
+        const idx = alphabet.indexOf(letter);
+        currentTargetOptions = [alphabet[(idx + 1) % alphabet.length], alphabet[(idx - 1 + alphabet.length) % alphabet.length]];
+        completeLetter(letter, data, plateId);
+    }
+
+function completeLetter(letter, data, plateId) {
+    foundLetters.add(letter);
+    lastScoredPlate = plateId;
+    
+    document.getElementById(`track-${letter}`).style.color = "#fff";
+    document.getElementById(`track-${letter}`).style.textShadow = "0 0 10px #f1c40f";
+
+    // Base Points
+    let pts = data.isName ? 50 : 10;
+    let badges = [];
+
+    // Reserved Bonus (+25)
+    if (data.town === "RESERVED") {
+        pts += 25;
+        badges.push('<div class="classic-badge" style="background:#8e44ad;">RESERVED +25</div>');
+    }
+
+    if (data.isName) badges.push(`<div class="word-badge">NAME: ${data.word} +50</div>`);
+    if (data.isClassic) { pts += 25; badges.push('<div class="classic-badge">CLASSIC +25</div>'); }
+    if (data.word && !data.isName) { 
+        pts += 50; 
+        badges.push(`<div class="word-badge">WORD: ${data.word} +50</div>`); 
+    }
+
+    totalSessionScore += pts;
+    document.getElementById('grand-total').innerText = totalSessionScore;
+    
+    const idx = alphabet.indexOf(letter);
+    gameDirection === 'forward' ? currentTargetOptions = [alphabet[(idx + 1) % alphabet.length]] : 
+    gameDirection === 'backward' ? currentTargetOptions = [alphabet[(idx - 1 + alphabet.length) % alphabet.length]] : null;
+
+    // --- INSERT ANIMATION TRIGGER HERE ---
+    resultCard.classList.remove('flash-success', 'flash-error');
+    void resultCard.offsetWidth; // This "magic" line resets the animation
+    resultCard.classList.add('flash-success');
+    // -------------------------------------
+
+    displayResultData(data, pts, "", badges.join(' '));
+    highlightTargets();
+    updateChain(); 
+    if (foundLetters.size === alphabet.length) showWinOverlay();
+    setTimeout(clearInput, 1000);
+}
+
+    function updateChain() {
+        chainTimeLeft <= 0 ? (chainCount = 1, startChainTimer()) : chainCount++;
+        updateChainUI();
+        if (chainCount >= 3) {
+            setTimeout(() => {
+                totalSessionScore += 100;
+                document.getElementById('grand-total').innerText = totalSessionScore;
+                document.getElementById('score-display').innerHTML = `<span style="color: #f1c40f; animation: pulse 0.5s;">🔥 CHAIN BONUS +100! 🔥</span>`;
+                chainCount = 0;
+                updateChainUI();
+            }, 300);
+        }
+    }
+
+    function startChainTimer() {
+        if (chainTimer) clearInterval(chainTimer);
+        chainTimeLeft = 60;
+        chainTimer = setInterval(() => {
+            chainTimeLeft--;
+            document.getElementById('timer-display').innerText = `${chainTimeLeft}s`;
+            if (chainTimeLeft <= 0) { clearInterval(chainTimer); chainCount = 0; updateChainUI(); }
+        }, 1000);
+    }
+
+    function updateChainUI() { document.getElementById('chain-display').innerText = `(${chainCount}/3)`; }
+
+    function displayResultData(data, pts, msg = "", badgeHtml = "") {
+        const townEl = document.getElementById('res-town');
+        townEl.innerText = (data.town === "RESERVED") ? "PRIVATE ISSUE" : `${data.region} | ${data.town}`;
+        document.getElementById('score-display').innerHTML = msg ? `<span style="color: #e74c3c;">${msg}</span>` : `+${pts} POINTS`;
+        document.getElementById('badges').innerHTML = badgeHtml;
+        resultCard.style.display = 'block';
+    }
+
+    function updateGameTimer() {
+        const diff = Math.floor((Date.now() - gameStartTime) / 1000);
+        document.getElementById('game-timer').innerText = `${Math.floor(diff/60).toString().padStart(2,'0')}:${(diff%60).toString().padStart(2,'0')}`;
+    }
+
+    function highlightTargets() {
+        alphabet.forEach(l => {
+            const el = document.getElementById(`track-${l}`);
+            if (el) el.style.borderBottom = currentTargetOptions.includes(l) ? "2px solid #f1c40f" : "none";
+        });
+    }
+
+    function clearInput() { hiddenInput.value = ""; slots.forEach(s => s.innerText = ""); focusInput(); }
+
+    function showUnknown() {
+        resultCard.style.display = 'block';
+	resultCard.classList.remove('flash-success', 'flash-error');
+    	void resultCard.offsetWidth;
+    	resultCard.classList.add('flash-error');
+
+        document.getElementById('res-town').innerText = "Unknown";
+        document.getElementById('score-display').innerText = "";
+        document.getElementById('badges').innerHTML = "";
+        setTimeout(clearInput, 800);
+    }
+
+    function showWinOverlay() {
+        clearInterval(gameInterval); clearInterval(chainTimer);
+        const winDiv = document.createElement('div');
+        winDiv.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:1000; text-align:center;";
+        winDiv.innerHTML = `<h1 style="color:#f1c40f;">MISSION COMPLETE</h1><p>SCORE: ${totalSessionScore}</p><button onclick="location.reload()" style="padding:10px 20px; background:#f1c40f; border:none; font-weight:bold;">RESTART</button>`;
+        document.body.appendChild(winDiv);
+    }
+</script>
+</body>
+</html>
