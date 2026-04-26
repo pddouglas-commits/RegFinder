@@ -7,7 +7,7 @@
     <link rel="manifest" href="manifest.json">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-<style>
+    <style>
     @import url('https://fonts.cdnfonts.com/css/charles-wright');
 
     body { 
@@ -106,7 +106,24 @@
     <button onclick="initApp()" style="padding:15px 40px; background:#f1c40f; border:none; border-radius:30px; font-weight:bold; font-size:1.2rem; cursor:pointer;">START SPRINT</button>
 </div>
 
+<div id="settings-menu" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(26,26,26,0.95); z-index:3000; flex-direction:column; align-items:center; justify-content:center;">
+    <h2 style="color:#f1c40f;">SETTINGS</h2>
+    
+    <div style="background:#222; padding:20px; border-radius:12px; width:80%; text-align:center; border:1px solid #444;">
+        <p style="font-size:0.9rem; color:#aaa;">Manage your "Caught So Far" collection data.</p>
+        
+        <button onclick="clearCollection()" style="background:#c0392b; color:white; border:none; padding:12px 20px; border-radius:8px; font-weight:bold; margin:10px 0; width:100%;">
+            CLEAR COLLECTION (RESET)
+        </button>
+        
+        <p id="reset-confirm" style="color:#27ae60; font-size:0.8rem; display:none;">Collection Cleared!</p>
+    </div>
+
+    <button onclick="toggleSettings()" style="margin-top:30px; background:none; border:1px solid #f1c40f; color:#f1c40f; padding:10px 30px; border-radius:20px;">CLOSE</button>
+</div>
+
 <div class="header-stats">
+<button onclick="toggleSettings()" style="position:absolute; top:10px; left:10px; background:none; border:none; font-size:20px; cursor:pointer;">⚙️</button>
 <button onclick="location.reload()" style="position:absolute; top:10px; right:10px; background:none; border:1px solid #444; color:#666; border-radius:4px; font-size:10px; padding:4px 8px;">RESTART</button>
 
     <div class="timer-row">
@@ -236,6 +253,23 @@ function initApp() {
     setTimeout(clearInput, 1000);
 }
     }
+
+function toggleSettings() {
+    const menu = document.getElementById('settings-menu');
+    menu.style.display = (menu.style.display === 'none') ? 'flex' : 'none';
+    document.getElementById('reset-confirm').style.display = 'none'; // Hide confirmation msg on reopen
+}
+
+function clearCollection() {
+    if (confirm("Are you sure? This will delete all your discovered plates forever.")) {
+        localStorage.removeItem('regFinder_collection');
+        document.getElementById('reset-confirm').style.display = 'block';
+        
+        // Update the UI counter if you have one
+        const countEl = document.getElementById('unique-count');
+        if (countEl) countEl.innerText = "0";
+    }
+}
 
     function startGame(letter, data, plateId) {
         isGameActive = true;
