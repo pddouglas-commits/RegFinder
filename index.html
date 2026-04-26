@@ -58,6 +58,28 @@
 
     input#hidden-input { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
 
+    .log-nav-btn {
+    background: #333;
+    color: #fff;
+    border: 1px solid #555;
+    padding: 8px 20px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.log-nav-btn.active {
+    background: #f1c40f;
+    color: #000;
+    border-color: #f1c40f;
+}
+
+.log-page {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
     /* --- Animations --- */
     @keyframes pulse {
         0% { transform: scale(1); }
@@ -446,6 +468,74 @@ function displayResultData(data, pts, msg = "", badgeHtml = "") {
         winDiv.innerHTML = `<h1 style="color:#f1c40f;">MISSION COMPLETE</h1><p>SCORE: ${totalSessionScore}</p><button onclick="location.reload()" style="padding:10px 20px; background:#f1c40f; border:none; font-weight:bold;">RESTART</button>`;
         document.body.appendChild(winDiv);
     }
+
+    function openLogbook() {
+    document.getElementById('logbook-overlay').style.display = 'flex';
+    updateLogbookData();
+    showLogPage('map-page'); // Default page
+}
+
+function closeLogbook() {
+    document.getElementById('logbook-overlay').style.display = 'none';
+}
+
+function showLogPage(pageId) {
+    document.querySelectorAll('.log-page').forEach(p => p.style.display = 'none');
+    document.getElementById(pageId).style.display = 'flex';
+}
+
+function updateLogbookData() {
+    const collection = JSON.parse(localStorage.getItem('regFinder_collection')) || [];
+    const counts = { J: 0, U: 0, X: 0, T: 0 };
+    
+    collection.forEach(plateId => {
+        const prefix = plateId[0];
+        // Only count as JUXT if it's not a TN (Scotland)
+        if (['J', 'U', 'X', 'T'].includes(prefix)) {
+            if (plateId.substring(0,2) !== 'TN') {
+                counts[prefix]++;
+            }
+        }
+    });
+
+    // Update UI Counters
+    document.getElementById('count-j').innerText = counts.J;
+    document.getElementById('count-u').innerText = counts.U;
+    document.getElementById('count-x').innerText = counts.X;
+    document.getElementById('count-t').innerText = counts.T;
+    document.getElementById('log-total-count').innerText = collection.length;
+}
 </script>
+<div id="logbook-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#1a1a1a; z-index:4000; flex-direction:column;">
+    <div style="padding: 20px 10px 10px; border-bottom: 1px solid #333; text-align: center;">
+        <h2 style="color:#f1c40f; margin:0 0 10px 0;">LOGBOOK</h2>
+        <div style="display: flex; justify-content: center; gap: 10px;">
+            <button onclick="showLogPage('map-page')" class="log-nav-btn">MAP</button>
+            <button onclick="showLogPage('stats-page')" class="log-nav-btn">STATS</button>
+            <button onclick="closeLogbook()" style="background:none; border:1px solid #666; color:#fff; border-radius:4px; padding:5px 15px;">EXIT</button>
+        </div>
+    </div>
+
+    <div id="map-page" class="log-page" style="padding: 10px; overflow-y: auto;">
+        <div id="map-ui-container">
+            <div id="log-map-svg"></div> 
+            
+            <div id="special-collection" style="margin-top: 20px; background: #222; padding: 15px; border-radius: 10px; border: 1px solid #444;">
+                <h4 style="color: #aaa; font-size: 10px; text-transform: uppercase; margin-bottom: 10px;">National & Select Issues (JUXT)</h4>
+                <div style="display: flex; justify-content: space-between; font-family: monospace; font-size: 1.2rem;">
+                    <div>J: <span id="count-j" style="color: #f1c40f;">0</span></div>
+                    <div>U: <span id="count-u" style="color: #f1c40f;">0</span></div>
+                    <div>X: <span id="count-x" style="color: #f1c40f;">0</span></div>
+                    <div>T: <span id="count-t" style="color: #f1c40f;">0</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="stats-page" class="log-page" style="display:none; padding: 20px; text-align: center;">
+        <p style="color: #888;">Total Unique Found: <span id="log-total-count">0</span></p>
+        <div id="recent-list" style="text-align: left; margin-top: 20px;"></div>
+    </div>
+</div>
 </body>
 </html>
