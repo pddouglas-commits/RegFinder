@@ -284,17 +284,7 @@ function completeLetter(letter, data, plateId) {
         badges.push(`<div class="word-badge">WORD: ${data.word} +50</div>`); 
     }
 
-    if (isNewDiscovery) {
-    setTimeout(() => {
-        const zone = document.getElementById('discovery-zone');
-        if (zone) {
-            zone.innerHTML = '<div class="badge-new">★ NEW DISCOVERY</div>';
-            
-            // Save to permanent collection
-            collection.push(plateId);
-            localStorage.setItem('regFinder_collection', JSON.stringify(collection));
-        }
-    }, 600);
+
 }
     totalSessionScore += pts;
     document.getElementById('grand-total').innerText = totalSessionScore;
@@ -334,7 +324,7 @@ function completeLetter(letter, data, plateId) {
     updateChain(); 
     if (foundLetters.size === alphabet.length) showWinOverlay();
     setTimeout(clearInput, 1500); // Bumped to 1.5s so they can actually see the badge!
-}
+
 
     function updateChain() {
         chainTimeLeft <= 0 ? (chainCount = 1, startChainTimer()) : chainCount++;
