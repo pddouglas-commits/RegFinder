@@ -488,26 +488,29 @@ function showLogPage(pageId) {
 
 function shadeMap() {
     const collection = JSON.parse(localStorage.getItem('regFinder_collection')) || [];
-    const discoveredRegions = new Set();
+    const activePathIds = new Set();
 
     collection.forEach(plateId => {
         const data = plateData[plateId];
-        
-        // TN triggers Scotland shading
-        if (plateId.substring(0, 2) === 'TN') {
-            discoveredRegions.add('region-scotland');
-        } else if (data && data.region) {
-            // Formats JSON region name into SVG ID format
-            const regionId = `region-${data.region.toLowerCase().replace(/\s+/g, '-')}`;
-            discoveredRegions.add(regionId);
-        }
+        if (!data || !data.region) return;
+
+        // Clean the region name to match our SVG IDs
+        // 1. Lowercase
+        // 2. Remove & and /
+        // 3. Replace spaces with hyphens
+        let cleanName = data.region.toLowerCase()
+            .replace(/[&/]/g, '')
+            .replace(/\s+/g, '-')
+            .replace(/-+/g, '-'); // Fix double hyphens if any exist
+
+        const targetId = `region-${cleanName}`;
+        activePathIds.add(targetId);
     });
 
-    // Reset all map paths to dark grey before updating
+    // Reset and Shade
     document.querySelectorAll('#log-map-svg svg path').forEach(p => p.style.fill = '#333');
-
-    // Shade discovered areas in RegFinder Gold
-    discoveredRegions.forEach(id => {
+    
+    activePathIds.forEach(id => {
         const path = document.getElementById(id);
         if (path) {
             path.style.fill = '#f1c40f';
@@ -515,8 +518,9 @@ function shadeMap() {
         }
     });
 
+    // Update counter to 19
     const regionCounter = document.getElementById('region-count');
-    if (regionCounter) regionCounter.innerText = `${discoveredRegions.size}/19`;
+    if (regionCounter) regionCounter.innerText = `${activePathIds.size}/19`;
 }
 
 function updateLogbookData() {
@@ -554,15 +558,29 @@ function updateLogbookData() {
     <div id="map-page" class="log-page" style="padding: 10px; overflow-y: auto;">
         <div id="map-ui-container">
             <div id="log-map-svg" style="text-align:center;">
+
     <svg viewBox="0 0 200 320" xmlns="http://www.w3.org/2000/svg" style="width: 100%; max-width: 280px; height: auto;">
-        <path id="region-scotland" d="M80 20 L120 20 L130 60 L110 100 L70 90 Z" fill="#333" stroke="#555" />
-        <path id="region-north east" d="M90 100 L130 100 L140 130 L80 130 Z" fill="#333" stroke="#555" />
-        <path id="region-birmingham" d="M80 170 L120 170 L130 210 L85 210 Z" fill="#333" stroke="#555" />
-        <path id="region-anglia" d="M120 170 L160 180 L170 220 L130 210 Z" fill="#333" stroke="#555" />
-        <path id="region-london" d="M110 215 L140 215 L140 240 L110 240 Z" fill="#333" stroke="#555" />
-        <path id="region-cymru" d="M40 180 L80 180 L70 230 L30 220 Z" fill="#333" stroke="#555" />
-        <path id="region-west of england" d="M20 230 L70 240 L60 280 L10 260 Z" fill="#333" stroke="#555" />
-    </svg>
+    <path id="region-scotland" d="M80 20 L120 20 L130 60 L110 100 L70 90 Z" fill="#333" stroke="#555" />
+    <path id="region-northeast" d="M90 100 L130 100 L140 125 L90 125 Z" fill="#333" stroke="#555" />
+    <path id="region-preston" d="M65 125 L90 125 L90 150 L65 150 Z" fill="#333" stroke="#555" />
+    <path id="region-mancs-mersey" d="M90 125 L115 125 L115 150 L90 150 Z" fill="#333" stroke="#555" />
+    <path id="region-yorkshire" d="M115 125 L145 125 L155 160 L115 160 Z" fill="#333" stroke="#555" />
+    <path id="region-deeside" d="M60 150 L85 150 L85 180 L55 180 Z" fill="#333" stroke="#555" />
+    <path id="region-birmingham" d="M85 150 L115 150 L115 180 L85 180 Z" fill="#333" stroke="#555" />
+    <path id="region-forest-fens" d="M115 160 L150 160 L155 190 L115 190 Z" fill="#333" stroke="#555" />
+    <path id="region-anglia" d="M150 160 L185 170 L190 200 L155 200 Z" fill="#333" stroke="#555" />
+    <path id="region-cymru" d="M25 170 L60 170 L55 220 L15 210 Z" fill="#333" stroke="#555" />
+    <path id="region-severn-valley" d="M75 180 L110 180 L110 220 L75 220 Z" fill="#333" stroke="#555" />
+    <path id="region-oxford" d="M110 180 L135 180 L135 210 L110 210 Z" fill="#333" stroke="#555" />
+    <path id="region-reading" d="M135 180 L155 180 L155 210 L135 210 Z" fill="#333" stroke="#555" />
+    <path id="region-london" d="M115 210 L140 210 L140 235 L115 235 Z" fill="#333" stroke="#555" />
+    <path id="region-essex" d="M140 200 L175 205 L170 230 L140 225 Z" fill="#333" stroke="#555" />
+    <path id="region-home-counties" d="M110 235 L150 235 L145 255 L105 255 Z" fill="#333" stroke="#555" />
+    <path id="region-garden-of-england" d="M140 240 L180 245 L170 275 L135 270 Z" fill="#333" stroke="#555" />
+    <path id="region-hants-dorset" d="M85 225 L125 225 L120 260 L80 255 Z" fill="#333" stroke="#555" />
+    <path id="region-west-of-england" d="M10 215 L75 225 L65 270 L10 250 Z" fill="#333" stroke="#555" />
+</svg>
+
     <div style="font-size: 11px; color: #666; margin-top: 10px;">
         Regions Discovered: <span id="region-count" style="color: #f1c40f;">0/21</span>
     </div>
