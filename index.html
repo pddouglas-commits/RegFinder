@@ -516,17 +516,17 @@ function shadeMap() {
     });
 
     const regionCounter = document.getElementById('region-count');
-    if (regionCounter) regionCounter.innerText = `${discoveredRegions.size}/21`;
+    if (regionCounter) regionCounter.innerText = `${discoveredRegions.size}/19`;
 }
 
 function updateLogbookData() {
     const collection = JSON.parse(localStorage.getItem('regFinder_collection')) || [];
-    const counts = { J: 0, U: 0, X: 0, T: 0 };
+    const counts = { J: 0, T: 0, U: 0, X: 0 };
     
     collection.forEach(plateId => {
         const prefix = plateId[0];
         // Only count as JUXT if it's not a TN (Scotland)
-        if (['J', 'U', 'X', 'T'].includes(prefix)) {
+        if (['J', 'T', 'U', 'X'].includes(prefix)) {
             if (plateId.substring(0,2) !== 'TN') {
                 counts[prefix]++;
             }
@@ -535,9 +535,9 @@ function updateLogbookData() {
 
     // Update UI Counters
     document.getElementById('count-j').innerText = counts.J;
-    document.getElementById('count-u').innerText = counts.U;
-    document.getElementById('count-x').innerText = counts.X;
-    document.getElementById('count-t').innerText = counts.T;
+    document.getElementById('count-u').innerText = counts.T;
+    document.getElementById('count-x').innerText = counts.U;
+    document.getElementById('count-t').innerText = counts.X;
     document.getElementById('log-total-count').innerText = collection.length;
 }
 </script>
@@ -556,12 +556,12 @@ function updateLogbookData() {
             <div id="log-map-svg" style="text-align:center;">
     <svg viewBox="0 0 200 320" xmlns="http://www.w3.org/2000/svg" style="width: 100%; max-width: 280px; height: auto;">
         <path id="region-scotland" d="M80 20 L120 20 L130 60 L110 100 L70 90 Z" fill="#333" stroke="#555" />
-        <path id="region-northern" d="M90 100 L130 100 L140 130 L80 130 Z" fill="#333" stroke="#555" />
-        <path id="region-midlands" d="M80 170 L120 170 L130 210 L85 210 Z" fill="#333" stroke="#555" />
+        <path id="region-north east" d="M90 100 L130 100 L140 130 L80 130 Z" fill="#333" stroke="#555" />
+        <path id="region-birmingham" d="M80 170 L120 170 L130 210 L85 210 Z" fill="#333" stroke="#555" />
         <path id="region-anglia" d="M120 170 L160 180 L170 220 L130 210 Z" fill="#333" stroke="#555" />
         <path id="region-london" d="M110 215 L140 215 L140 240 L110 240 Z" fill="#333" stroke="#555" />
         <path id="region-cymru" d="M40 180 L80 180 L70 230 L30 220 Z" fill="#333" stroke="#555" />
-        <path id="region-west-country" d="M20 230 L70 240 L60 280 L10 260 Z" fill="#333" stroke="#555" />
+        <path id="region-west of england" d="M20 230 L70 240 L60 280 L10 260 Z" fill="#333" stroke="#555" />
     </svg>
     <div style="font-size: 11px; color: #666; margin-top: 10px;">
         Regions Discovered: <span id="region-count" style="color: #f1c40f;">0/21</span>
