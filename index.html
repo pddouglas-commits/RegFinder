@@ -494,33 +494,33 @@ function shadeMap() {
         const data = plateData[plateId];
         if (!data || !data.region) return;
 
-        // Clean the region name to match our SVG IDs
-        // 1. Lowercase
-        // 2. Remove & and /
-        // 3. Replace spaces with hyphens
+        // Strip symbols to match IDs: "Forest & Fens" -> "region-forest-fens"
         let cleanName = data.region.toLowerCase()
             .replace(/[&/]/g, '')
             .replace(/\s+/g, '-')
-            .replace(/-+/g, '-'); // Fix double hyphens if any exist
+            .replace(/-+/g, '-');
 
-        const targetId = `region-${cleanName}`;
-        activePathIds.add(targetId);
+        activePathIds.add(`region-${cleanName}`);
     });
 
-    // Reset and Shade
-    document.querySelectorAll('#log-map-svg svg path').forEach(p => p.style.fill = '#333');
-    
+    // Reset everything
+    document.querySelectorAll('#log-map-svg path').forEach(p => p.style.fill = '#333');
+    document.querySelectorAll('.map-label').forEach(t => t.classList.remove('active-label'));
+
+    // Light it up
     activePathIds.forEach(id => {
         const path = document.getElementById(id);
         if (path) {
             path.style.fill = '#f1c40f';
             path.style.stroke = '#fff';
+            // Find the sibling text in the same group and activate it
+            const label = path.parentElement.querySelector('.map-label');
+            if (label) label.classList.add('active-label');
         }
     });
 
-    // Update counter to 19
-    const regionCounter = document.getElementById('region-count');
-    if (regionCounter) regionCounter.innerText = `${activePathIds.size}/19`;
+    const totalPaths = document.querySelectorAll('#log-map-svg path').length;
+    document.getElementById('region-count').innerText = `${activePathIds.size}/${totalPaths}`;
 }
 
 function updateLogbookData() {
@@ -560,25 +560,87 @@ function updateLogbookData() {
             <div id="log-map-svg" style="text-align:center;">
 
     <svg viewBox="0 0 200 320" xmlns="http://www.w3.org/2000/svg" style="width: 100%; max-width: 280px; height: auto;">
-    <path id="region-scotland" d="M80 20 L120 20 L130 60 L110 100 L70 90 Z" fill="#333" stroke="#555" />
-    <path id="region-northeast" d="M90 100 L130 100 L140 125 L90 125 Z" fill="#333" stroke="#555" />
-    <path id="region-preston" d="M65 125 L90 125 L90 150 L65 150 Z" fill="#333" stroke="#555" />
-    <path id="region-mancs-mersey" d="M90 125 L115 125 L115 150 L90 150 Z" fill="#333" stroke="#555" />
-    <path id="region-yorkshire" d="M115 125 L145 125 L155 160 L115 160 Z" fill="#333" stroke="#555" />
-    <path id="region-deeside" d="M60 150 L85 150 L85 180 L55 180 Z" fill="#333" stroke="#555" />
-    <path id="region-birmingham" d="M85 150 L115 150 L115 180 L85 180 Z" fill="#333" stroke="#555" />
-    <path id="region-forest-fens" d="M115 160 L150 160 L155 190 L115 190 Z" fill="#333" stroke="#555" />
-    <path id="region-anglia" d="M150 160 L185 170 L190 200 L155 200 Z" fill="#333" stroke="#555" />
-    <path id="region-cymru" d="M25 170 L60 170 L55 220 L15 210 Z" fill="#333" stroke="#555" />
-    <path id="region-severn-valley" d="M75 180 L110 180 L110 220 L75 220 Z" fill="#333" stroke="#555" />
-    <path id="region-oxford" d="M110 180 L135 180 L135 210 L110 210 Z" fill="#333" stroke="#555" />
-    <path id="region-reading" d="M135 180 L155 180 L155 210 L135 210 Z" fill="#333" stroke="#555" />
-    <path id="region-london" d="M115 210 L140 210 L140 235 L115 235 Z" fill="#333" stroke="#555" />
-    <path id="region-essex" d="M140 200 L175 205 L170 230 L140 225 Z" fill="#333" stroke="#555" />
-    <path id="region-home-counties" d="M110 235 L150 235 L145 255 L105 255 Z" fill="#333" stroke="#555" />
-    <path id="region-garden-of-england" d="M140 240 L180 245 L170 275 L135 270 Z" fill="#333" stroke="#555" />
-    <path id="region-hants-dorset" d="M85 225 L125 225 L120 260 L80 255 Z" fill="#333" stroke="#555" />
-    <path id="region-west-of-england" d="M10 215 L75 225 L65 270 L10 250 Z" fill="#333" stroke="#555" />
+    <style>
+        .map-label { fill: #666; font-family: sans-serif; font-weight: bold; font-size: 10px; pointer-events: none; }
+        .active-label { fill: #000; }
+    </style>
+
+    <g id="region-scotland-group">
+        <path id="region-scotland" d="M80 20 L120 20 L130 60 L110 100 L70 90 Z" fill="#333" stroke="#555" />
+        <text x="95" y="60" class="map-label">S</text>
+    </g>
+    <g id="region-northeast-group">
+        <path id="region-northeast" d="M90 100 L130 100 L140 125 L90 125 Z" fill="#333" stroke="#555" />
+        <text x="110" y="115" class="map-label">N</text>
+    </g>
+    <g id="region-preston-group">
+        <path id="region-preston" d="M65 125 L90 125 L90 150 L65 150 Z" fill="#333" stroke="#555" />
+        <text x="73" y="142" class="map-label">P</text>
+    </g>
+    <g id="region-mancs-mersey-group">
+        <path id="region-mancs-mersey" d="M90 125 L115 125 L115 150 L90 150 Z" fill="#333" stroke="#555" />
+        <text x="95" y="142" class="map-label">M</text>
+    </g>
+    <g id="region-yorkshire-group">
+        <path id="region-yorkshire" d="M115 125 L145 125 L155 160 L115 160 Z" fill="#333" stroke="#555" />
+        <text x="125" y="145" class="map-label">Y</text>
+    </g>
+    <g id="region-deeside-group">
+        <path id="region-deeside" d="M60 150 L85 150 L85 180 L55 180 Z" fill="#333" stroke="#555" />
+        <text x="65" y="170" class="map-label">D</text>
+    </g>
+    <g id="region-birmingham-group">
+        <path id="region-birmingham" d="M85 150 L115 150 L115 180 L85 180 Z" fill="#333" stroke="#555" />
+        <text x="95" y="170" class="map-label">B</text>
+    </g>
+    <g id="region-forest-fens-group">
+        <path id="region-forest-fens" d="M115 160 L150 160 L155 190 L115 190 Z" fill="#333" stroke="#555" />
+        <text x="125" y="180" class="map-label">F</text>
+    </g>
+    <g id="region-anglia-group">
+        <path id="region-anglia" d="M150 160 L185 170 L190 200 L155 200 Z" fill="#333" stroke="#555" />
+        <text x="165" y="185" class="map-label">A</text>
+    </g>
+    <g id="region-cymru-group">
+        <path id="region-cymru" d="M25 170 L60 170 L55 220 L15 210 Z" fill="#333" stroke="#555" />
+        <text x="35" y="200" class="map-label">C</text>
+    </g>
+    <g id="region-severn-valley-group">
+        <path id="region-severn-valley" d="M75 180 L110 180 L110 220 L75 220 Z" fill="#333" stroke="#555" />
+        <text x="85" y="205" class="map-label">V</text>
+    </g>
+    <g id="region-oxford-group">
+        <path id="region-oxford" d="M110 180 L135 180 L135 210 L110 210 Z" fill="#333" stroke="#555" />
+        <text x="115" y="200" class="map-label">O</text>
+    </g>
+    <g id="region-reading-group">
+        <path id="region-reading" d="M135 180 L155 180 L155 210 L135 210 Z" fill="#333" stroke="#555" />
+        <text x="140" y="200" class="map-label">R</text>
+    </g>
+    <g id="region-london-group">
+        <path id="region-london" d="M115 210 L140 210 L140 235 L115 235 Z" fill="#333" stroke="#555" />
+        <text x="122" y="228" class="map-label">L</text>
+    </g>
+    <g id="region-essex-group">
+        <path id="region-essex" d="M140 200 L175 205 L170 230 L140 225 Z" fill="#333" stroke="#555" />
+        <text x="152" y="220" class="map-label">E</text>
+    </g>
+    <g id="region-home-counties-group">
+        <path id="region-home-counties" d="M110 235 L150 235 L145 255 L105 255 Z" fill="#333" stroke="#555" />
+        <text x="122" y="250" class="map-label">K</text>
+    </g>
+    <g id="region-garden-of-england-group">
+        <path id="region-garden-of-england" d="M140 240 L180 245 L170 275 L135 270 Z" fill="#333" stroke="#555" />
+        <text x="152" y="262" class="map-label">G</text>
+    </g>
+    <g id="region-hants-dorset-group">
+        <path id="region-hants-dorset" d="M85 225 L125 225 L120 260 L80 255 Z" fill="#333" stroke="#555" />
+        <text x="95" y="248" class="map-label">H</text>
+    </g>
+    <g id="region-west-of-england-group">
+        <path id="region-west-of-england" d="M10 215 L75 225 L65 270 L10 250 Z" fill="#333" stroke="#555" />
+        <text x="35" y="248" class="map-label">W</text>
+    </g>
 </svg>
 
     <div style="font-size: 11px; color: #666; margin-top: 10px;">
