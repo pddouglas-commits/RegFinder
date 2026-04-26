@@ -241,17 +241,20 @@ function initApp() {
     }
 
 function completeLetter(letter, data, plateId) {
+    // 1. CHECK IF NEW DISCOVERY (Do this first before we save it!)
+    let collection = JSON.parse(localStorage.getItem('regFinder_collection')) || [];
+    let isNewDiscovery = !collection.includes(plateId);
+
     foundLetters.add(letter);
     lastScoredPlate = plateId;
     
     document.getElementById(`track-${letter}`).style.color = "#fff";
     document.getElementById(`track-${letter}`).style.textShadow = "0 0 10px #f1c40f";
 
-    // Base Points
+    // Base Points Logic (unchanged)
     let pts = data.isName ? 50 : 10;
     let badges = [];
 
-    // Reserved Bonus (+25)
     if (data.town === "RESERVED") {
         pts += 25;
         badges.push('<div class="classic-badge" style="background:#8e44ad;">RESERVED +25</div>');
@@ -271,17 +274,37 @@ function completeLetter(letter, data, plateId) {
     gameDirection === 'forward' ? currentTargetOptions = [alphabet[(idx + 1) % alphabet.length]] : 
     gameDirection === 'backward' ? currentTargetOptions = [alphabet[(idx - 1 + alphabet.length) % alphabet.length]] : null;
 
-    // --- INSERT ANIMATION TRIGGER HERE ---
+    // --- ANIMATION TRIGGER ---
     resultCard.classList.remove('flash-success', 'flash-error');
-    void resultCard.offsetWidth; // This "magic" line resets the animation
+    void resultCard.offsetWidth; 
     resultCard.classList.add('flash-success');
-    // -------------------------------------
 
+    // 2. DISPLAY INITIAL DATA (Town/Word)
     displayResultData(data, pts, "", badges.join(' '));
+
+    // 3. THE "DELAYED" DISCOVERY POP
+    if (isNewDiscovery) {
+        setTimeout(() => {
+            // Check if resultCard is still showing this plate
+            const discoveryBadge = document.createElement('div');
+            discoveryBadge.className = 'badge-new'; // Make sure you add the CSS I gave you!
+            discoveryBadge.innerHTML = '★ NEW DISCOVERY';
+            
+            // Append to the badges container inside your result card
+            // (Assuming your displayResultData puts badges in a specific div)
+            const badgeContainer = document.querySelector('.badges-row') || document.getElementById('result-data');
+            if(badgeContainer) badgeContainer.appendChild(discoveryBadge);
+            
+            // 4. PERMANENTLY SAVE
+            collection.push(plateId);
+            localStorage.setItem('regFinder_collection', JSON.stringify(collection));
+        }, 600); // 600ms delay: lets the success flash happen first
+    }
+
     highlightTargets();
     updateChain(); 
     if (foundLetters.size === alphabet.length) showWinOverlay();
-    setTimeout(clearInput, 1000);
+    setTimeout(clearInput, 1500); // Bumped to 1.5s so they can actually see the badge!
 }
 
     function updateChain() {
