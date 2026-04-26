@@ -494,28 +494,36 @@ function shadeMap() {
         const data = plateData[plateId];
         if (!data || !data.region) return;
 
-        // Strip symbols to match IDs: "Forest & Fens" -> "region-forest-fens"
-        let cleanName = data.region.toLowerCase()
-            .replace(/[&/]/g, '')
-            .replace(/\s+/g, '-')
-            .replace(/-+/g, '-');
+        // 1. Precise Cleaning
+        let cleanName = data.region.trim().toLowerCase()
+            .replace(/\//g, '-')   // Specifically turn / into - for Mancs-Mersey
+            .replace(/&/g, '')     // Strip &
+            .replace(/\s+/g, '-')  // Spaces to hyphens
+            .replace(/-+/g, '-');  // Collapse multiple hyphens
 
-        activePathIds.add(`region-${cleanName}`);
+        let targetId = `region-${cleanName}`;
+        
+        // 2. Manual Override for Reading (if needed)
+        if (cleanName === "reading") targetId = "region-reading";
+
+        activePathIds.add(targetId);
     });
 
-    // Reset everything
+    // Reset styles
     document.querySelectorAll('#log-map-svg path').forEach(p => p.style.fill = '#333');
     document.querySelectorAll('.map-label').forEach(t => t.classList.remove('active-label'));
 
-    // Light it up
+    // Apply Gold Shading
     activePathIds.forEach(id => {
         const path = document.getElementById(id);
         if (path) {
             path.style.fill = '#f1c40f';
             path.style.stroke = '#fff';
-            // Find the sibling text in the same group and activate it
             const label = path.parentElement.querySelector('.map-label');
             if (label) label.classList.add('active-label');
+        } else {
+            // Debugging log for your mobile console if it still fails
+            console.log("Failed to find SVG ID:", id);
         }
     });
 
