@@ -472,8 +472,9 @@ function displayResultData(data, pts, msg = "", badgeHtml = "") {
 
     function openLogbook() {
     document.getElementById('logbook-overlay').style.display = 'flex';
-    updateLogbookData();
-    showLogPage('map-page'); // Default page
+    updateLogbookData(); // Already handles your JUXT counters
+    shadeMap();          // Now handles the visual territory shading
+    showLogPage('map-page'); 
 }
 
 function closeLogbook() {
@@ -483,6 +484,39 @@ function closeLogbook() {
 function showLogPage(pageId) {
     document.querySelectorAll('.log-page').forEach(p => p.style.display = 'none');
     document.getElementById(pageId).style.display = 'flex';
+}
+
+function shadeMap() {
+    const collection = JSON.parse(localStorage.getItem('regFinder_collection')) || [];
+    const discoveredRegions = new Set();
+
+    collection.forEach(plateId => {
+        const data = plateData[plateId];
+        
+        // TN triggers Scotland shading
+        if (plateId.substring(0, 2) === 'TN') {
+            discoveredRegions.add('region-scotland');
+        } else if (data && data.region) {
+            // Formats JSON region name into SVG ID format
+            const regionId = `region-${data.region.toLowerCase().replace(/\s+/g, '-')}`;
+            discoveredRegions.add(regionId);
+        }
+    });
+
+    // Reset all map paths to dark grey before updating
+    document.querySelectorAll('#log-map-svg svg path').forEach(p => p.style.fill = '#333');
+
+    // Shade discovered areas in RegFinder Gold
+    discoveredRegions.forEach(id => {
+        const path = document.getElementById(id);
+        if (path) {
+            path.style.fill = '#f1c40f';
+            path.style.stroke = '#fff';
+        }
+    });
+
+    const regionCounter = document.getElementById('region-count');
+    if (regionCounter) regionCounter.innerText = `${discoveredRegions.size}/21`;
 }
 
 function updateLogbookData() {
@@ -519,7 +553,20 @@ function updateLogbookData() {
 
     <div id="map-page" class="log-page" style="padding: 10px; overflow-y: auto;">
         <div id="map-ui-container">
-            <div id="log-map-svg"></div> 
+            <div id="log-map-svg" style="text-align:center;">
+    <svg viewBox="0 0 200 320" xmlns="http://www.w3.org/2000/svg" style="width: 100%; max-width: 280px; height: auto;">
+        <path id="region-scotland" d="M80 20 L120 20 L130 60 L110 100 L70 90 Z" fill="#333" stroke="#555" />
+        <path id="region-northern" d="M90 100 L130 100 L140 130 L80 130 Z" fill="#333" stroke="#555" />
+        <path id="region-midlands" d="M80 170 L120 170 L130 210 L85 210 Z" fill="#333" stroke="#555" />
+        <path id="region-anglia" d="M120 170 L160 180 L170 220 L130 210 Z" fill="#333" stroke="#555" />
+        <path id="region-london" d="M110 215 L140 215 L140 240 L110 240 Z" fill="#333" stroke="#555" />
+        <path id="region-cymru" d="M40 180 L80 180 L70 230 L30 220 Z" fill="#333" stroke="#555" />
+        <path id="region-west-country" d="M20 230 L70 240 L60 280 L10 260 Z" fill="#333" stroke="#555" />
+    </svg>
+    <div style="font-size: 11px; color: #666; margin-top: 10px;">
+        Regions Discovered: <span id="region-count" style="color: #f1c40f;">0/21</span>
+    </div>
+</div>
             
             <div id="special-collection" style="margin-top: 20px; background: #222; padding: 15px; border-radius: 10px; border: 1px solid #444;">
                 <h4 style="color: #aaa; font-size: 10px; text-transform: uppercase; margin-bottom: 10px;">National & Select Issues (JUXT)</h4>
