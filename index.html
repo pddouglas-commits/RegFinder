@@ -350,13 +350,31 @@ function completeLetter(letter, data, plateId) {
 
     function updateChainUI() { document.getElementById('chain-display').innerText = `(${chainCount}/3)`; }
 
-    function displayResultData(data, pts, msg = "", badgeHtml = "") {
-        const townEl = document.getElementById('res-town');
+function displayResultData(data, pts, msg = "", badgeHtml = "") {
+    // 1. Update Town/Region
+    const townEl = document.getElementById('res-town');
+    if (townEl) {
         townEl.innerText = (data.town === "RESERVED") ? "PRIVATE ISSUE" : `${data.region} | ${data.town}`;
-        document.getElementById('score-display').innerHTML = msg ? `<span style="color: #e74c3c;">${msg}</span>` : `+${pts} POINTS`;
-        document.getElementById('badges').innerHTML = badgeHtml;
-        resultCard.style.display = 'block';
     }
+
+    // 2. Update Points/Message
+    const scoreEl = document.getElementById('score-display');
+    if (scoreEl) {
+        scoreEl.innerHTML = msg ? `<span style="color: #e7433c;">${msg}</span>` : `+${pts} POINTS`;
+    }
+
+    // 3. Update Town/Word Badges
+    const badgeEl = document.getElementById('badges');
+    if (badgeEl) {
+        // We add an empty div at the end for the Discovery Badge to 'pop' into
+        badgeEl.innerHTML = `
+            <div class="badges-row">${badgeHtml}</div>
+            <div id="discovery-zone"></div>
+        `;
+    }
+
+    resultCard.style.display = 'block';
+}
 
     function updateGameTimer() {
         const diff = Math.floor((Date.now() - gameStartTime) / 1000);
