@@ -122,18 +122,32 @@
 <script>
 
 function initApp() {
-    // Trigger everything that requires a user gesture
-    if (navigator.wakeLock) navigator.wakeLock.request('screen').catch(e => {});
+    // 1. Wake Lock (Android only, but wrapped so it doesn't crash iOS)
+    if (navigator.wakeLock) {
+        navigator.wakeLock.request('screen').catch(e => console.log("WakeLock skipped"));
+    }
     
-    document.documentElement.requestFullscreen().then(() => {
-        if (screen.orientation && screen.orientation.lock) {
-            screen.orientation.lock('portrait').catch(e => console.log("Lock failed", e));
-        }
-    }).catch(e => {});
+    // 2. Fullscreen & Orientation (Wrapped in a 'Try/Catch' so iOS doesn't freeze)
+    const docEl = document.documentElement;
+    const requestFs = docEl.requestFullscreen || docEl.webkitRequestFullscreen || docEl.mozRequestFullScreen || docEl.msRequestFullscreen;
 
-    // Hide splash and focus input
+    if (requestFs) {
+        requestFs.call(docEl).then(() => {
+            if (screen.orientation && screen.orientation.lock) {
+                screen.orientation.lock('portrait').catch(e => console.log("Orientation lock skipped"));
+            }
+        }).catch(e => {
+            console.log("Fullscreen denied/skipped");
+        });
+    }
+
+    // 3. THE VITAL FIX: Hide splash and focus regardless of the steps above failing
     document.getElementById('splash-screen').style.display = 'none';
-    focusInput();
+    
+    // Slight delay for iOS keyboard focus
+    setTimeout(() => {
+        focusInput();
+    }, 300);
 }
 
     let plateData = {};
