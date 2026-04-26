@@ -284,11 +284,11 @@ function completeLetter(letter, data, plateId) {
         badges.push(`<div class="word-badge">WORD: ${data.word} +50</div>`); 
     }
 
-
-}
     totalSessionScore += pts;
     document.getElementById('grand-total').innerText = totalSessionScore;
     
+
+
     const idx = alphabet.indexOf(letter);
     gameDirection === 'forward' ? currentTargetOptions = [alphabet[(idx + 1) % alphabet.length]] : 
     gameDirection === 'backward' ? currentTargetOptions = [alphabet[(idx - 1 + alphabet.length) % alphabet.length]] : null;
@@ -325,6 +325,7 @@ function completeLetter(letter, data, plateId) {
     if (foundLetters.size === alphabet.length) showWinOverlay();
     setTimeout(clearInput, 1500); // Bumped to 1.5s so they can actually see the badge!
 
+}
 
     function updateChain() {
         chainTimeLeft <= 0 ? (chainCount = 1, startChainTimer()) : chainCount++;
