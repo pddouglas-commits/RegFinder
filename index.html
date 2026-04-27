@@ -123,9 +123,19 @@
 </head>
 <body>
 <div id="splash-screen" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#1a1a1a; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:2000;">
+    <div style="position:absolute; top:20px; width:100%; display:flex; justify-content:space-between; padding:0 20px; box-sizing:border-box;">
+        <button onclick="toggleSettings()" style="background:none; border:none; font-size:24px; cursor:pointer;">⚙️</button>
+        <button onclick="openLogbook()" style="background:none; border:none; font-size:24px; cursor:pointer;">📖</button>
+    </div>
+
     <h1 style="color:#f1c40f; margin-bottom:10px;">RegFinder</h1>
     <p style="color:#aaa; margin-bottom:30px;">The Alphabet Sprint</p>
-    <button onclick="initApp()" style="padding:15px 40px; background:#f1c40f; border:none; border-radius:30px; font-weight:bold; font-size:1.2rem; cursor:pointer;">START SPRINT</button>
+    
+    <button onclick="initApp()" style="padding:15px 40px; background:#f1c40f; border:none; border-radius:30px; font-weight:bold; font-size:1.2rem; cursor:pointer; box-shadow: 0 4px 15px rgba(241, 196, 15, 0.3);">START SPRINT</button>
+    
+    <div id="splash-stats" style="margin-top:20px; font-size:12px; color:#555;">
+        Map Progress: <span id="splash-map-count" style="color:#f1c40f;">0/19</span>
+    </div>
 </div>
 
 <div id="settings-menu" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(26,26,26,0.95); z-index:3000; flex-direction:column; align-items:center; justify-content:center;">
@@ -284,13 +294,19 @@ function toggleSettings() {
 }
 
 function clearCollection() {
-    if (confirm("Are you sure? This will delete all your discovered plates forever.")) {
+    if (confirm("Are you sure? This will delete all discovered plates AND your league table records forever.")) {
+        // 1. Wipe all stored progress
         localStorage.removeItem('regFinder_collection');
+        localStorage.removeItem('regFinder_league');
+        localStorage.removeItem('regFinder_activeGame'); // Clean any active drive state
+        
+        // 2. UI Feedback
         document.getElementById('reset-confirm').style.display = 'block';
         
-        // Update the UI counter if you have one
-        const countEl = document.getElementById('unique-count');
-        if (countEl) countEl.innerText = "0";
+        // 3. Refresh to clear active variables and reset the map
+        setTimeout(() => {
+            location.reload();
+        }, 1000);
     }
 }
 
@@ -508,36 +524,35 @@ function toggleSort(type) {
     displayLeagueTable();
 }
 
-function displayLeagueTable() {
+function displayLeagueTable(targetId = 'league-display') {
     const league = JSON.parse(localStorage.getItem('regFinder_league')) || [];
-    const container = document.getElementById('league-display');
+    const container = document.getElementById(targetId);
     if (!container) return;
 
-    // Apply sorting logic based on selection
-    if (currentSort === 'time') {
-        league.sort((a, b) => a.seconds - b.seconds);
-    } else {
-        league.sort((a, b) => b.score - a.score);
-    }
+    // Sorting logic
+    league.sort((a, b) => currentSort === 'time' ? (a.seconds || 999999) - (b.seconds || 999999) : (b.score || 0) - (a.score || 0));
 
     let tableHtml = league.map((entry, i) => `
         <div style="display:flex; justify-content:space-between; width:100%; font-family:monospace; margin:5px 0; font-size:0.85rem; border-bottom:1px solid #333; padding-bottom:2px;">
             <span style="color:#666; width:20px;">${i+1}</span>
-            <span style="width:65px; text-align:left;">${entry.date}</span>
-            <span style="flex-grow:1; text-align:center;">${entry.timeStr}</span>
-            <span style="color:#f1c40f; width:70px; text-align:right;">${entry.score} pts</span>
+            <span style="width:65px;">${entry.date || '--/--/--'}</span>
+            <span style="flex-grow:1; text-align:center;">${entry.timeStr || 'N/A'}</span>
+            <span style="color:#f1c40f; width:70px; text-align:right;">${entry.score || 0}</span>
         </div>`).join('');
 
     container.innerHTML = `
-        <h3 style="font-size:0.8rem; color:#666; margin:0 0 10px 0;">PERSONAL BESTS</h3>
+        <h3 style="font-size:0.8rem; color:#666; margin:0 0 10px 0; text-align:center;">PERSONAL BESTS</h3>
         <div style="margin-bottom:12px; display:flex; justify-content:center; gap:8px;">
-            <button onclick="toggleSort('time')" style="font-size:10px; background:${currentSort==='time'?'#f1c40f':'#444'}; color:${currentSort==='time'?'#000':'#fff'}; border:none; padding:5px 12px; border-radius:4px; cursor:pointer;">TIME</button>
-            <button onclick="toggleSort('score')" style="font-size:10px; background:${currentSort==='score'?'#f1c40f':'#444'}; color:${currentSort==='score'?'#000':'#fff'}; border:none; padding:5px 12px; border-radius:4px; cursor:pointer;">SCORE</button>
+            <button onclick="toggleSort('time', '${targetId}')" style="font-size:10px; background:${currentSort==='time'?'#f1c40f':'#444'}; color:${currentSort==='time'?'#000':'#fff'}; border:none; padding:5px 12px; border-radius:4px;">TIME</button>
+            <button onclick="toggleSort('score', '${targetId}')" style="font-size:10px; background:${currentSort==='score'?'#f1c40f':'#444'}; color:${currentSort==='score'?'#000':'#fff'}; border:none; padding:5px 12px; border-radius:4px;">SCORE</button>
         </div>
-        <div style="max-height:180px; overflow-y:auto;">
-            ${tableHtml || '<p style="color:#444; font-size:0.8rem;">No records yet</p>'}
-        </div>
+        ${tableHtml || '<p style="color:#444; font-size:0.8rem; text-align:center;">No records yet</p>'}
     `;
+}
+
+function toggleSort(type, targetId) {
+    currentSort = type;
+    displayLeagueTable(targetId); // Redraws the specific container we're looking at
 }
 
     function openLogbook() {
@@ -552,8 +567,23 @@ function closeLogbook() {
 }
 
 function showLogPage(pageId) {
+    // 1. Hide all pages and deactivate buttons
     document.querySelectorAll('.log-page').forEach(p => p.style.display = 'none');
+    document.querySelectorAll('.log-nav-btn').forEach(b => b.classList.remove('active'));
+
+    // 2. Show the selected page
     document.getElementById(pageId).style.display = 'flex';
+    
+    // 3. Highlight the correct button
+    const btnText = pageId.split('-')[0].toUpperCase();
+    document.querySelectorAll('.log-nav-btn').forEach(b => {
+        if (b.innerText === btnText) b.classList.add('active');
+    });
+
+    // 4. Specifically for the League page, redraw the table
+    if (pageId === 'league-page') {
+        displayLeagueTable('log-league-container');
+    }
 }
 
 function shadeMap() {
@@ -629,12 +659,26 @@ function updateLogbookData() {
 <div id="logbook-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#1a1a1a; z-index:4000; flex-direction:column;">
     <div style="padding: 20px 10px 10px; border-bottom: 1px solid #333; text-align: center;">
         <h2 style="color:#f1c40f; margin:0 0 10px 0;">LOGBOOK</h2>
-        <div style="display: flex; justify-content: center; gap: 10px;">
-            <button onclick="showLogPage('map-page')" class="log-nav-btn">MAP</button>
+        <div style="display: flex; justify-content: center; gap: 8px;">
+            <button onclick="showLogPage('map-page')" class="log-nav-btn active">MAP</button>
+            <button onclick="showLogPage('league-page')" class="log-nav-btn">LEAGUE</button>
             <button onclick="showLogPage('stats-page')" class="log-nav-btn">STATS</button>
-            <button onclick="closeLogbook()" style="background:none; border:1px solid #666; color:#fff; border-radius:4px; padding:5px 15px;">EXIT</button>
+            <button onclick="closeLogbook()" style="background:none; border:1px solid #666; color:#fff; border-radius:4px; padding:5px 10px; font-size:12px;">EXIT</button>
         </div>
     </div>
+
+    <div id="map-page" class="log-page" style="padding: 10px; overflow-y: auto;">
+        </div>
+
+    <div id="league-page" class="log-page" style="display:none; padding: 20px; align-items: center;">
+        <div id="log-league-container" style="width: 100%; max-width: 320px;">
+            </div>
+    </div>
+
+    <div id="stats-page" class="log-page" style="display:none; padding: 20px; text-align: center;">
+        <p style="color: #888;">Total Unique Found: <span id="log-total-count">0</span></p>
+    </div>
+</div>
 
     <div id="map-page" class="log-page" style="padding: 10px; overflow-y: auto;">
         <div id="map-ui-container">
@@ -730,12 +774,12 @@ function updateLogbookData() {
 </div>
             
             <div id="special-collection" style="margin-top: 20px; background: #222; padding: 15px; border-radius: 10px; border: 1px solid #444;">
-                <h4 style="color: #aaa; font-size: 10px; text-transform: uppercase; margin-bottom: 10px;">National & Select Issues (JUXT)</h4>
+                <h4 style="color: #aaa; font-size: 10px; text-transform: uppercase; margin-bottom: 10px;">National & Select Issues (JTUX)</h4>
                 <div style="display: flex; justify-content: space-between; font-family: monospace; font-size: 1.2rem;">
                     <div>J: <span id="count-j" style="color: #f1c40f;">0</span></div>
-                    <div>U: <span id="count-u" style="color: #f1c40f;">0</span></div>
-                    <div>X: <span id="count-x" style="color: #f1c40f;">0</span></div>
-                    <div>T: <span id="count-t" style="color: #f1c40f;">0</span></div>
+                    <div>U: <span id="count-t" style="color: #f1c40f;">0</span></div>
+                    <div>X: <span id="count-u" style="color: #f1c40f;">0</span></div>
+                    <div>T: <span id="count-x" style="color: #f1c40f;">0</span></div>
                 </div>
             </div>
         </div>
@@ -745,6 +789,34 @@ function updateLogbookData() {
         <p style="color: #888;">Total Unique Found: <span id="log-total-count">0</span></p>
         <div id="recent-list" style="text-align: left; margin-top: 20px;"></div>
     </div>
+
+    window.onload = () => {
+    // Load collection first so we can update the map count on the splash screen
+    fetch('RegFinder.json?v=' + Date.now()).then(r => r.json()).then(data => { 
+        plateData = data; 
+        updateSplashStats(); // Show progress on splash
+    });
+    
+    loadGameState(); // Check for "Long Haul" resumes
+};
+
+function updateSplashStats() {
+    const collection = JSON.parse(localStorage.getItem('regFinder_collection')) || [];
+    const activePathIds = new Set();
+
+    collection.forEach(plateId => {
+        const data = plateData[plateId];
+        if (data && data.region) {
+            let cleanName = data.region.trim().toLowerCase()
+                .replace(/\//g, '-').replace(/&/g, '').replace(/\s+/g, '-').replace(/-+/g, '-');
+            if (cleanName === "reading") cleanName = "reading"; // Override check
+            activePathIds.add(cleanName);
+        }
+    });
+
+    const splashCount = document.getElementById('splash-map-count');
+    if (splashCount) splashCount.innerText = `${activePathIds.size}/19`;
+}
 </div>
 </body>
 </html>
