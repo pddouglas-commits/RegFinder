@@ -678,7 +678,8 @@ function updateLogbookData() {
     document.getElementById('log-total-count').innerText = collection.length;
 }
 </script>
-<div id="logbook-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#1a1a1a; z-index:4000; flex-direction:column;">
+
+<div id="logbook-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#1a1a1a; z-index:6000; flex-direction:column;">
     <div style="padding: 20px 10px 10px; border-bottom: 1px solid #333; text-align: center;">
         <h2 style="color:#f1c40f; margin:0 0 10px 0;">LOGBOOK</h2>
         <div style="display: flex; justify-content: center; gap: 8px;">
@@ -687,149 +688,144 @@ function updateLogbookData() {
             <button onclick="showLogPage('stats-page')" class="log-nav-btn">STATS</button>
             <button onclick="closeLogbook()" style="background:none; border:1px solid #666; color:#fff; border-radius:4px; padding:5px 10px; font-size:12px;">EXIT</button>
         </div>
-    </div>   
-</div>
+    </div>
 
     <div id="map-page" class="log-page" style="padding: 10px; overflow-y: auto;">
         <div id="map-ui-container">
             <div id="log-map-svg" style="text-align:center;">
-
-    <svg viewBox="0 0 200 320" xmlns="http://www.w3.org/2000/svg" style="width: 100%; max-width: 280px; height: auto;">
-    <style>
-        .map-label { fill: #666; font-family: sans-serif; font-weight: bold; font-size: 10px; pointer-events: none; }
-        .active-label { fill: #000; }
-    </style>
-
-    <g id="region-scotland-group">
-        <path id="region-scotland" d="M80 20 L120 20 L130 60 L110 100 L70 90 Z" fill="#333" stroke="#555" />
-        <text x="95" y="60" class="map-label">S</text>
-    </g>
-    <g id="region-northeast-group">
-        <path id="region-northeast" d="M90 100 L130 100 L140 125 L90 125 Z" fill="#333" stroke="#555" />
-        <text x="110" y="115" class="map-label">N</text>
-    </g>
-    <g id="region-preston-group">
-        <path id="region-preston" d="M65 125 L90 125 L90 150 L65 150 Z" fill="#333" stroke="#555" />
-        <text x="73" y="142" class="map-label">P</text>
-    </g>
-    <g id="region-mancs-mersey-group">
-        <path id="region-mancs-mersey" d="M90 125 L115 125 L115 150 L90 150 Z" fill="#333" stroke="#555" />
-        <text x="95" y="142" class="map-label">M</text>
-    </g>
-    <g id="region-yorkshire-group">
-        <path id="region-yorkshire" d="M115 125 L145 125 L155 160 L115 160 Z" fill="#333" stroke="#555" />
-        <text x="125" y="145" class="map-label">Y</text>
-    </g>
-    <g id="region-deeside-group">
-        <path id="region-deeside" d="M60 150 L85 150 L85 180 L55 180 Z" fill="#333" stroke="#555" />
-        <text x="65" y="170" class="map-label">D</text>
-    </g>
-    <g id="region-birmingham-group">
-        <path id="region-birmingham" d="M85 150 L115 150 L115 180 L85 180 Z" fill="#333" stroke="#555" />
-        <text x="95" y="170" class="map-label">B</text>
-    </g>
-    <g id="region-forest-fens-group">
-        <path id="region-forest-fens" d="M115 160 L150 160 L155 190 L115 190 Z" fill="#333" stroke="#555" />
-        <text x="125" y="180" class="map-label">F</text>
-    </g>
-    <g id="region-anglia-group">
-        <path id="region-anglia" d="M150 160 L185 170 L190 200 L155 200 Z" fill="#333" stroke="#555" />
-        <text x="165" y="185" class="map-label">A</text>
-    </g>
-    <g id="region-cymru-group">
-        <path id="region-cymru" d="M25 170 L60 170 L55 220 L15 210 Z" fill="#333" stroke="#555" />
-        <text x="35" y="200" class="map-label">C</text>
-    </g>
-    <g id="region-severn-valley-group">
-        <path id="region-severn-valley" d="M75 180 L110 180 L110 220 L75 220 Z" fill="#333" stroke="#555" />
-        <text x="85" y="205" class="map-label">V</text>
-    </g>
-    <g id="region-oxford-group">
-        <path id="region-oxford" d="M110 180 L135 180 L135 210 L110 210 Z" fill="#333" stroke="#555" />
-        <text x="115" y="200" class="map-label">O</text>
-    </g>
-    <g id="region-reading-group">
-        <path id="region-reading" d="M135 180 L155 180 L155 210 L135 210 Z" fill="#333" stroke="#555" />
-        <text x="140" y="200" class="map-label">R</text>
-    </g>
-    <g id="region-london-group">
-        <path id="region-london" d="M115 210 L140 210 L140 235 L115 235 Z" fill="#333" stroke="#555" />
-        <text x="122" y="228" class="map-label">L</text>
-    </g>
-    <g id="region-essex-group">
-        <path id="region-essex" d="M140 200 L175 205 L170 230 L140 225 Z" fill="#333" stroke="#555" />
-        <text x="152" y="220" class="map-label">E</text>
-    </g>
-    <g id="region-home-counties-group">
-        <path id="region-home-counties" d="M110 235 L150 235 L145 255 L105 255 Z" fill="#333" stroke="#555" />
-        <text x="122" y="250" class="map-label">K</text>
-    </g>
-    <g id="region-garden-of-england-group">
-        <path id="region-garden-of-england" d="M140 240 L180 245 L170 275 L135 270 Z" fill="#333" stroke="#555" />
-        <text x="152" y="262" class="map-label">G</text>
-    </g>
-    <g id="region-hants-dorset-group">
-        <path id="region-hants-dorset" d="M85 225 L125 225 L120 260 L80 255 Z" fill="#333" stroke="#555" />
-        <text x="95" y="248" class="map-label">H</text>
-    </g>
-    <g id="region-west-of-england-group">
-        <path id="region-west-of-england" d="M10 215 L75 225 L65 270 L10 250 Z" fill="#333" stroke="#555" />
-        <text x="35" y="248" class="map-label">W</text>
-    </g>
-</svg>
-
-    <div style="font-size: 11px; color: #666; margin-top: 10px;">
-        Regions Discovered: <span id="region-count" style="color: #f1c40f;">0/21</span>
-    </div>
-</div>
-            
+                <svg viewBox="0 0 200 320" xmlns="http://www.w3.org/2000/svg" style="width: 100%; max-width: 280px; height: auto;">
+                    <g id="region-scotland-group">
+                        <path id="region-scotland" d="M80 20 L120 20 L130 60 L110 100 L70 90 Z" fill="#333" stroke="#555" />
+                        <text x="95" y="60" class="map-label">S</text>
+                    </g>
+                    <g id="region-northeast-group">
+                        <path id="region-northeast" d="M90 100 L130 100 L140 125 L90 125 Z" fill="#333" stroke="#555" />
+                        <text x="110" y="115" class="map-label">N</text>
+                    </g>
+                    <g id="region-preston-group">
+                        <path id="region-preston" d="M65 125 L90 125 L90 150 L65 150 Z" fill="#333" stroke="#555" />
+                        <text x="73" y="142" class="map-label">P</text>
+                    </g>
+                    <g id="region-mancs-mersey-group">
+                        <path id="region-mancs-mersey" d="M90 125 L115 125 L115 150 L90 150 Z" fill="#333" stroke="#555" />
+                        <text x="95" y="142" class="map-label">M</text>
+                    </g>
+                    <g id="region-yorkshire-group">
+                        <path id="region-yorkshire" d="M115 125 L145 125 L155 160 L115 160 Z" fill="#333" stroke="#555" />
+                        <text x="125" y="145" class="map-label">Y</text>
+                    </g>
+                    <g id="region-deeside-group">
+                        <path id="region-deeside" d="M60 150 L85 150 L85 180 L55 180 Z" fill="#333" stroke="#555" />
+                        <text x="65" y="170" class="map-label">D</text>
+                    </g>
+                    <g id="region-birmingham-group">
+                        <path id="region-birmingham" d="M85 150 L115 150 L115 180 L85 180 Z" fill="#333" stroke="#555" />
+                        <text x="95" y="170" class="map-label">B</text>
+                    </g>
+                    <g id="region-forest-fens-group">
+                        <path id="region-forest-fens" d="M115 160 L150 160 L155 190 L115 190 Z" fill="#333" stroke="#555" />
+                        <text x="125" y="180" class="map-label">F</text>
+                    </g>
+                    <g id="region-anglia-group">
+                        <path id="region-anglia" d="M150 160 L185 170 L190 200 L155 200 Z" fill="#333" stroke="#555" />
+                        <text x="165" y="185" class="map-label">A</text>
+                    </g>
+                    <g id="region-cymru-group">
+                        <path id="region-cymru" d="M25 170 L60 170 L55 220 L15 210 Z" fill="#333" stroke="#555" />
+                        <text x="35" y="200" class="map-label">C</text>
+                    </g>
+                    <g id="region-severn-valley-group">
+                        <path id="region-severn-valley" d="M75 180 L110 180 L110 220 L75 220 Z" fill="#333" stroke="#555" />
+                        <text x="85" y="205" class="map-label">V</text>
+                    </g>
+                    <g id="region-oxford-group">
+                        <path id="region-oxford" d="M110 180 L135 180 L135 210 L110 210 Z" fill="#333" stroke="#555" />
+                        <text x="115" y="200" class="map-label">O</text>
+                    </g>
+                    <g id="region-reading-group">
+                        <path id="region-reading" d="M135 180 L155 180 L155 210 L135 210 Z" fill="#333" stroke="#555" />
+                        <text x="140" y="200" class="map-label">R</text>
+                    </g>
+                    <g id="region-london-group">
+                        <path id="region-london" d="M115 210 L140 210 L140 235 L115 235 Z" fill="#333" stroke="#555" />
+                        <text x="122" y="228" class="map-label">L</text>
+                    </g>
+                    <g id="region-essex-group">
+                        <path id="region-essex" d="M140 200 L175 205 L170 230 L140 225 Z" fill="#333" stroke="#555" />
+                        <text x="152" y="220" class="map-label">E</text>
+                    </g>
+                    <g id="region-home-counties-group">
+                        <path id="region-home-counties" d="M110 235 L150 235 L145 255 L105 255 Z" fill="#333" stroke="#555" />
+                        <text x="122" y="250" class="map-label">K</text>
+                    </g>
+                    <g id="region-garden-of-england-group">
+                        <path id="region-garden-of-england" d="M140 240 L180 245 L170 275 L135 270 Z" fill="#333" stroke="#555" />
+                        <text x="152" y="262" class="map-label">G</text>
+                    </g>
+                    <g id="region-hants-dorset-group">
+                        <path id="region-hants-dorset" d="M85 225 L125 225 L120 260 L80 255 Z" fill="#333" stroke="#555" />
+                        <text x="95" y="248" class="map-label">H</text>
+                    </g>
+                    <g id="region-west-of-england-group">
+                        <path id="region-west-of-england" d="M10 215 L75 225 L65 270 L10 250 Z" fill="#333" stroke="#555" />
+                        <text x="35" y="248" class="map-label">W</text>
+                    </g>
+                </svg>
+                <div style="font-size: 11px; color: #666; margin-top: 10px;">
+                    Regions Discovered: <span id="region-count" style="color: #f1c40f;">0/19</span>
+                </div>
+            </div>
             <div id="special-collection" style="margin-top: 20px; background: #222; padding: 15px; border-radius: 10px; border: 1px solid #444;">
                 <h4 style="color: #aaa; font-size: 10px; text-transform: uppercase; margin-bottom: 10px;">National & Select Issues (JTUX)</h4>
                 <div style="display: flex; justify-content: space-between; font-family: monospace; font-size: 1.2rem;">
                     <div>J: <span id="count-j" style="color: #f1c40f;">0</span></div>
-                    <div>U: <span id="count-t" style="color: #f1c40f;">0</span></div>
-                    <div>X: <span id="count-u" style="color: #f1c40f;">0</span></div>
-                    <div>T: <span id="count-x" style="color: #f1c40f;">0</span></div>
+                    <div>T: <span id="count-t" style="color: #f1c40f;">0</span></div>
+                    <div>U: <span id="count-u" style="color: #f1c40f;">0</span></div>
+                    <div>X: <span id="count-x" style="color: #f1c40f;">0</span></div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="stats-page" class="log-page" style="display:none; padding: 20px; text-align: center;">
-        <p style="color: #888;">Total Unique Found: <span id="log-total-count">0</span></p>
-        <div id="recent-list" style="text-align: left; margin-top: 20px;"></div>
+    <div id="league-page" class="log-page" style="display:none; padding: 20px; align-items: center;">
+        <div id="log-league-container" style="width: 100%; max-width: 320px;"></div>
     </div>
 
-    window.onload = () => {
-    // 1. Fetch data for immediate Splash & Logbook use
-    fetch('RegFinder.json?v=' + Date.now())
-        .then(r => r.json())
-        .then(data => { 
-            plateData = data; 
-            updateSplashStats(); // Updates the 0/19 on splash
-        });
-};
-    
-//    loadGameState(); // Check for "Long Haul" resumes
-//};
-
-function updateSplashStats() {
-    const collection = JSON.parse(localStorage.getItem('regFinder_collection')) || [];
-    const activePathIds = new Set();
-
-    collection.forEach(plateId => {
-        const data = plateData[plateId];
-        if (data && data.region) {
-            let cleanName = data.region.trim().toLowerCase()
-                .replace(/\//g, '-').replace(/&/g, '').replace(/\s+/g, '-').replace(/-+/g, '-');
-            if (cleanName === "reading") cleanName = "reading"; // Override check
-            activePathIds.add(cleanName);
-        }
-    });
-
-    const splashCount = document.getElementById('splash-map-count');
-    if (splashCount) splashCount.innerText = `${activePathIds.size}/19`;
-}
+    <div id="stats-page" class="log-page" style="display:none; padding: 20px; text-align: center;">
+        <p style="color: #888;">Total Unique Found: <span id="log-total-count">0</span></p>
+    </div>
 </div>
+
+<script>
+    // These functions must be inside a script tag!
+    window.onload = () => {
+        fetch('RegFinder.json?v=' + Date.now())
+            .then(r => r.json())
+            .then(data => { 
+                plateData = data; 
+                updateSplashStats();
+            });
+    };
+
+    function updateSplashStats() {
+        const collection = JSON.parse(localStorage.getItem('regFinder_collection')) || [];
+        const activePathIds = new Set();
+        if (!plateData) return;
+
+        collection.forEach(plateId => {
+            const data = plateData[plateId];
+            if (data && data.region) {
+                let cleanName = data.region.trim().toLowerCase()
+                    .replace(/\//g, '-').replace(/&/g, '').replace(/\s+/g, '-').replace(/-+/g, '-');
+                if (cleanName === "reading") cleanName = "reading";
+                let targetId = `region-${cleanName}`;
+                if (document.getElementById(targetId)) activePathIds.add(targetId);
+            }
+        });
+
+        const splashCount = document.getElementById('splash-map-count');
+        if (splashCount) splashCount.innerText = `${activePathIds.size}/19`;
+    }
+</script>
 </body>
 </html>
