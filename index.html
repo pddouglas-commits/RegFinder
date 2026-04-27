@@ -330,7 +330,7 @@
     document.getElementById(`track-${letter}`).style.textShadow = "0 0 10px #f1c40f";
     
     // Points and Badge Logic
-    let pts = data.isName ? 50 : 10;
+let pts = 10;
     let badges = [];
 
     if (data.town === "RESERVED") { 
@@ -341,12 +341,14 @@
         pts += 25; 
         badges.push('<div class="classic-badge">CLASSIC</div>'); 
     }
+
+    // Use else if to prevent double-badging
     if (data.isName) {
-    badges.push(`<div class="word-badge" style="background:#3498db; color:white;">NAME: ${data.word}</div>`);
-    }
-    if (data.word) { 
-    pts += 50; 
-    badges.push(`<div class="word-badge">WORD: ${data.word}</div>`); 
+        pts += 40; // Total 50
+        badges.push(`<div class="word-badge" style="background:#3498db; color:white;">NAME: ${data.word || data.town}</div>`);
+    } else if (data.word) { 
+        pts += 50; // Total 60
+        badges.push(`<div class="word-badge">WORD: ${data.word}</div>`); 
     }
     
     // Immediate Discovery Badge
