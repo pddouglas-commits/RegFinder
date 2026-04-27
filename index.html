@@ -282,8 +282,9 @@
             completeLetter(firstLetter, data, plateId);
         } else {
             const msg = currentTargetOptions.length > 0 ? `NEED ${currentTargetOptions.join(' or ')}` : "COMPLETE!";
+            // --- ANIMATION TRIGGER FIX ---
             resultCard.classList.remove('flash-success', 'flash-error');
-            void resultCard.offsetWidth;
+            void resultCard.offsetWidth; // Force reflow
             resultCard.classList.add('flash-error');
             displayResultData(data, 0, msg);
             setTimeout(clearInput, 1000);
@@ -330,6 +331,8 @@
         const idx = alphabet.indexOf(letter);
         gameDirection === 'forward' ? currentTargetOptions = [alphabet[(idx + 1) % alphabet.length]] : 
         gameDirection === 'backward' ? currentTargetOptions = [alphabet[(idx - 1 + alphabet.length) % alphabet.length]] : null;
+        resultCard.classList.remove('flash-success', 'flash-error');
+        void resultCard.offsetWidth; 
         resultCard.classList.add('flash-success');
         displayResultData(data, pts, "", badges.join(' '));
         if (isNewDiscovery) {
@@ -417,8 +420,13 @@
         const container = document.getElementById(targetId);
         if (!container) return;
         league.sort((a, b) => currentSort === 'time' ? (a.seconds || 999999) - (b.seconds || 999999) : (b.score || 0) - (a.score || 0));
-        let html = league.map((e, i) => `<div style="display:flex; justify-content:space-between; font-family:monospace; font-size:0.85rem; border-bottom:1px solid #333; padding:5px 0;"><span>${i+1}. ${e.date}</span><span>${e.timeStr}</span><span style="color:#f1c40f;">${e.score}</span></div>`).join('');
-        container.innerHTML = `<h3 style="font-size:0.8rem; color:#666; margin-bottom:10px;">PERSONAL BESTS</h3><div style="margin-bottom:10px;"><button onclick="toggleSort('time', '${targetId}')" style="font-size:10px; background:${currentSort==='time'?'#f1c40f':'#444'}; color:${currentSort==='time'?'#000':'#fff'}; border:none; padding:5px 10px; border-radius:4px;">TIME</button> <button onclick="toggleSort('score', '${targetId}')" style="font-size:10px; background:${currentSort==='score'?'#f1c40f':'#444'}; color:${currentSort==='score'?'#000':'#fff'}; border:none; padding:5px 10px; border-radius:4px;">SCORE</button></div>${html || '<p>No records</p>'}`;
+        let html = league.map((e, i) => `
+        <div style="display:flex; justify-content:space-between; font-family:monospace; font-size:0.85rem; border-bottom:1px solid #333; padding:5px 0; align-items:center;">
+            <span style="width:20px; color:#666;">${i+1}</span>
+            <span style="width:75px; text-align:left;">${e.date}</span>
+            <span style="flex-grow:1; text-align:center;">${e.timeStr}</span>
+            <span style="width:70px; text-align:right; color:#f1c40f;">${e.score}</span>
+        </div>`).join('');
     }
 
     function toggleSort(type, targetId) { currentSort = type; displayLeagueTable(targetId); }
