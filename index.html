@@ -315,45 +315,84 @@
     }
 
     function completeLetter(letter, data, plateId) {
-        let collection = JSON.parse(localStorage.getItem('regFinder_collection')) || [];
-        let isNewDiscovery = !collection.includes(plateId);
-        foundLetters.add(letter);
-        lastScoredPlate = plateId;
-        document.getElementById(`track-${letter}`).style.color = "#fff";
-        document.getElementById(`track-${letter}`).style.textShadow = "0 0 10px #f1c40f";
-        let pts = data.isName ? 50 : 10;
-        let badges = [];
-        if (data.town === "RESERVED") { pts += 25; badges.push('<div class="classic-badge" style="background:#8e44ad;">RESERVED</div>'); }
-        if (data.isClassic) { pts += 25; badges.push('<div class="classic-badge">CLASSIC</div>'); }
-        if (data.word) { pts += 50; badges.push(`<div class="word-badge">${data.word}</div>`); }
-        totalSessionScore += pts;
-        document.getElementById('grand-total').innerText = totalSessionScore;
-        const idx = alphabet.indexOf(letter);
-        gameDirection === 'forward' ? currentTargetOptions = [alphabet[(idx + 1) % alphabet.length]] : 
-        gameDirection === 'backward' ? currentTargetOptions = [alphabet[(idx - 1 + alphabet.length) % alphabet.length]] : null;
-        resultCard.classList.remove('flash-success', 'flash-error');
-        void resultCard.offsetWidth; 
-        resultCard.classList.add('flash-success');
-        displayResultData(data, pts, "", badges.join(' '));
-        if (isNewDiscovery) {
-            collection.push(plateId);
-            localStorage.setItem('regFinder_collection', JSON.stringify(collection));
-        }
-        highlightTargets();
-        updateChain(); 
-        if (foundLetters.size === alphabet.length) showWinOverlay();
-        setTimeout(clearInput, 1500);
+    let collection = JSON.parse(localStorage.getItem('regFinder_collection')) || [];
+    let isNewDiscovery = !collection.includes(plateId);
+    
+    foundLetters.add(letter);
+    lastScoredPlate = plateId;
+    
+    // Update Alphabet Tracker UI
+    document.getElementById(`track-${letter}`).style.color = "#fff";
+    document.getElementById(`track-${letter}`).style.textShadow = "0 0 10px #f1c40f";
+    
+    // Points and Badge Logic
+    let pts = data.isName ? 50 : 10;
+    let badges = [];
+
+    if (data.town === "RESERVED") { 
+        pts += 25; 
+        badges.push('<div class="classic-badge" style="background:#8e44ad;">RESERVED</div>'); 
     }
+    if (data.isClassic) { 
+        pts += 25; 
+        badges.push('<div class="classic-badge">CLASSIC</div>'); 
+    }
+    if (data.word) { 
+        pts += 50; 
+        badges.push(`<div class="word-badge">${data.word}</div>`); 
+    }
+    
+    // Immediate Discovery Badge
+    if (isNewDiscovery) {
+        badges.push('<div class="badge-new">★ NEW DISCOVERY</div>');
+        collection.push(plateId);
+        localStorage.setItem('regFinder_collection', JSON.stringify(collection));
+    }
+
+    totalSessionScore += pts;
+    document.getElementById('grand-total').innerText = totalSessionScore;
+
+    // Handle Game Direction and Next Targets
+    const idx = alphabet.indexOf(letter);
+    if (gameDirection === 'forward') {
+        currentTargetOptions = [alphabet[(idx + 1) % alphabet.length]];
+    } else if (gameDirection === 'backward') {
+        currentTargetOptions = [alphabet[(idx - 1 + alphabet.length) % alphabet.length]];
+    }
+
+    // --- ANIMATION TRIGGER FIX ---
+    resultCard.classList.remove('flash-success', 'flash-error');
+    void resultCard.offsetWidth; // Force CSS reflow
+    resultCard.classList.add('flash-success');
+
+    // Display the data with the joined badges
+    displayResultData(data, pts, "", badges.join(' '));
+
+    highlightTargets();
+    updateChain(); 
+    
+    if (foundLetters.size === alphabet.length) showWinOverlay();
+    
+    // Clear input after a delay so user can read the lozenges
+    setTimeout(clearInput, 1500);
+}
 
     function updateChain() {
         chainTimeLeft <= 0 ? (chainCount = 1, startChainTimer()) : chainCount++;
         updateChainUI();
         if (chainCount >= 3) {
-            totalSessionScore += 100;
-            document.getElementById('grand-total').innerText = totalSessionScore;
-            chainCount = 0;
-            updateChainUI();
-        }
+    totalSessionScore += 100;
+    document.getElementById('grand-total').innerText = totalSessionScore;
+    
+    // THE FIX: Show the bonus lozenge in the result card
+    const scoreEl = document.getElementById('score-display');
+    if (scoreEl) {
+        scoreEl.innerHTML = `<span style="color: #f1c40f; animation: pulse 0.5s;">🔥 CHAIN BONUS +100! 🔥</span>`;
+    }
+    
+    chainCount = 0;
+    updateChainUI();
+}
     }
 
     function startChainTimer() {
@@ -533,7 +572,7 @@ function displayLeagueTable(targetId = 'league-display') {
         <div id="map-ui-container">
             <div id="log-map-svg" style="text-align:center;">
                 <svg viewBox="0 0 200 320" xmlns="http://www.w3.org/2000/svg" style="width: 100%; max-width: 280px; height: auto;">
-                    <g id="region-scotland-group"><path id="region-scotland" d="M80 20 L120 20 L130 60 L110 100 L70 90 Z" fill="#333" stroke="#555" /><text x="92" y="60" class="map-label" style="fill:white; font-size:10px;">S / TN</text></g>
+                    <g id="region-scotland-group"><path id="region-scotland" d="M80 20 L120 20 L130 60 L110 100 L70 90 Z" fill="#333" stroke="#555" /><text x="90" y="60" class="map-label" style="fill:white; font-size:10px;">S / TN</text></g>
                     <g id="region-northeast-group"><path id="region-northeast" d="M90 100 L130 100 L140 125 L90 125 Z" fill="#333" stroke="#555" /><text x="110" y="115" class="map-label" style="fill:white; font-size:10px;">N</text></g>
                     <g id="region-preston-group"><path id="region-preston" d="M65 125 L90 125 L90 150 L65 150 Z" fill="#333" stroke="#555" /><text x="73" y="142" class="map-label" style="fill:white; font-size:10px;">P</text></g>
                     <g id="region-mancs-mersey-group"><path id="region-mancs-mersey" d="M90 125 L115 125 L115 150 L90 150 Z" fill="#333" stroke="#555" /><text x="95" y="142" class="map-label" style="fill:white; font-size:10px;">M</text></g>
