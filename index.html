@@ -209,36 +209,6 @@
 </div>
 
 <script>
-
-function initApp() {
-    // 1. Wake Lock (Android only, but wrapped so it doesn't crash iOS)
-    if (navigator.wakeLock) {
-        navigator.wakeLock.request('screen').catch(e => console.log("WakeLock skipped"));
-    }
-    
-    // 2. Fullscreen & Orientation (Wrapped in a 'Try/Catch' so iOS doesn't freeze)
-    const docEl = document.documentElement;
-    const requestFs = docEl.requestFullscreen || docEl.webkitRequestFullscreen || docEl.mozRequestFullScreen || docEl.msRequestFullscreen;
-
-    if (requestFs) {
-        requestFs.call(docEl).then(() => {
-            if (screen.orientation && screen.orientation.lock) {
-                screen.orientation.lock('portrait').catch(e => console.log("Orientation lock skipped"));
-            }
-        }).catch(e => {
-            console.log("Fullscreen denied/skipped");
-        });
-    }
-
-    // 3. THE VITAL FIX: Hide splash and focus regardless of the steps above failing
-    document.getElementById('splash-screen').style.display = 'none';
-    
-    // Slight delay for iOS keyboard focus
-    setTimeout(() => {
-        focusInput();
-    }, 300);
-}
-
     let plateData = {};
     let totalSessionScore = 0;
     let lastScoredPlate = "";
@@ -248,6 +218,7 @@ function initApp() {
     let gameDirection = null; 
     let isGameActive = false;
     let gameStartTime, gameInterval, chainTimer, chainTimeLeft = 0, chainCount = 0;
+    let currentSort = 'time'; 
 
     const slots = [document.getElementById('slot0'), document.getElementById('slot1'), document.getElementById('slot2'), document.getElementById('slot3')];
     const hiddenInput = document.getElementById('hidden-input');
@@ -263,10 +234,22 @@ function initApp() {
         trackerContainer.appendChild(span);
     });
 
-    fetch('RegFinder.json?v=' + Date.now()).then(r => r.json()).then(data => { 
-        plateData = data; 
-        console.log("Database Loaded");
-    });
+    window.onload = () => {
+        fetch('RegFinder.json?v=' + Date.now())
+            .then(r => r.json())
+            .then(data => { 
+                plateData = data; 
+                updateSplashStats();
+            });
+    };
+
+    function initApp() {
+        if (navigator.wakeLock) {
+            navigator.wakeLock.request('screen').catch(e => {});
+        }
+        document.getElementById('splash-screen').style.display = 'none';
+        setTimeout(() => focusInput(), 300);
+    }
 
     function focusInput() { 
         hiddenInput.focus({ preventScroll: true }); 
@@ -287,7 +270,6 @@ function initApp() {
     function processPlate(data, plateId) {
         const firstLetter = plateId[0];
         if (!isGameActive) { startGame(firstLetter, data, plateId); return; }
-
         if (currentTargetOptions.includes(firstLetter) && plateId !== lastScoredPlate) {
             if (gameDirection === null) {
                 const startLetter = Array.from(foundLetters)[0];
@@ -298,53 +280,32 @@ function initApp() {
                 if (startLetter === 'Y' && firstLetter === 'A') gameDirection = 'forward';
             }
             completeLetter(firstLetter, data, plateId);
-       } else {
-    const msg = currentTargetOptions.length > 0 ? `NEED ${currentTargetOptions.join(' or ')}` : "COMPLETE!";
-    resultCard.classList.remove('flash-success', 'flash-error');
-    void resultCard.offsetWidth;
-    resultCard.classList.add('flash-error');
-    
-    displayResultData(data, 0, msg);
-    setTimeout(clearInput, 1000);
-}
+        } else {
+            const msg = currentTargetOptions.length > 0 ? `NEED ${currentTargetOptions.join(' or ')}` : "COMPLETE!";
+            resultCard.classList.remove('flash-success', 'flash-error');
+            void resultCard.offsetWidth;
+            resultCard.classList.add('flash-error');
+            displayResultData(data, 0, msg);
+            setTimeout(clearInput, 1000);
+        }
     }
 
-function toggleSettings() {
-    const menu = document.getElementById('settings-menu');
-    menu.style.display = (menu.style.display === 'none') ? 'flex' : 'none';
-    document.getElementById('reset-confirm').style.display = 'none'; // Hide confirmation msg on reopen
-}
+    function toggleSettings() {
+        const menu = document.getElementById('settings-menu');
+        menu.style.display = (menu.style.display === 'none') ? 'flex' : 'none';
+    }
 
-function clearCollection() {
-    if (confirm("Are you sure? This will delete all discovered plates AND your league table records forever.")) {
-        // 1. Wipe all stored progress
-        localStorage.removeItem('regFinder_collection');
-        localStorage.removeItem('regFinder_league');
-        localStorage.removeItem('regFinder_activeGame'); // Clean any active drive state
-        
-        // 2. UI Feedback
-        document.getElementById('reset-confirm').style.display = 'block';
-        
-        // 3. Refresh to clear active variables and reset the map
-        setTimeout(() => {
+    function clearCollection() {
+        if (confirm("Reset everything?")) {
+            localStorage.removeItem('regFinder_collection');
+            localStorage.removeItem('regFinder_league');
+            localStorage.removeItem('regFinder_activeGame');
             location.reload();
-        }, 1000);
+        }
     }
-}
 
     function startGame(letter, data, plateId) {
         isGameActive = true;
-// 1. Keep screen on
-    if (navigator.wakeLock) navigator.wakeLock.request('screen').catch(e => {});
-
-    // 2. Request Fullscreen and THEN lock orientation
-    document.documentElement.requestFullscreen().then(() => {
-        if (screen.orientation && screen.orientation.lock) {
-            screen.orientation.lock('portrait').catch(err => {
-                console.log("Orientation lock failed: ", err);
-            });
-        }
-    }).catch(e => {});
         gameStartTime = Date.now();
         gameInterval = setInterval(updateGameTimer, 1000);
         const idx = alphabet.indexOf(letter);
@@ -352,87 +313,43 @@ function clearCollection() {
         completeLetter(letter, data, plateId);
     }
 
-function completeLetter(letter, data, plateId) {
-    // 1. CHECK IF NEW DISCOVERY (Do this first before we save it!)
-    let collection = JSON.parse(localStorage.getItem('regFinder_collection')) || [];
-    let isNewDiscovery = !collection.includes(plateId);
-
-    foundLetters.add(letter);
-    lastScoredPlate = plateId;
-    
-    document.getElementById(`track-${letter}`).style.color = "#fff";
-    document.getElementById(`track-${letter}`).style.textShadow = "0 0 10px #f1c40f";
-
-    // Base Points Logic (unchanged)
-    let pts = data.isName ? 50 : 10;
-    let badges = [];
-
-    if (data.town === "RESERVED") {
-        pts += 25;
-        badges.push('<div class="classic-badge" style="background:#8e44ad;">RESERVED +25</div>');
-    }
-
-    if (data.isName) badges.push(`<div class="word-badge">NAME: ${data.word} +50</div>`);
-    if (data.isClassic) { pts += 25; badges.push('<div class="classic-badge">CLASSIC +25</div>'); }
-    if (data.word && !data.isName) { 
-        pts += 50; 
-        badges.push(`<div class="word-badge">WORD: ${data.word} +50</div>`); 
-    }
-
-    totalSessionScore += pts;
-    document.getElementById('grand-total').innerText = totalSessionScore;
-    
-
-
-    const idx = alphabet.indexOf(letter);
-    gameDirection === 'forward' ? currentTargetOptions = [alphabet[(idx + 1) % alphabet.length]] : 
-    gameDirection === 'backward' ? currentTargetOptions = [alphabet[(idx - 1 + alphabet.length) % alphabet.length]] : null;
-
-    // --- ANIMATION TRIGGER ---
-    resultCard.classList.remove('flash-success', 'flash-error');
-    void resultCard.offsetWidth; 
-    resultCard.classList.add('flash-success');
-
-    // 2. DISPLAY INITIAL DATA (Town/Word)
-    displayResultData(data, pts, "", badges.join(' '));
-
-    // 3. THE "DELAYED" DISCOVERY POP
-    if (isNewDiscovery) {
-        setTimeout(() => {
-            // Check if resultCard is still showing this plate
-            const discoveryBadge = document.createElement('div');
-            discoveryBadge.className = 'badge-new'; // Make sure you add the CSS I gave you!
-            discoveryBadge.innerHTML = '★ NEW DISCOVERY';
-            
-            // Append to the badges container inside your result card
-            // (Assuming your displayResultData puts badges in a specific div)
-            const badgeContainer = document.querySelector('.badges-row') || document.getElementById('result-data');
-            if(badgeContainer) badgeContainer.appendChild(discoveryBadge);
-            
-            // 4. PERMANENTLY SAVE
+    function completeLetter(letter, data, plateId) {
+        let collection = JSON.parse(localStorage.getItem('regFinder_collection')) || [];
+        let isNewDiscovery = !collection.includes(plateId);
+        foundLetters.add(letter);
+        lastScoredPlate = plateId;
+        document.getElementById(`track-${letter}`).style.color = "#fff";
+        document.getElementById(`track-${letter}`).style.textShadow = "0 0 10px #f1c40f";
+        let pts = data.isName ? 50 : 10;
+        let badges = [];
+        if (data.town === "RESERVED") { pts += 25; badges.push('<div class="classic-badge" style="background:#8e44ad;">RESERVED</div>'); }
+        if (data.isClassic) { pts += 25; badges.push('<div class="classic-badge">CLASSIC</div>'); }
+        if (data.word) { pts += 50; badges.push(`<div class="word-badge">${data.word}</div>`); }
+        totalSessionScore += pts;
+        document.getElementById('grand-total').innerText = totalSessionScore;
+        const idx = alphabet.indexOf(letter);
+        gameDirection === 'forward' ? currentTargetOptions = [alphabet[(idx + 1) % alphabet.length]] : 
+        gameDirection === 'backward' ? currentTargetOptions = [alphabet[(idx - 1 + alphabet.length) % alphabet.length]] : null;
+        resultCard.classList.add('flash-success');
+        displayResultData(data, pts, "", badges.join(' '));
+        if (isNewDiscovery) {
             collection.push(plateId);
             localStorage.setItem('regFinder_collection', JSON.stringify(collection));
-        }, 600); // 600ms delay: lets the success flash happen first
+        }
+        highlightTargets();
+        updateChain(); 
+        if (foundLetters.size === alphabet.length) showWinOverlay();
+        setTimeout(clearInput, 1500);
     }
-
-    highlightTargets();
-    updateChain(); 
-    if (foundLetters.size === alphabet.length) showWinOverlay();
-    setTimeout(clearInput, 1500); // Bumped to 1.5s so they can actually see the badge!
-
-}
 
     function updateChain() {
         chainTimeLeft <= 0 ? (chainCount = 1, startChainTimer()) : chainCount++;
         updateChainUI();
         if (chainCount >= 3) {
-            setTimeout(() => {
-                totalSessionScore += 100;
-                document.getElementById('grand-total').innerText = totalSessionScore;
-                document.getElementById('score-display').innerHTML = `<span style="color: #f1c40f; animation: pulse 0.5s;">🔥 CHAIN BONUS +100! 🔥</span>`;
-                chainCount = 0;
-                updateChainUI();
-            }, 300);
+            totalSessionScore += 100;
+            document.getElementById('grand-total').innerText = totalSessionScore;
+            chainCount = 0;
+            updateChainUI();
         }
     }
 
@@ -448,31 +365,12 @@ function completeLetter(letter, data, plateId) {
 
     function updateChainUI() { document.getElementById('chain-display').innerText = `(${chainCount}/3)`; }
 
-function displayResultData(data, pts, msg = "", badgeHtml = "") {
-    // 1. Update Town/Region
-    const townEl = document.getElementById('res-town');
-    if (townEl) {
-        townEl.innerText = (data.town === "RESERVED") ? "PRIVATE ISSUE" : `${data.region} | ${data.town}`;
+    function displayResultData(data, pts, msg = "", badgeHtml = "") {
+        document.getElementById('res-town').innerText = (data.town === "RESERVED") ? "PRIVATE ISSUE" : `${data.region} | ${data.town}`;
+        document.getElementById('score-display').innerHTML = msg ? `<span style="color: #e7433c;">${msg}</span>` : `+${pts} POINTS`;
+        document.getElementById('badges').innerHTML = badgeHtml;
+        resultCard.style.display = 'block';
     }
-
-    // 2. Update Points/Message
-    const scoreEl = document.getElementById('score-display');
-    if (scoreEl) {
-        scoreEl.innerHTML = msg ? `<span style="color: #e7433c;">${msg}</span>` : `+${pts} POINTS`;
-    }
-
-    // 3. Update Town/Word Badges
-    const badgeEl = document.getElementById('badges');
-    if (badgeEl) {
-        // We add an empty div at the end for the Discovery Badge to 'pop' into
-        badgeEl.innerHTML = `
-            <div class="badges-row">${badgeHtml}</div>
-            <div id="discovery-zone"></div>
-        `;
-    }
-
-    resultCard.style.display = 'block';
-}
 
     function updateGameTimer() {
         const diff = Math.floor((Date.now() - gameStartTime) / 1000);
@@ -490,197 +388,112 @@ function displayResultData(data, pts, msg = "", badgeHtml = "") {
 
     function showUnknown() {
         resultCard.style.display = 'block';
-	resultCard.classList.remove('flash-success', 'flash-error');
-    	void resultCard.offsetWidth;
-    	resultCard.classList.add('flash-error');
-
         document.getElementById('res-town').innerText = "Unknown";
-        document.getElementById('score-display').innerText = "";
-        document.getElementById('badges').innerHTML = "";
         setTimeout(clearInput, 800);
     }
 
-    let currentSort = 'time'; // Track if we are sorting by Time or Score
+    function saveToLeagueTable(seconds, timeStr, score) {
+        let league = JSON.parse(localStorage.getItem('regFinder_league')) || [];
+        const date = new Date().toLocaleDateString('en-GB', { day:'2-digit', month:'2-digit', year:'2-digit' });
+        league.push({ seconds, timeStr, score, date });
+        league.sort((a, b) => a.seconds - b.seconds);
+        localStorage.setItem('regFinder_league', JSON.stringify(league.slice(0, 10)));
+    }
 
-function saveToLeagueTable(seconds, timeStr, score) {
-    let league = JSON.parse(localStorage.getItem('regFinder_league')) || [];
-    
-    // Format date as DD/MM/YY
-    const completionDate = new Date().toLocaleDateString('en-GB', { 
-        day: '2-digit', month: '2-digit', year: '2-digit' 
-    });
+    function showWinOverlay() {
+        clearInterval(gameInterval); clearInterval(chainTimer);
+        const timeStr = document.getElementById('game-timer').innerText;
+        const [m, s] = timeStr.split(':').map(Number);
+        saveToLeagueTable((m*60)+s, timeStr, totalSessionScore);
+        const winDiv = document.createElement('div');
+        winDiv.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:9000; text-align:center; padding:20px; box-sizing:border-box;";
+        winDiv.innerHTML = `<h1 style="color:#f1c40f;">MISSION COMPLETE</h1><p>TIME: ${timeStr}</p><div id="league-display" style="width:90%; max-width:320px;"></div><button onclick="location.reload()" style="margin-top:20px; padding:15px 40px; background:#f1c40f; border-radius:30px; font-weight:bold;">NEW SPRINT</button>`;
+        document.body.appendChild(winDiv);
+        displayLeagueTable();
+    }
 
-    league.push({ seconds, timeStr, score, date: completionDate });
-    
-    // Default sort by fastest time and keep top 10
-    league.sort((a, b) => a.seconds - b.seconds);
-    localStorage.setItem('regFinder_league', JSON.stringify(league.slice(0, 10)));
-}
+    function displayLeagueTable(targetId = 'league-display') {
+        const league = JSON.parse(localStorage.getItem('regFinder_league')) || [];
+        const container = document.getElementById(targetId);
+        if (!container) return;
+        league.sort((a, b) => currentSort === 'time' ? (a.seconds || 999999) - (b.seconds || 999999) : (b.score || 0) - (a.score || 0));
+        let html = league.map((e, i) => `<div style="display:flex; justify-content:space-between; font-family:monospace; font-size:0.85rem; border-bottom:1px solid #333; padding:5px 0;"><span>${i+1}. ${e.date}</span><span>${e.timeStr}</span><span style="color:#f1c40f;">${e.score}</span></div>`).join('');
+        container.innerHTML = `<h3 style="font-size:0.8rem; color:#666; margin-bottom:10px;">PERSONAL BESTS</h3><div style="margin-bottom:10px;"><button onclick="toggleSort('time', '${targetId}')" style="font-size:10px; background:${currentSort==='time'?'#f1c40f':'#444'}; color:${currentSort==='time'?'#000':'#fff'}; border:none; padding:5px 10px; border-radius:4px;">TIME</button> <button onclick="toggleSort('score', '${targetId}')" style="font-size:10px; background:${currentSort==='score'?'#f1c40f':'#444'}; color:${currentSort==='score'?'#000':'#fff'}; border:none; padding:5px 10px; border-radius:4px;">SCORE</button></div>${html || '<p>No records</p>'}`;
+    }
 
-function showWinOverlay() {
-    clearInterval(gameInterval); 
-    clearInterval(chainTimer);
-    
-    const timeString = document.getElementById('game-timer').innerText;
-    const [mins, secs] = timeString.split(':').map(Number);
-    const totalSeconds = (mins * 60) + secs;
-    
-    saveToLeagueTable(totalSeconds, timeString, totalSessionScore);
-
-    const winDiv = document.createElement('div');
-    // Centering Fix: Column layout + Center alignment
-    winDiv.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:5000; text-align:center; padding:20px; box-sizing:border-box;";
-    
-    winDiv.innerHTML = `
-        <h1 style="color:#f1c40f; margin:0 0 10px 0;">MISSION COMPLETE</h1>
-        <p style="font-size:1.5rem; margin:0 0 20px 0;">FINAL TIME: ${timeString}</p>
-        <div id="league-display" style="background:#222; padding:15px; border-radius:12px; margin-bottom:20px; width:90%; max-width:320px;"></div>
-        <button onclick="location.reload()" style="padding:15px 40px; background:#f1c40f; border:none; border-radius:30px; font-weight:bold; font-size:1.1rem;">NEW SPRINT</button>
-    `;
-    document.body.appendChild(winDiv);
-    displayLeagueTable();
-}
-
-function toggleSort(type) {
-    currentSort = type;
-    displayLeagueTable();
-}
-
-function displayLeagueTable(targetId = 'league-display') {
-    const league = JSON.parse(localStorage.getItem('regFinder_league')) || [];
-    const container = document.getElementById(targetId);
-    if (!container) return;
-
-    // Sorting logic
-    league.sort((a, b) => currentSort === 'time' ? (a.seconds || 999999) - (b.seconds || 999999) : (b.score || 0) - (a.score || 0));
-
-    let tableHtml = league.map((entry, i) => `
-        <div style="display:flex; justify-content:space-between; width:100%; font-family:monospace; margin:5px 0; font-size:0.85rem; border-bottom:1px solid #333; padding-bottom:2px;">
-            <span style="color:#666; width:20px;">${i+1}</span>
-            <span style="width:65px;">${entry.date || '--/--/--'}</span>
-            <span style="flex-grow:1; text-align:center;">${entry.timeStr || 'N/A'}</span>
-            <span style="color:#f1c40f; width:70px; text-align:right;">${entry.score || 0}</span>
-        </div>`).join('');
-
-    container.innerHTML = `
-        <h3 style="font-size:0.8rem; color:#666; margin:0 0 10px 0; text-align:center;">PERSONAL BESTS</h3>
-        <div style="margin-bottom:12px; display:flex; justify-content:center; gap:8px;">
-            <button onclick="toggleSort('time', '${targetId}')" style="font-size:10px; background:${currentSort==='time'?'#f1c40f':'#444'}; color:${currentSort==='time'?'#000':'#fff'}; border:none; padding:5px 12px; border-radius:4px;">TIME</button>
-            <button onclick="toggleSort('score', '${targetId}')" style="font-size:10px; background:${currentSort==='score'?'#f1c40f':'#444'}; color:${currentSort==='score'?'#000':'#fff'}; border:none; padding:5px 12px; border-radius:4px;">SCORE</button>
-        </div>
-        ${tableHtml || '<p style="color:#444; font-size:0.8rem; text-align:center;">No records yet</p>'}
-    `;
-}
-
-function toggleSort(type, targetId) {
-    currentSort = type;
-    displayLeagueTable(targetId); // Redraws the specific container we're looking at
-}
+    function toggleSort(type, targetId) { currentSort = type; displayLeagueTable(targetId); }
 
     function openLogbook() {
-    document.getElementById('logbook-overlay').style.display = 'flex';
-    updateLogbookData(); // Already handles your JUXT counters
-    shadeMap();          // Now handles the visual territory shading
-    showLogPage('map-page'); 
-}
-
-function closeLogbook() {
-    document.getElementById('logbook-overlay').style.display = 'none';
-}
-
-function showLogPage(pageId) {
-    // 1. Hide all pages and deactivate buttons
-    document.querySelectorAll('.log-page').forEach(p => p.style.display = 'none');
-    document.querySelectorAll('.log-nav-btn').forEach(b => b.classList.remove('active'));
-
-    // 2. Show the selected page
-    document.getElementById(pageId).style.display = 'flex';
-    
-    // 3. Highlight the correct button
-    const btnText = pageId.split('-')[0].toUpperCase();
-    document.querySelectorAll('.log-nav-btn').forEach(b => {
-        if (b.innerText === btnText) b.classList.add('active');
-    });
-
-    // 4. Specifically for the League page, redraw the table
-    if (pageId === 'league-page') {
-        displayLeagueTable('log-league-container');
+        document.getElementById('logbook-overlay').style.display = 'flex';
+        updateLogbookData();
+        shadeMap(); 
+        showLogPage('map-page'); 
     }
-}
 
-function shadeMap() {
-    const collection = JSON.parse(localStorage.getItem('regFinder_collection')) || [];
-    const activePathIds = new Set();
+    function closeLogbook() { document.getElementById('logbook-overlay').style.display = 'none'; }
 
-    collection.forEach(plateId => {
-        const data = plateData[plateId];
-        if (!data || !data.region) return;
+    function showLogPage(pageId) {
+        document.querySelectorAll('.log-page').forEach(p => p.style.display = 'none');
+        document.querySelectorAll('.log-nav-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(pageId).style.display = 'flex';
+        if (pageId === 'league-page') displayLeagueTable('log-league-container');
+    }
 
-        // THE FIX: If it's a "T" prefix but NOT a Scottish "TN" plate, 
-        // it shouldn't affect the map at all.
-        const isNationalT = plateId[0] === 'T' && plateId.substring(0, 2) !== 'TN';
-        if (isNationalT) return;
+    function shadeMap() {
+        const collection = JSON.parse(localStorage.getItem('regFinder_collection')) || [];
+        const activePathIds = new Set();
+        collection.forEach(plateId => {
+            const data = plateData[plateId];
+            if (!data || !data.region) return;
+            const isNationalT = plateId[0] === 'T' && plateId.substring(0, 2) !== 'TN';
+            if (isNationalT) return;
+            let cleanName = data.region.trim().toLowerCase().replace(/\//g, '-').replace(/&/g, '').replace(/\s+/g, '-').replace(/-+/g, '-');
+            if (cleanName === "reading") cleanName = "reading"; 
+            let targetId = `region-${cleanName}`;
+            if (document.getElementById(targetId)) activePathIds.add(targetId);
+        });
 
-        let cleanName = data.region.trim().toLowerCase()
-            .replace(/\//g, '-')
-            .replace(/&/g, '')
-            .replace(/\s+/g, '-')
-            .replace(/-+/g, '-');
-
-        let targetId = `region-${cleanName}`;
-        
-        //if (cleanName === "reading") targetId = "region-reading";
-
-        if (document.getElementById(targetId)) {
-            activePathIds.add(targetId);
-        }
-    });
-}
-       
-
-    // Reset styles
-    document.querySelectorAll('#log-map-svg path').forEach(p => p.style.fill = '#333');
-    document.querySelectorAll('.map-label').forEach(t => t.classList.remove('active-label'));
-
-    // Apply Gold Shading
-    activePathIds.forEach(id => {
-        const path = document.getElementById(id);
-        if (path) {
-            path.style.fill = '#f1c40f';
-            path.style.stroke = '#fff';
-            const label = path.parentElement.querySelector('.map-label');
-            if (label) label.classList.add('active-label');
-        } else {
-            // Debugging log for your mobile console if it still fails
-            console.log("Failed to find SVG ID:", id);
-        }
-    });
-
-    const totalPaths = document.querySelectorAll('#log-map-svg path').length;
-    document.getElementById('region-count').innerText = `${activePathIds.size}/${totalPaths}`;
-
-
-function updateLogbookData() {
-    const collection = JSON.parse(localStorage.getItem('regFinder_collection')) || [];
-    const counts = { J: 0, T: 0, U: 0, X: 0 };
-    
-    collection.forEach(plateId => {
-        const prefix = plateId[0];
-        // Only count as JUXT if it's not a TN (Scotland)
-        if (['J', 'T', 'U', 'X'].includes(prefix)) {
-            if (plateId.substring(0,2) !== 'TN') {
-                counts[prefix]++;
+        document.querySelectorAll('#log-map-svg path').forEach(p => p.style.fill = '#333');
+        activePathIds.forEach(id => {
+            const path = document.getElementById(id);
+            if (path) {
+                path.style.fill = '#f1c40f';
+                path.style.stroke = '#fff';
             }
-        }
-    });
+        });
+        document.getElementById('region-count').innerText = `${activePathIds.size}/19`;
+    }
 
-    // Update UI Counters
-    document.getElementById('count-j').innerText = counts.J;
-    document.getElementById('count-t').innerText = counts.T;
-    document.getElementById('count-u').innerText = counts.U;
-    document.getElementById('count-x').innerText = counts.X;
-    document.getElementById('log-total-count').innerText = collection.length;
-}
+    function updateLogbookData() {
+        const collection = JSON.parse(localStorage.getItem('regFinder_collection')) || [];
+        const counts = { J: 0, T: 0, U: 0, X: 0 };
+        collection.forEach(p => {
+            const pref = p[0];
+            if (['J', 'T', 'U', 'X'].includes(pref) && p.substring(0,2) !== 'TN') counts[pref]++;
+        });
+        document.getElementById('count-j').innerText = counts.J;
+        document.getElementById('count-t').innerText = counts.T;
+        document.getElementById('count-u').innerText = counts.U;
+        document.getElementById('count-x').innerText = counts.X;
+        document.getElementById('log-total-count').innerText = collection.length;
+    }
+
+    function updateSplashStats() {
+        const collection = JSON.parse(localStorage.getItem('regFinder_collection')) || [];
+        const activePathIds = new Set();
+        if (!plateData) return;
+        collection.forEach(p => {
+            const data = plateData[p];
+            if (data && data.region) {
+                let clean = data.region.trim().toLowerCase().replace(/\//g, '-').replace(/&/g, '').replace(/\s+/g, '-').replace(/-+/g, '-');
+                if (clean === "reading") clean = "reading";
+                let tid = `region-${clean}`;
+                if (document.getElementById(tid)) activePathIds.add(tid);
+            }
+        });
+        const splashCount = document.getElementById('splash-map-count');
+        if (splashCount) splashCount.innerText = `${activePathIds.size}/19`;
+    }
 </script>
 
 <div id="logbook-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#1a1a1a; z-index:6000; flex-direction:column;">
@@ -698,138 +511,41 @@ function updateLogbookData() {
         <div id="map-ui-container">
             <div id="log-map-svg" style="text-align:center;">
                 <svg viewBox="0 0 200 320" xmlns="http://www.w3.org/2000/svg" style="width: 100%; max-width: 280px; height: auto;">
-                    <g id="region-scotland-group">
-                        <path id="region-scotland" d="M80 20 L120 20 L130 60 L110 100 L70 90 Z" fill="#333" stroke="#555" />
-                        <text x="95" y="60" class="map-label">S / TN</text>
-                    </g>
-                    <g id="region-northeast-group">
-                        <path id="region-northeast" d="M90 100 L130 100 L140 125 L90 125 Z" fill="#333" stroke="#555" />
-                        <text x="110" y="115" class="map-label">N</text>
-                    </g>
-                    <g id="region-preston-group">
-                        <path id="region-preston" d="M65 125 L90 125 L90 150 L65 150 Z" fill="#333" stroke="#555" />
-                        <text x="73" y="142" class="map-label">P</text>
-                    </g>
-                    <g id="region-mancs-mersey-group">
-                        <path id="region-mancs-mersey" d="M90 125 L115 125 L115 150 L90 150 Z" fill="#333" stroke="#555" />
-                        <text x="95" y="142" class="map-label">M</text>
-                    </g>
-                    <g id="region-yorkshire-group">
-                        <path id="region-yorkshire" d="M115 125 L145 125 L155 160 L115 160 Z" fill="#333" stroke="#555" />
-                        <text x="125" y="145" class="map-label">Y</text>
-                    </g>
-                    <g id="region-deeside-group">
-                        <path id="region-deeside" d="M60 150 L85 150 L85 180 L55 180 Z" fill="#333" stroke="#555" />
-                        <text x="65" y="170" class="map-label">D</text>
-                    </g>
-                    <g id="region-birmingham-group">
-                        <path id="region-birmingham" d="M85 150 L115 150 L115 180 L85 180 Z" fill="#333" stroke="#555" />
-                        <text x="95" y="170" class="map-label">B</text>
-                    </g>
-                    <g id="region-forest-fens-group">
-                        <path id="region-forest-fens" d="M115 160 L150 160 L155 190 L115 190 Z" fill="#333" stroke="#555" />
-                        <text x="125" y="180" class="map-label">F</text>
-                    </g>
-                    <g id="region-anglia-group">
-                        <path id="region-anglia" d="M150 160 L185 170 L190 200 L155 200 Z" fill="#333" stroke="#555" />
-                        <text x="165" y="185" class="map-label">A</text>
-                    </g>
-                    <g id="region-cymru-group">
-                        <path id="region-cymru" d="M25 170 L60 170 L55 220 L15 210 Z" fill="#333" stroke="#555" />
-                        <text x="35" y="200" class="map-label">C</text>
-                    </g>
-                    <g id="region-severn-valley-group">
-                        <path id="region-severn-valley" d="M75 180 L110 180 L110 220 L75 220 Z" fill="#333" stroke="#555" />
-                        <text x="85" y="205" class="map-label">V</text>
-                    </g>
-                    <g id="region-oxford-group">
-                        <path id="region-oxford" d="M110 180 L135 180 L135 210 L110 210 Z" fill="#333" stroke="#555" />
-                        <text x="115" y="200" class="map-label">O</text>
-                    </g>
-                    <g id="region-reading-group">
-                        <path id="region-reading" d="M135 180 L155 180 L155 210 L135 210 Z" fill="#333" stroke="#555" />
-                        <text x="140" y="200" class="map-label">R</text>
-                    </g>
-                    <g id="region-london-group">
-                        <path id="region-london" d="M115 210 L140 210 L140 235 L115 235 Z" fill="#333" stroke="#555" />
-                        <text x="122" y="228" class="map-label">L</text>
-                    </g>
-                    <g id="region-essex-group">
-                        <path id="region-essex" d="M140 200 L175 205 L170 230 L140 225 Z" fill="#333" stroke="#555" />
-                        <text x="152" y="220" class="map-label">E</text>
-                    </g>
-                    <g id="region-home-counties-group">
-                        <path id="region-home-counties" d="M110 235 L150 235 L145 255 L105 255 Z" fill="#333" stroke="#555" />
-                        <text x="122" y="250" class="map-label">K</text>
-                    </g>
-                    <g id="region-garden-of-england-group">
-                        <path id="region-garden-of-england" d="M140 240 L180 245 L170 275 L135 270 Z" fill="#333" stroke="#555" />
-                        <text x="152" y="262" class="map-label">G</text>
-                    </g>
-                    <g id="region-hants-dorset-group">
-                        <path id="region-hants-dorset" d="M85 225 L125 225 L120 260 L80 255 Z" fill="#333" stroke="#555" />
-                        <text x="95" y="248" class="map-label">H</text>
-                    </g>
-                    <g id="region-west-of-england-group">
-                        <path id="region-west-of-england" d="M10 215 L75 225 L65 270 L10 250 Z" fill="#333" stroke="#555" />
-                        <text x="35" y="248" class="map-label">W</text>
-                    </g>
+                    <g id="region-scotland-group"><path id="region-scotland" d="M80 20 L120 20 L130 60 L110 100 L70 90 Z" fill="#333" stroke="#555" /><text x="95" y="60" class="map-label" style="fill:white; font-size:10px;">S</text></g>
+                    <g id="region-northeast-group"><path id="region-northeast" d="M90 100 L130 100 L140 125 L90 125 Z" fill="#333" stroke="#555" /><text x="110" y="115" class="map-label" style="fill:white; font-size:10px;">N</text></g>
+                    <g id="region-preston-group"><path id="region-preston" d="M65 125 L90 125 L90 150 L65 150 Z" fill="#333" stroke="#555" /><text x="73" y="142" class="map-label" style="fill:white; font-size:10px;">P</text></g>
+                    <g id="region-mancs-mersey-group"><path id="region-mancs-mersey" d="M90 125 L115 125 L115 150 L90 150 Z" fill="#333" stroke="#555" /><text x="95" y="142" class="map-label" style="fill:white; font-size:10px;">M</text></g>
+                    <g id="region-yorkshire-group"><path id="region-yorkshire" d="M115 125 L145 125 L155 160 L115 160 Z" fill="#333" stroke="#555" /><text x="125" y="145" class="map-label" style="fill:white; font-size:10px;">Y</text></g>
+                    <g id="region-deeside-group"><path id="region-deeside" d="M60 150 L85 150 L85 180 L55 180 Z" fill="#333" stroke="#555" /><text x="65" y="170" class="map-label" style="fill:white; font-size:10px;">D</text></g>
+                    <g id="region-birmingham-group"><path id="region-birmingham" d="M85 150 L115 150 L115 180 L85 180 Z" fill="#333" stroke="#555" /><text x="95" y="170" class="map-label" style="fill:white; font-size:10px;">B</text></g>
+                    <g id="region-forest-fens-group"><path id="region-forest-fens" d="M115 160 L150 160 L155 190 L115 190 Z" fill="#333" stroke="#555" /><text x="125" y="180" class="map-label" style="fill:white; font-size:10px;">F</text></g>
+                    <g id="region-anglia-group"><path id="region-anglia" d="M150 160 L185 170 L190 200 L155 200 Z" fill="#333" stroke="#555" /><text x="165" y="185" class="map-label" style="fill:white; font-size:10px;">A</text></g>
+                    <g id="region-cymru-group"><path id="region-cymru" d="M25 170 L60 170 L55 220 L15 210 Z" fill="#333" stroke="#555" /><text x="35" y="200" class="map-label" style="fill:white; font-size:10px;">C</text></g>
+                    <g id="region-severn-valley-group"><path id="region-severn-valley" d="M75 180 L110 180 L110 220 L75 220 Z" fill="#333" stroke="#555" /><text x="85" y="205" class="map-label" style="fill:white; font-size:10px;">V</text></g>
+                    <g id="region-oxford-group"><path id="region-oxford" d="M110 180 L135 180 L135 210 L110 210 Z" fill="#333" stroke="#555" /><text x="115" y="200" class="map-label" style="fill:white; font-size:10px;">O</text></g>
+                    <g id="region-reading-group"><path id="region-reading" d="M135 180 L155 180 L155 210 L135 210 Z" fill="#333" stroke="#555" /><text x="140" y="200" class="map-label" style="fill:white; font-size:10px;">R</text></g>
+                    <g id="region-london-group"><path id="region-london" d="M115 210 L140 210 L140 235 L115 235 Z" fill="#333" stroke="#555" /><text x="122" y="228" class="map-label" style="fill:white; font-size:10px;">L</text></g>
+                    <g id="region-essex-group"><path id="region-essex" d="M140 200 L175 205 L170 230 L140 225 Z" fill="#333" stroke="#555" /><text x="152" y="220" class="map-label" style="fill:white; font-size:10px;">E</text></g>
+                    <g id="region-home-counties-group"><path id="region-home-counties" d="M110 235 L150 235 L145 255 L105 255 Z" fill="#333" stroke="#555" /><text x="122" y="250" class="map-label" style="fill:white; font-size:10px;">K</text></g>
+                    <g id="region-garden-of-england-group"><path id="region-garden-of-england" d="M140 240 L180 245 L170 275 L135 270 Z" fill="#333" stroke="#555" /><text x="152" y="262" class="map-label" style="fill:white; font-size:10px;">G</text></g>
+                    <g id="region-hants-dorset-group"><path id="region-hants-dorset" d="M85 225 L125 225 L120 260 L80 255 Z" fill="#333" stroke="#555" /><text x="95" y="248" class="map-label" style="fill:white; font-size:10px;">H</text></g>
+                    <g id="region-west-of-england-group"><path id="region-west-of-england" d="M10 215 L75 225 L65 270 L10 250 Z" fill="#333" stroke="#555" /><text x="35" y="248" class="map-label" style="fill:white; font-size:10px;">W</text></g>
                 </svg>
-                <div style="font-size: 11px; color: #666; margin-top: 10px;">
-                    Regions Discovered: <span id="region-count" style="color: #f1c40f;">0/19</span>
-                </div>
+                <div style="font-size: 11px; color: #666; margin-top: 10px;">Regions: <span id="region-count" style="color:#f1c40f;">0/19</span></div>
             </div>
             <div id="special-collection" style="margin-top: 20px; background: #222; padding: 15px; border-radius: 10px; border: 1px solid #444;">
-                <h4 style="color: #aaa; font-size: 10px; text-transform: uppercase; margin-bottom: 10px;">National & Select Issues (JTUX)</h4>
+                <h4 style="color: #aaa; font-size: 10px; text-transform: uppercase; margin-bottom: 10px;">National (JTUX)</h4>
                 <div style="display: flex; justify-content: space-between; font-family: monospace; font-size: 1.2rem;">
-                    <div>J: <span id="count-j" style="color: #f1c40f;">0</span></div>
-                    <div>T: <span id="count-t" style="color: #f1c40f;">0</span></div>
-                    <div>U: <span id="count-u" style="color: #f1c40f;">0</span></div>
-                    <div>X: <span id="count-x" style="color: #f1c40f;">0</span></div>
+                    <div>J: <span id="count-j">0</span></div>
+                    <div>T: <span id="count-t">0</span></div>
+                    <div>U: <span id="count-u">0</span></div>
+                    <div>X: <span id="count-x">0</span></div>
                 </div>
             </div>
         </div>
     </div>
-
-    <div id="league-page" class="log-page" style="display:none; padding: 20px; align-items: center;">
-        <div id="log-league-container" style="width: 100%; max-width: 320px;"></div>
-    </div>
-
-    <div id="stats-page" class="log-page" style="display:none; padding: 20px; text-align: center;">
-        <p style="color: #888;">Total Unique Found: <span id="log-total-count">0</span></p>
-    </div>
+    <div id="league-page" class="log-page" style="display:none; padding: 20px;"><div id="log-league-container"></div></div>
+    <div id="stats-page" class="log-page" style="display:none; padding: 20px; text-align: center;"><p>Total Unique Found: <span id="log-total-count">0</span></p></div>
 </div>
-
-<script>
-    // These functions must be inside a script tag!
-    window.onload = () => {
-        fetch('RegFinder.json?v=' + Date.now())
-            .then(r => r.json())
-            .then(data => { 
-                plateData = data; 
-                updateSplashStats();
-            });
-    };
-
-    function updateSplashStats() {
-        const collection = JSON.parse(localStorage.getItem('regFinder_collection')) || [];
-        const activePathIds = new Set();
-        if (!plateData) return;
-
-        collection.forEach(plateId => {
-            const data = plateData[plateId];
-            if (data && data.region) {
-                let cleanName = data.region.trim().toLowerCase()
-                    .replace(/\//g, '-').replace(/&/g, '').replace(/\s+/g, '-').replace(/-+/g, '-');
-                if (cleanName === "reading") cleanName = "reading";
-                let targetId = `region-${cleanName}`;
-                if (document.getElementById(targetId)) activePathIds.add(targetId);
-            }
-        });
-
-        const splashCount = document.getElementById('splash-map-count');
-        if (splashCount) splashCount.innerText = `${activePathIds.size}/19`;
-    }
-</script>
 </body>
 </html>
