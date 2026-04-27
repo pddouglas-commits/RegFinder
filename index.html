@@ -616,23 +616,27 @@ function shadeMap() {
         const data = plateData[plateId];
         if (!data || !data.region) return;
 
-        // 1. Precise Cleaning
+        // THE FIX: If it's a "T" prefix but NOT a Scottish "TN" plate, 
+        // it shouldn't affect the map at all.
+        const isNationalT = plateId[0] === 'T' && plateId.substring(0, 2) !== 'TN';
+        if (isNationalT) return;
+
         let cleanName = data.region.trim().toLowerCase()
-            .replace(/\//g, '-')   // Specifically turn / into - for Mancs-Mersey
-            .replace(/&/g, '')     // Strip &
-            .replace(/\s+/g, '-')  // Spaces to hyphens
-            .replace(/-+/g, '-');  // Collapse multiple hyphens
+            .replace(/\//g, '-')
+            .replace(/&/g, '')
+            .replace(/\s+/g, '-')
+            .replace(/-+/g, '-');
 
         let targetId = `region-${cleanName}`;
         
-        // 2. Manual Override for Reading (if needed)
-        if (cleanName === "reading") targetId = "region-reading";
+        //if (cleanName === "reading") targetId = "region-reading";
 
         if (document.getElementById(targetId)) {
-        activePathIds.add(targetId);
+            activePathIds.add(targetId);
+        }
+    });
 }
-
-        });
+       
 
     // Reset styles
     document.querySelectorAll('#log-map-svg path').forEach(p => p.style.fill = '#333');
@@ -654,7 +658,7 @@ function shadeMap() {
 
     const totalPaths = document.querySelectorAll('#log-map-svg path').length;
     document.getElementById('region-count').innerText = `${activePathIds.size}/${totalPaths}`;
-}
+
 
 function updateLogbookData() {
     const collection = JSON.parse(localStorage.getItem('regFinder_collection')) || [];
@@ -672,9 +676,9 @@ function updateLogbookData() {
 
     // Update UI Counters
     document.getElementById('count-j').innerText = counts.J;
-    document.getElementById('count-u').innerText = counts.T;
-    document.getElementById('count-x').innerText = counts.U;
-    document.getElementById('count-t').innerText = counts.X;
+    document.getElementById('count-t').innerText = counts.T;
+    document.getElementById('count-u').innerText = counts.U;
+    document.getElementById('count-x').innerText = counts.X;
     document.getElementById('log-total-count').innerText = collection.length;
 }
 </script>
@@ -696,7 +700,7 @@ function updateLogbookData() {
                 <svg viewBox="0 0 200 320" xmlns="http://www.w3.org/2000/svg" style="width: 100%; max-width: 280px; height: auto;">
                     <g id="region-scotland-group">
                         <path id="region-scotland" d="M80 20 L120 20 L130 60 L110 100 L70 90 Z" fill="#333" stroke="#555" />
-                        <text x="95" y="60" class="map-label">S</text>
+                        <text x="95" y="60" class="map-label">S / TN</text>
                     </g>
                     <g id="region-northeast-group">
                         <path id="region-northeast" d="M90 100 L130 100 L140 125 L90 125 Z" fill="#333" stroke="#555" />
