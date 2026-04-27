@@ -462,6 +462,30 @@ function displayResultData(data, pts, msg = "", badgeHtml = "") {
         setTimeout(clearInput, 800);
     }
 
+    function saveToLeagueTable(seconds, timeStr, score) {
+    let league = JSON.parse(localStorage.getItem('regFinder_league')) || [];
+    
+    // Capture the current date in a compact format
+    const completionDate = new Date().toLocaleDateString('en-GB', { 
+        day: '2-digit', 
+        month: '2-digit',
+        year: '2-digit'
+    });
+
+    league.push({ 
+        seconds, 
+        timeStr, 
+        score, 
+        date: completionDate 
+    });
+    
+    // Default sort by time, but keeping the top 10 for better history
+    league.sort((a, b) => a.seconds - b.seconds);
+    league = league.slice(0, 10);
+    
+    localStorage.setItem('regFinder_league', JSON.stringify(league));
+}
+
     function showWinOverlay() {
     clearInterval(gameInterval); 
     clearInterval(chainTimer);
@@ -501,6 +525,39 @@ function displayResultData(data, pts, msg = "", badgeHtml = "") {
         <button onclick="location.reload()" style="padding:15px 40px; background:#f1c40f; border:none; border-radius:30px; font-weight:bold;">NEW SPRINT</button>
     `;
     document.body.appendChild(winDiv);
+}
+
+function displayLeagueTable() {
+    const league = JSON.parse(localStorage.getItem('regFinder_league')) || [];
+    const container = document.getElementById('league-display');
+    if (!container) return;
+
+    if (currentSort === 'time') {
+        league.sort((a, b) => a.seconds - b.seconds);
+    } else {
+        league.sort((a, b) => b.score - a.score);
+    }
+
+    // Updated template to include the Date column
+    let tableHtml = league.map((entry, i) => 
+        `<div style="display:flex; justify-content:space-between; width:100%; font-family:monospace; margin:5px 0; font-size:0.85rem; border-bottom:1px solid #333; padding-bottom:2px;">
+            <span style="color:#666; width:20px;">${i+1}</span>
+            <span style="width:60px;">${entry.date}</span>
+            <span style="flex-grow:1; text-align:center;">${entry.timeStr}</span>
+            <span style="color:#f1c40f; width:70px; text-align:right;">${entry.score} pts</span>
+        </div>`
+    ).join('');
+
+    container.innerHTML = `
+        <h3 style="font-size:0.8rem; color:#666; margin-bottom:10px;">PERSONAL BESTS</h3>
+        <div style="margin-bottom:12px;">
+            <button onclick="toggleSort('time')" style="font-size:10px; background:${currentSort==='time'?'#f1c40f':'#333'}; color:${currentSort==='time'?'#000':'#fff'}; border:none; padding:4px 10px; border-radius:4px; margin-right:5px;">TIME</button>
+            <button onclick="toggleSort('score')" style="font-size:10px; background:${currentSort==='score'?'#f1c40f':'#333'}; color:${currentSort==='score'?'#000':'#fff'}; border:none; padding:4px 10px; border-radius:4px;">SCORE</button>
+        </div>
+        <div style="max-height:150px; overflow-y:auto; padding-right:5px;">
+            ${tableHtml || '<p style="color:#444">No records yet</p>'}
+        </div>
+    `;
 }
 
     function openLogbook() {
