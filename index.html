@@ -337,9 +337,12 @@
         pts += 25; 
         badges.push('<div class="classic-badge">CLASSIC</div>'); 
     }
+    if (data.isName) {
+    badges.push(`<div class="word-badge" style="background:#3498db; color:white;">NAME: ${data.town}</div>`);
+    }
     if (data.word) { 
-        pts += 50; 
-        badges.push(`<div class="word-badge">${data.word}</div>`); 
+    pts += 50; 
+    badges.push(`<div class="word-badge">WORD: ${data.word}</div>`); 
     }
     
     // Immediate Discovery Badge
@@ -377,24 +380,7 @@
     setTimeout(clearInput, 1500);
 }
 
-    function updateChain() {
-        chainTimeLeft <= 0 ? (chainCount = 1, startChainTimer()) : chainCount++;
-        updateChainUI();
-        if (chainCount >= 3) {
-    totalSessionScore += 100;
-    document.getElementById('grand-total').innerText = totalSessionScore;
-    
-    // THE FIX: Show the bonus lozenge in the result card
-    const scoreEl = document.getElementById('score-display');
-    if (scoreEl) {
-        scoreEl.innerHTML = `<span style="color: #f1c40f; animation: pulse 0.5s;">🔥 CHAIN BONUS +100! 🔥</span>`;
-    }
-    
-    chainCount = 0;
-    updateChainUI();
-}
-    }
-
+   
     function startChainTimer() {
         if (chainTimer) clearInterval(chainTimer);
         chainTimeLeft = 60;
@@ -405,14 +391,34 @@
         }, 1000);
     }
 
-    function updateChainUI() { document.getElementById('chain-display').innerText = `(${chainCount}/3)`; }
-
-    function displayResultData(data, pts, msg = "", badgeHtml = "") {
-        document.getElementById('res-town').innerText = (data.town === "RESERVED") ? "PRIVATE ISSUE" : `${data.region} | ${data.town}`;
-        document.getElementById('score-display').innerHTML = msg ? `<span style="color: #e7433c;">${msg}</span>` : `+${pts} POINTS`;
-        document.getElementById('badges').innerHTML = badgeHtml;
-        resultCard.style.display = 'block';
+    function updateChain() {
+    chainTimeLeft <= 0 ? (chainCount = 1, startChainTimer()) : chainCount++;
+    updateChainUI();
+    if (chainCount >= 3) {
+        totalSessionScore += 100;
+        document.getElementById('grand-total').innerText = totalSessionScore;
+        
+        // Trigger UI display for the bonus
+        const bonusData = { region: "STREAK", town: "3-IN-A-ROW" };
+        displayResultData(bonusData, 100, "🔥 CHAIN BONUS 🔥", '<div class="badge-new">STREAK COMPLETE</div>');
+        
+        chainCount = 0;
+        updateChainUI();
     }
+}
+    function displayResultData(data, pts, msg = "", badgeHtml = "") {
+    document.getElementById('res-town').innerText = (data.town === "RESERVED") ? "PRIVATE ISSUE" : `${data.region} | ${data.town}`;
+    
+    const scoreEl = document.getElementById('score-display');
+    // If there is a message (like "NEED X" or "CHAIN BONUS"), use red/gold colors
+    if (msg) {
+        const color = msg.includes("BONUS") ? "#f1c40f" : "#e7433c";
+        scoreEl.innerHTML = `<span style="color: ${color};">${msg}</span>`;
+    } else {
+        scoreEl.innerHTML = `+${pts} POINTS`;
+    }   
+
+}
 
     function updateGameTimer() {
         const diff = Math.floor((Date.now() - gameStartTime) / 1000);
