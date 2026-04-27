@@ -462,69 +462,50 @@ function displayResultData(data, pts, msg = "", badgeHtml = "") {
         setTimeout(clearInput, 800);
     }
 
-    function saveToLeagueTable(seconds, timeStr, score) {
+    let currentSort = 'time'; // Track if we are sorting by Time or Score
+
+function saveToLeagueTable(seconds, timeStr, score) {
     let league = JSON.parse(localStorage.getItem('regFinder_league')) || [];
     
-    // Capture the current date in a compact format
+    // Format date as DD/MM/YY
     const completionDate = new Date().toLocaleDateString('en-GB', { 
-        day: '2-digit', 
-        month: '2-digit',
-        year: '2-digit'
+        day: '2-digit', month: '2-digit', year: '2-digit' 
     });
 
-    league.push({ 
-        seconds, 
-        timeStr, 
-        score, 
-        date: completionDate 
-    });
+    league.push({ seconds, timeStr, score, date: completionDate });
     
-    // Default sort by time, but keeping the top 10 for better history
+    // Default sort by fastest time and keep top 10
     league.sort((a, b) => a.seconds - b.seconds);
-    league = league.slice(0, 10);
-    
-    localStorage.setItem('regFinder_league', JSON.stringify(league));
+    localStorage.setItem('regFinder_league', JSON.stringify(league.slice(0, 10)));
 }
 
-    function showWinOverlay() {
+function showWinOverlay() {
     clearInterval(gameInterval); 
     clearInterval(chainTimer);
     
-    // 1. Capture final time
     const timeString = document.getElementById('game-timer').innerText;
     const [mins, secs] = timeString.split(':').map(Number);
     const totalSeconds = (mins * 60) + secs;
     
-    // 2. Save to League Table
-    let league = JSON.parse(localStorage.getItem('regFinder_league')) || [];
-    league.push({ time: timeString, seconds: totalSeconds, score: totalSessionScore, date: new Date().toLocaleDateString() });
-    
-    // Sort by fastest time and keep top 5
-    league.sort((a, b) => a.seconds - b.seconds);
-    league = league.slice(0, 5);
-    localStorage.setItem('regFinder_league', JSON.stringify(league));
+    saveToLeagueTable(totalSeconds, timeString, totalSessionScore);
 
-    // 3. Display Overlay
     const winDiv = document.createElement('div');
-    winDiv.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:5000; text-align:center; padding:20px;";
+    // Centering Fix: Column layout + Center alignment
+    winDiv.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:5000; text-align:center; padding:20px; box-sizing:border-box;";
     
-    let tableHtml = league.map((entry, i) => 
-        `<div style="display:flex; justify-content:space-between; width:200px; font-family:monospace; margin:5px 0;">
-            <span>${i+1}. ${entry.time}</span>
-            <span style="color:#f1c40f;">${entry.score} pts</span>
-        </div>`
-    ).join('');
-
     winDiv.innerHTML = `
-        <h1 style="color:#f1c40f;">MISSION COMPLETE</h1>
-        <p style="font-size:1.5rem;">FINAL TIME: ${timeString}</p>
-        <div style="background:#222; padding:15px; border-radius:10px; margin:20px 0;">
-            <h3 style="font-size:0.8rem; color:#666; margin-bottom:10px;">PERSONAL BESTS</h3>
-            ${tableHtml}
-        </div>
-        <button onclick="location.reload()" style="padding:15px 40px; background:#f1c40f; border:none; border-radius:30px; font-weight:bold;">NEW SPRINT</button>
+        <h1 style="color:#f1c40f; margin:0 0 10px 0;">MISSION COMPLETE</h1>
+        <p style="font-size:1.5rem; margin:0 0 20px 0;">FINAL TIME: ${timeString}</p>
+        <div id="league-display" style="background:#222; padding:15px; border-radius:12px; margin-bottom:20px; width:90%; max-width:320px;"></div>
+        <button onclick="location.reload()" style="padding:15px 40px; background:#f1c40f; border:none; border-radius:30px; font-weight:bold; font-size:1.1rem;">NEW SPRINT</button>
     `;
     document.body.appendChild(winDiv);
+    displayLeagueTable();
+}
+
+function toggleSort(type) {
+    currentSort = type;
+    displayLeagueTable();
 }
 
 function displayLeagueTable() {
@@ -532,30 +513,29 @@ function displayLeagueTable() {
     const container = document.getElementById('league-display');
     if (!container) return;
 
+    // Apply sorting logic based on selection
     if (currentSort === 'time') {
         league.sort((a, b) => a.seconds - b.seconds);
     } else {
         league.sort((a, b) => b.score - a.score);
     }
 
-    // Updated template to include the Date column
-    let tableHtml = league.map((entry, i) => 
-        `<div style="display:flex; justify-content:space-between; width:100%; font-family:monospace; margin:5px 0; font-size:0.85rem; border-bottom:1px solid #333; padding-bottom:2px;">
+    let tableHtml = league.map((entry, i) => `
+        <div style="display:flex; justify-content:space-between; width:100%; font-family:monospace; margin:5px 0; font-size:0.85rem; border-bottom:1px solid #333; padding-bottom:2px;">
             <span style="color:#666; width:20px;">${i+1}</span>
-            <span style="width:60px;">${entry.date}</span>
+            <span style="width:65px; text-align:left;">${entry.date}</span>
             <span style="flex-grow:1; text-align:center;">${entry.timeStr}</span>
             <span style="color:#f1c40f; width:70px; text-align:right;">${entry.score} pts</span>
-        </div>`
-    ).join('');
+        </div>`).join('');
 
     container.innerHTML = `
-        <h3 style="font-size:0.8rem; color:#666; margin-bottom:10px;">PERSONAL BESTS</h3>
-        <div style="margin-bottom:12px;">
-            <button onclick="toggleSort('time')" style="font-size:10px; background:${currentSort==='time'?'#f1c40f':'#333'}; color:${currentSort==='time'?'#000':'#fff'}; border:none; padding:4px 10px; border-radius:4px; margin-right:5px;">TIME</button>
-            <button onclick="toggleSort('score')" style="font-size:10px; background:${currentSort==='score'?'#f1c40f':'#333'}; color:${currentSort==='score'?'#000':'#fff'}; border:none; padding:4px 10px; border-radius:4px;">SCORE</button>
+        <h3 style="font-size:0.8rem; color:#666; margin:0 0 10px 0;">PERSONAL BESTS</h3>
+        <div style="margin-bottom:12px; display:flex; justify-content:center; gap:8px;">
+            <button onclick="toggleSort('time')" style="font-size:10px; background:${currentSort==='time'?'#f1c40f':'#444'}; color:${currentSort==='time'?'#000':'#fff'}; border:none; padding:5px 12px; border-radius:4px; cursor:pointer;">TIME</button>
+            <button onclick="toggleSort('score')" style="font-size:10px; background:${currentSort==='score'?'#f1c40f':'#444'}; color:${currentSort==='score'?'#000':'#fff'}; border:none; padding:5px 12px; border-radius:4px; cursor:pointer;">SCORE</button>
         </div>
-        <div style="max-height:150px; overflow-y:auto; padding-right:5px;">
-            ${tableHtml || '<p style="color:#444">No records yet</p>'}
+        <div style="max-height:180px; overflow-y:auto;">
+            ${tableHtml || '<p style="color:#444; font-size:0.8rem;">No records yet</p>'}
         </div>
     `;
 }
