@@ -261,8 +261,12 @@
         slots.forEach((s, i) => s.innerText = val[i] || "");
         if (val.length === 4) {
             const match = plateData[val];
-            match ? processPlate(match, val) : showUnknown();
+            if (match){
+                processPlate(match, val);
         } else {
+            showUnknown();
+        }
+    }else {
             resultCard.style.display = 'none';
         }
     });
@@ -442,7 +446,11 @@ function updateChainUI() {
 
     function showUnknown() {
         resultCard.style.display = 'block';
-        document.getElementById('res-town').innerText = "Unknown";
+        resultCard.classList.remove('flash-success');
+        resultCard.classList.add('flash-error'); //Flash red for invalid
+        document.getElementById('res-town').innerText = "Unknown / Not in Database";
+        document.getElementById('score-display').innerText = "";
+        document.getElementById('badges').innerHTML = ""; //Clear lozenges
         setTimeout(clearInput, 800);
     }
 
