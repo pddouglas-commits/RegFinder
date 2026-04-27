@@ -463,12 +463,45 @@ function displayResultData(data, pts, msg = "", badgeHtml = "") {
     }
 
     function showWinOverlay() {
-        clearInterval(gameInterval); clearInterval(chainTimer);
-        const winDiv = document.createElement('div');
-        winDiv.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:1000; text-align:center;";
-        winDiv.innerHTML = `<h1 style="color:#f1c40f;">MISSION COMPLETE</h1><p>SCORE: ${totalSessionScore}</p><button onclick="location.reload()" style="padding:10px 20px; background:#f1c40f; border:none; font-weight:bold;">RESTART</button>`;
-        document.body.appendChild(winDiv);
-    }
+    clearInterval(gameInterval); 
+    clearInterval(chainTimer);
+    
+    // 1. Capture final time
+    const timeString = document.getElementById('game-timer').innerText;
+    const [mins, secs] = timeString.split(':').map(Number);
+    const totalSeconds = (mins * 60) + secs;
+    
+    // 2. Save to League Table
+    let league = JSON.parse(localStorage.getItem('regFinder_league')) || [];
+    league.push({ time: timeString, seconds: totalSeconds, score: totalSessionScore, date: new Date().toLocaleDateString() });
+    
+    // Sort by fastest time and keep top 5
+    league.sort((a, b) => a.seconds - b.seconds);
+    league = league.slice(0, 5);
+    localStorage.setItem('regFinder_league', JSON.stringify(league));
+
+    // 3. Display Overlay
+    const winDiv = document.createElement('div');
+    winDiv.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:5000; text-align:center; padding:20px;";
+    
+    let tableHtml = league.map((entry, i) => 
+        `<div style="display:flex; justify-content:space-between; width:200px; font-family:monospace; margin:5px 0;">
+            <span>${i+1}. ${entry.time}</span>
+            <span style="color:#f1c40f;">${entry.score} pts</span>
+        </div>`
+    ).join('');
+
+    winDiv.innerHTML = `
+        <h1 style="color:#f1c40f;">MISSION COMPLETE</h1>
+        <p style="font-size:1.5rem;">FINAL TIME: ${timeString}</p>
+        <div style="background:#222; padding:15px; border-radius:10px; margin:20px 0;">
+            <h3 style="font-size:0.8rem; color:#666; margin-bottom:10px;">PERSONAL BESTS</h3>
+            ${tableHtml}
+        </div>
+        <button onclick="location.reload()" style="padding:15px 40px; background:#f1c40f; border:none; border-radius:30px; font-weight:bold;">NEW SPRINT</button>
+    `;
+    document.body.appendChild(winDiv);
+}
 
     function openLogbook() {
     document.getElementById('logbook-overlay').style.display = 'flex';
@@ -506,8 +539,11 @@ function shadeMap() {
         // 2. Manual Override for Reading (if needed)
         if (cleanName === "reading") targetId = "region-reading";
 
+        if (document.getElementById(targetId)) {
         activePathIds.add(targetId);
-    });
+}
+
+        });
 
     // Reset styles
     document.querySelectorAll('#log-map-svg path').forEach(p => p.style.fill = '#333');
