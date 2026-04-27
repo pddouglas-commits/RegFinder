@@ -406,6 +406,11 @@
         updateChainUI();
     }
 }
+
+function updateChainUI() { 
+    document.getElementById('chain-display').innerText = `(${chainCount}/3)`; 
+}
+
     function displayResultData(data, pts, msg = "", badgeHtml = "") {
     document.getElementById('res-town').innerText = (data.town === "RESERVED") ? "PRIVATE ISSUE" : `${data.region} | ${data.town}`;
     
