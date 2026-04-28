@@ -493,8 +493,8 @@ function updateChainUI() {
 }
 
 function displayEraResult(letter, era, detail, alreadyFound = false) {
-    const year = era === "Classic" ? classicYears[letter] : heritageYears[letter];
-    const color = era === "Classic" ? "#3498db" : "#8e44ad";
+    const year = (era === "Classic") ? classicYears[letter] : heritageYears[letter];
+    const color = (era === "Classic") ? "#3498db" : "#8e44ad"; // Blue for Classic, Purple for Heritage
     
     document.getElementById('res-town').innerText = `${era} Era: ${year}`;
     
@@ -502,16 +502,19 @@ function displayEraResult(letter, era, detail, alreadyFound = false) {
     if (alreadyFound) {
         scoreEl.innerHTML = `<span style="color: #666;">ALREADY IN COLLECTION</span>`;
     } else {
-        totalSessionScore += 50; // Higher reward for older plates
+        totalSessionScore += 50;
         document.getElementById('grand-total').innerText = totalSessionScore;
         scoreEl.innerHTML = `+50 POINTS`;
     }
 
     document.getElementById('badges').innerHTML = `<div class="classic-badge" style="background:${color};">${letter} SERIES</div>`;
-    resultCard.style.display = 'block';
-    resultCard.classList.remove('flash-success', 'flash-error');
-    void resultCard.offsetWidth;
-    resultCard.classList.add('flash-success');
+    
+    // Trigger the card reveal and animation
+    const card = document.getElementById('result-card');
+    card.style.display = 'block';
+    card.classList.remove('flash-success', 'flash-error');
+    void card.offsetWidth; // Force CSS reflow
+    card.classList.add('flash-success');
 }
 
     function updateGameTimer() {
