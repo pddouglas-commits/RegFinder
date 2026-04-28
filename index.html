@@ -649,61 +649,19 @@ function showRegionDetails(targetId) {
 }
 
 function showNationalDetails() {
-    const container = document.getElementById('region-detail-view');
-    if (!container) return;
+        const container = document.getElementById('region-detail-view'); if (!container) return;
+        const collection = JSON.parse(localStorage.getItem('regFinder_collection')) || [];
+        const valid = collection.filter(id => plateData && plateData[id]);
+        let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;"><h3 style="color:#f1c40f; margin:0;">NATIONAL & SPECIAL</h3><button onclick="togglePlateSort('national')" style="background:#333; color:#f1c40f; border:1px solid #f1c40f; padding:4px 8px; border-radius:4px; font-size:10px;">SORT: ${currentPlateSort === 'time' ? 'NEWEST' : 'A-Z'}</button></div>`;
+        html += renderSection("SPECIAL ISSUES", "#8e44ad", valid.filter(id => plateData[id].town === "RESERVED" && !['J','T','U','X'].includes(id[0])));
+        html += renderSection("J SERIES", "#f1c40f", valid.filter(id => id[0] === 'J'));
+        ['T', 'U', 'X'].forEach(l => html += renderSection(`${l} SERIES`, "#3498db", valid.filter(id => id[0] === l && plateData[id].town !== "RESERVED")));
+        html += renderSection("OTHER NATIONAL", "#2ecc71", valid.filter(id => plateData[id].region === "National" && !['J','T','U','X'].includes(id[0])));
+        container.innerHTML = html + `<button onclick="this.parentElement.style.display='none'" style="margin-top:20px; width:100%; padding:12px; background:#444; color:white; border:none; border-radius:8px;">BACK</button>`;
+        container.style.display = 'block';
+    }
 
-    const collection = JSON.parse(localStorage.getItem('regFinder_collection')) || [];
-    // This ensures we only deal with IDs that exist in our master plateData
-    const validCollection = collection.filter(id => plateData && plateData[id]);
-    
-    let html = `
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-            <h3 style="color:#f1c40f; margin:0;">NATIONAL & SPECIAL ISSUES</h3>
-            <button onclick="togglePlateSort('national')" style="background:#333; color:#f1c40f; border:1px solid #f1c40f; padding:4px 8px; border-radius:4px; font-size:10px;">
-                SORT: ${currentPlateSort === 'time' ? 'NEWEST' : 'A-Z'}
-            </button>
-        </div>`;
-    
-    // SECTION 1: Special Issues
-    const special = validCollection.filter(id => plateData[id].town === "RESERVED" && !['J','T','U','X'].includes(id[0]));
-    html += renderSection("SPECIAL ISSUES", "#8e44ad", special); // Titles, Color, then the ARRAY
 
-    // SECTION 2: J Series
-    const jPlates = validCollection.filter(id => id[0] === 'J');
-    html += renderSection("J SERIES", "#f1c40f", jPlates);
-
-    // SECTION 3: T, U, X
-    ['T', 'U', 'X'].forEach(l => {
-        const plates = validCollection.filter(id => id[0] === l && plateData[id].town !== "RESERVED");
-        html += renderSection(`${l} SERIES`, "#3498db", plates);
-    });
-
-    // SECTION 4: Others
-    const others = validCollection.filter(id => plateData[id].region === "National" && !['J','T','U','X'].includes(id[0]));
-    html += renderSection("OTHER NATIONAL", "#2ecc71", others);
-
-    container.innerHTML = html + `<button onclick="this.parentElement.style.display='none'" style="margin-top:20px; width:100%; padding:12px; background:#444; color:white; border:none; border-radius:8px; font-weight:bold;">BACK</button>`;
-    container.style.display = 'block';
-}
-
-// THE RENDERER: Must accept exactly (title, color, platesArray)
-function renderSection(title, color, platesArray) {
-    // If the platesArray is missing or not an array, default to empty to prevent .length crash
-    const safePlates = Array.isArray(platesArray) ? platesArray : [];
-    
-    if (safePlates.length === 0) return "";
-
-    let sorted = [...safePlates];
-    if (currentPlateSort === 'alpha') sorted.sort();
-    
-    return `
-        <div style="margin-top:15px;">
-            <strong style="color:${color}; font-size:0.8rem; text-transform:uppercase;">${title}</strong>
-            <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:5px;">
-                ${sorted.map(id => `<span style="font-family:monospace; background:#222; padding:3px 8px; border-radius:4px; border:1px solid #444; font-size:0.9rem;">${id}</span>`).join('')}
-            </div>
-        </div>`;
-}
 
 function togglePlateSort(targetId) {
     currentPlateSort = (currentPlateSort === 'time') ? 'alpha' : 'time';
@@ -732,61 +690,52 @@ function togglePlateSort(targetId) {
         if (splashCount) splashCount.innerText = `${activePathIds.size}/19`;
     }
     
-    function renderSection(html, title, color, plates) {
-    if (plates.length === 0) return;
-    html += `<div style="margin-top:15px;"><strong style="color:${color}; font-size: 0.8rem;">${title}:</strong><br>`;
-    html += `<div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 5px;">`;
-    
-    // Apply alphabetical sort if your dev-log toggle is active 
-    const sortedPlates = [...plates].sort(); 
-    
-    sortedPlates.forEach(id => {
-        html += `<span style="font-family:monospace; background:#222; padding:4px 8px; border-radius:4px; border: 1px solid #444;">${id}</span>`;
-    });
-    html += `</div></div>`;
+// THE RENDERER: Must accept exactly (title, color, platesArray)
+function renderSection(title, color, platesArray = []) {
+        if (!platesArray || platesArray.length === 0) return "";
+        let sorted = [...platesArray]; if (currentPlateSort === 'alpha') sorted.sort();
+        return `<div style="margin-top:15px;"><strong style="color:${color}; font-size:0.8rem; text-transform:uppercase;">${title}</strong><div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:5px;">${sorted.map(id => `<span style="font-family:monospace; background:#222; padding:3px 8px; border-radius:4px; border:1px solid #444; font-size:0.9rem;">${id}</span>`).join('')}</div></div>`;
     }
-
 </script>
 
-<div id="logbook-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#1a1a1a; z-index:6000; flex-direction:column;">
+<div id="logbook-overlay">
     <div style="padding: 20px 10px 10px; border-bottom: 1px solid #333; text-align: center;">
         <h2 style="color:#f1c40f; margin:0 0 10px 0;">LOGBOOK</h2>
         <div style="display: flex; justify-content: center; gap: 8px;">
-            <button onclick="showLogPage('map-page')" class="log-nav-btn active">MAP</button>
+            <button onclick="showLogPage('map-page')" class="log-nav-btn">MAP</button>
             <button onclick="showLogPage('league-page')" class="log-nav-btn">LEAGUE</button>
             <button onclick="showLogPage('stats-page')" class="log-nav-btn">STATS</button>
             <button onclick="closeLogbook()" style="background:none; border:1px solid #666; color:#fff; border-radius:4px; padding:5px 10px; font-size:12px;">EXIT</button>
         </div>
     </div>
 
-    <div id="region-detail-view" style="display:none; position:absolute; top:0; left:0; width:100%; height:100%; background:#1a1a1a; padding:20px; box-sizing:border-box; z-index:7000; overflow-y:auto;"></div>
-
-    <div id="map-page" class="log-page" style="padding: 10px; overflow-y: auto; display: flex; flex-direction: column;">
+    <div id="map-page" class="log-page" style="padding: 10px; overflow-y: auto;">
         <div id="map-ui-container">
             <div id="log-map-svg" style="text-align:center;">
                 <svg viewBox="0 0 200 320" xmlns="http://www.w3.org/2000/svg" style="width: 100%; max-width: 280px; height: auto;">
-                    <g id="region-scotland-group"><path id="region-scotland" d="M80 20 L120 20 L130 60 L110 100 L70 90 Z" fill="#333" stroke="#555" /><text x="90" y="60" class="map-label" style="fill:white; font-size:10px;">S / TN</text></g>
-                    <g id="region-northeast-group"><path id="region-northeast" d="M90 100 L130 100 L140 125 L90 125 Z" fill="#333" stroke="#555" /><text x="110" y="115" class="map-label" style="fill:white; font-size:10px;">N</text></g>
-                    <g id="region-preston-group"><path id="region-preston" d="M65 125 L90 125 L90 150 L65 150 Z" fill="#333" stroke="#555" /><text x="73" y="142" class="map-label" style="fill:white; font-size:10px;">P</text></g>
-                    <g id="region-mancs-mersey-group"><path id="region-mancs-mersey" d="M90 125 L115 125 L115 150 L90 150 Z" fill="#333" stroke="#555" /><text x="95" y="142" class="map-label" style="fill:white; font-size:10px;">M</text></g>
-                    <g id="region-yorkshire-group"><path id="region-yorkshire" d="M115 125 L145 125 L155 160 L115 160 Z" fill="#333" stroke="#555" /><text x="125" y="145" class="map-label" style="fill:white; font-size:10px;">Y</text></g>
-                    <g id="region-deeside-group"><path id="region-deeside" d="M60 150 L85 150 L85 180 L55 180 Z" fill="#333" stroke="#555" /><text x="65" y="170" class="map-label" style="fill:white; font-size:10px;">D</text></g>
-                    <g id="region-birmingham-group"><path id="region-birmingham" d="M85 150 L115 150 L115 180 L85 180 Z" fill="#333" stroke="#555" /><text x="95" y="170" class="map-label" style="fill:white; font-size:10px;">B</text></g>
-                    <g id="region-forest-fens-group"><path id="region-forest-fens" d="M115 160 L150 160 L155 190 L115 190 Z" fill="#333" stroke="#555" /><text x="125" y="180" class="map-label" style="fill:white; font-size:10px;">F</text></g>
-                    <g id="region-anglia-group"><path id="region-anglia" d="M150 160 L185 170 L190 200 L155 200 Z" fill="#333" stroke="#555" /><text x="165" y="185" class="map-label" style="fill:white; font-size:10px;">A</text></g>
-                    <g id="region-cymru-group"><path id="region-cymru" d="M25 170 L60 170 L55 220 L15 210 Z" fill="#333" stroke="#555" /><text x="35" y="200" class="map-label" style="fill:white; font-size:10px;">C</text></g>
-                    <g id="region-severn-valley-group"><path id="region-severn-valley" d="M75 180 L110 180 L110 220 L75 220 Z" fill="#333" stroke="#555" /><text x="85" y="205" class="map-label" style="fill:white; font-size:10px;">V</text></g>
-                    <g id="region-oxford-group"><path id="region-oxford" d="M110 180 L135 180 L135 210 L110 210 Z" fill="#333" stroke="#555" /><text x="115" y="200" class="map-label" style="fill:white; font-size:10px;">O</text></g>
-                    <g id="region-reading-group"><path id="region-reading" d="M135 180 L155 180 L155 210 L135 210 Z" fill="#333" stroke="#555" /><text x="140" y="200" class="map-label" style="fill:white; font-size:10px;">R</text></g>
-                    <g id="region-london-group"><path id="region-london" d="M115 210 L140 210 L140 235 L115 235 Z" fill="#333" stroke="#555" /><text x="122" y="228" class="map-label" style="fill:white; font-size:10px;">L</text></g>
-                    <g id="region-essex-group"><path id="region-essex" d="M140 200 L175 205 L170 230 L140 225 Z" fill="#333" stroke="#555" /><text x="152" y="220" class="map-label" style="fill:white; font-size:10px;">E</text></g>
-                    <g id="region-home-counties-group"><path id="region-home-counties" d="M110 235 L150 235 L145 255 L105 255 Z" fill="#333" stroke="#555" /><text x="122" y="250" class="map-label" style="fill:white; font-size:10px;">K</text></g>
-                    <g id="region-garden-of-england-group"><path id="region-garden-of-england" d="M140 240 L180 245 L170 275 L135 270 Z" fill="#333" stroke="#555" /><text x="152" y="262" class="map-label" style="fill:white; font-size:10px;">G</text></g>
-                    <g id="region-hants-dorset-group"><path id="region-hants-dorset" d="M85 225 L125 225 L120 260 L80 255 Z" fill="#333" stroke="#555" /><text x="95" y="248" class="map-label" style="fill:white; font-size:10px;">H</text></g>
-                    <g id="region-west-of-england-group"><path id="region-west-of-england" d="M10 215 L75 225 L65 270 L10 250 Z" fill="#333" stroke="#555" /><text x="35" y="248" class="map-label" style="fill:white; font-size:10px;">W</text></g>
+                    <g id="region-scotland-group"><path id="region-scotland" d="M80 20 L120 20 L130 60 L110 100 L70 90 Z" stroke="#555" /><text x="90" y="60" style="fill:white; font-size:10px;">S / TN</text></g>
+                    <g id="region-northeast-group"><path id="region-northeast" d="M90 100 L130 100 L140 125 L90 125 Z" stroke="#555" /><text x="110" y="115" style="fill:white; font-size:10px;">N</text></g>
+                    <g id="region-preston-group"><path id="region-preston" d="M65 125 L90 125 L90 150 L65 150 Z" stroke="#555" /><text x="73" y="142" style="fill:white; font-size:10px;">P</text></g>
+                    <g id="region-mancs-mersey-group"><path id="region-mancs-mersey" d="M90 125 L115 125 L115 150 L90 150 Z" stroke="#555" /><text x="95" y="142" style="fill:white; font-size:10px;">M</text></g>
+                    <g id="region-yorkshire-group"><path id="region-yorkshire" d="M115 125 L145 125 L155 160 L115 160 Z" stroke="#555" /><text x="125" y="145" style="fill:white; font-size:10px;">Y</text></g>
+                    <g id="region-deeside-group"><path id="region-deeside" d="M60 150 L85 150 L85 180 L55 180 Z" stroke="#555" /><text x="65" y="170" style="fill:white; font-size:10px;">D</text></g>
+                    <g id="region-birmingham-group"><path id="region-birmingham" d="M85 150 L115 150 L115 180 L85 180 Z" stroke="#555" /><text x="95" y="170" style="fill:white; font-size:10px;">B</text></g>
+                    <g id="region-forest-fens-group"><path id="region-forest-fens" d="M115 160 L150 160 L155 190 L115 190 Z" stroke="#555" /><text x="125" y="180" style="fill:white; font-size:10px;">F</text></g>
+                    <g id="region-anglia-group"><path id="region-anglia" d="M150 160 L185 170 L190 200 L155 200 Z" stroke="#555" /><text x="165" y="185" style="fill:white; font-size:10px;">A</text></g>
+                    <g id="region-cymru-group"><path id="region-cymru" d="M25 170 L60 170 L55 220 L15 210 Z" stroke="#555" /><text x="35" y="200" style="fill:white; font-size:10px;">C</text></g>
+                    <g id="region-severn-valley-group"><path id="region-severn-valley" d="M75 180 L110 180 L110 220 L75 220 Z" stroke="#555" /><text x="85" y="205" style="fill:white; font-size:10px;">V</text></g>
+                    <g id="region-oxford-group"><path id="region-oxford" d="M110 180 L135 180 L135 210 L110 210 Z" stroke="#555" /><text x="115" y="200" style="fill:white; font-size:10px;">O</text></g>
+                    <g id="region-reading-group"><path id="region-reading" d="M135 180 L155 180 L155 210 L135 210 Z" stroke="#555" /><text x="140" y="200" style="fill:white; font-size:10px;">R</text></g>
+                    <g id="region-london-group"><path id="region-london" d="M115 210 L140 210 L140 235 L115 235 Z" stroke="#555" /><text x="122" y="228" style="fill:white; font-size:10px;">L</text></g>
+                    <g id="region-essex-group"><path id="region-essex" d="M140 200 L175 205 L170 230 L140 225 Z" stroke="#555" /><text x="152" y="220" style="fill:white; font-size:10px;">E</text></g>
+                    <g id="region-home-counties-group"><path id="region-home-counties" d="M110 235 L150 235 L145 255 L105 255 Z" stroke="#555" /><text x="122" y="250" style="fill:white; font-size:10px;">K</text></g>
+                    <g id="region-garden-of-england-group"><path id="region-garden-of-england" d="M140 240 L180 245 L170 275 L135 270 Z" stroke="#555" /><text x="152" y="262" style="fill:white; font-size:10px;">G</text></g>
+                    <g id="region-hants-dorset-group"><path id="region-hants-dorset" d="M85 225 L125 225 L120 260 L80 255 Z" stroke="#555" /><text x="95" y="248" style="fill:white; font-size:10px;">H</text></g>
+                    <g id="region-west-of-england-group"><path id="region-west-of-england" d="M10 215 L75 225 L65 270 L10 250 Z" stroke="#555" /><text x="35" y="248" style="fill:white; font-size:10px;">W</text></g>
                 </svg>
                 <div style="font-size: 11px; color: #666; margin-top: 10px;">Regions: <span id="region-count" style="color:#f1c40f;">0/19</span></div>
-            </div> <div id="special-collection" onclick="showNationalDetails()" style="cursor:pointer; margin-top: 20px; background: #222; padding: 15px; border-radius: 10px; border: 1px solid #444;">
+            </div>
+            <div id="special-collection" onclick="showNationalDetails()" style="cursor:pointer; margin-top: 20px; background: #222; padding: 15px; border-radius: 10px; border: 1px solid #444;">
                 <h4 style="color: #aaa; font-size: 10px; text-transform: uppercase; margin-bottom: 10px; text-align: center;">National (JTUX) & Special Issues</h4>
                 <div style="display: flex; justify-content: space-between; font-family: monospace; font-size: 1.2rem;">
                     <div>J: <span id="count-j">0</span></div>
@@ -794,11 +743,15 @@ function togglePlateSort(targetId) {
                     <div>U: <span id="count-u">0</span></div>
                     <div>X: <span id="count-x">0</span></div>
                 </div>
-            </div> </div> </div> <div id="league-page" class="log-page" style="display:none; padding: 20px; flex-direction: column;">
+            </div>
+        </div>
+    </div>
+
+    <div id="league-page" class="log-page" style="display:none; padding: 20px;">
         <div id="log-league-container"></div>
     </div>
 
-    <div id="stats-page" class="log-page" style="display:none; padding: 20px; text-align: center; flex-direction: column;">
+    <div id="stats-page" class="log-page" style="display:none; padding: 20px; text-align: center;">
         <p>Total Unique Found: <span id="log-total-count">0</span></p>
     </div>
 </div>
