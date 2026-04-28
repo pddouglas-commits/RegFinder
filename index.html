@@ -399,16 +399,17 @@
         }, 1000);
     }
 
-    function updateChain() {
+function updateChain() {
     chainTimeLeft <= 0 ? (chainCount = 1, startChainTimer()) : chainCount++;
     updateChainUI();
+    
     if (chainCount >= 3) {
         totalSessionScore += 100;
         document.getElementById('grand-total').innerText = totalSessionScore;
         
-        // Trigger UI display for the bonus
-        const bonusData = { region: "STREAK", town: "3-IN-A-ROW" };
-        displayResultData(bonusData, 100, "🔥 CHAIN BONUS 🔥", '<div class="badge-new">STREAK COMPLETE</div>');
+        // Target ONLY the score display, leaving Town/Region untouched
+        const scoreEl = document.getElementById('score-display');
+        scoreEl.innerHTML = `<span style="color: #f1c40f;">🔥 CHAIN BONUS +100 🔥</span>`;
         
         chainCount = 0;
         updateChainUI();
@@ -416,7 +417,8 @@
 }
 
 function updateChainUI() { 
-    document.getElementById('chain-display').innerText = `(${chainCount}/3)`; 
+    const el = document.getElementById('chain-display');
+    if (el) el.innerText = `(${chainCount}/3)`; // Use backticks (`) not single quotes (')
 }
 
     function displayResultData(data, pts, msg = "", badgeHtml = "") {
@@ -555,19 +557,22 @@ function displayLeagueTable(targetId = 'league-display') {
 
     }
 
-    function updateLogbookData() {
-        const collection = JSON.parse(localStorage.getItem('regFinder_collection')) || [];
-        const counts = { J: 0, T: 0, U: 0, X: 0 };
-        collection.forEach(p => {
-            const pref = p[0];
-            if (['J', 'T', 'U', 'X'].includes(pref) && p.substring(0,2) !== 'TN') counts[pref]++;
-        });
-        document.getElementById('count-j').innerText = counts.J;
-        document.getElementById('count-t').innerText = counts.T;
-        document.getElementById('count-u').innerText = counts.U;
-        document.getElementById('count-x').innerText = counts.X;
-        document.getElementById('log-total-count').innerText = collection.length;
-    }
+function updateLogbookData() {
+    const collection = JSON.parse(localStorage.getItem('regFinder_collection')) || [];
+    const counts = { J: 0, T: 0, U: 0, X: 0 };
+    collection.forEach(p => {
+        const pref = p[0];
+        // Only count as National if it isn't a geographic Scottish plate (TN)
+        if (['J', 'T', 'U', 'X'].includes(pref) && p.substring(0, 2) !== 'TN') {
+            counts[pref]++;
+        }
+    });
+    document.getElementById('count-j').innerText = counts.J;
+    document.getElementById('count-t').innerText = counts.T;
+    document.getElementById('count-u').innerText = counts.U;
+    document.getElementById('count-x').innerText = counts.X;
+    document.getElementById('log-total-count').innerText = collection.length;
+}
 
 function showRegionDetails(targetId) {
     const regionName = targetId.replace('region-', '').replace(/-/g, ' ');
