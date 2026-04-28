@@ -569,43 +569,77 @@ function displayLeagueTable(targetId = 'league-display') {
         document.getElementById('log-total-count').innerText = collection.length;
     }
 
-    function showRegionDetails(targetId) {
+function showRegionDetails(targetId) {
     const regionName = targetId.replace('region-', '').replace(/-/g, ' ');
     const collection = JSON.parse(localStorage.getItem('regFinder_collection')) || [];
     
-    // 1. Get all towns belonging to this region from master plateData
-    const regionTowns = {}; 
+    const regionTowns = {};
+     
     Object.values(plateData).forEach(p => {
-        let cleanMatch = p.region.trim().toLowerCase().replace(/\s+/g, '-');
+        // THE FIX: Use the same cleaning logic as shadeMap
+        let cleanMatch = p.region.trim().toLowerCase()
+            .replace(/\//g, '-')  // Converts Mancs/Mersey to Mancs-Mersey
+            .replace(/&/g, '')
+            .replace(/\s+/g, '-')
+            .replace(/-+/g, '-');
+
         if (`region-${cleanMatch}` === targetId) {
             if (!regionTowns[p.town]) regionTowns[p.town] = [];
         }
     });
 
-    // 2. Cross-reference with User Collection
     let html = `<h3 style="color:#f1c40f; text-transform:uppercase;">${regionName}</h3>`;
     
     Object.keys(regionTowns).sort().forEach(town => {
+        // THE FIX: Move this to the top of the loop
+        if (town === "RESERVED") return;
+
+        // THE FIX: Only declare this once
         const foundInTown = collection.filter(plateId => 
             plateData[plateId] && plateData[plateId].town === town
         );
 
         if (foundInTown.length > 0) {
-            // Found: Green text
             html += `<div style="margin-top:10px;"><strong style="color:#27ae60;">${town}:</strong><br>`;
             foundInTown.forEach(id => html += `<span style="font-family:monospace; margin-right:10px;">${id}</span>`);
             html += `</div>`;
         } else {
-            // Not Found: Grey text
             html += `<div style="margin-top:10px; color:#666;"><strong>${town}:</strong> No finds</div>`;
         }
     });
 
-    // 3. Inject into a detail overlay
     const container = document.getElementById('region-detail-view');
-    container.innerHTML = html + `<button onclick="this.parentElement.style.display='none'" style="margin-top:20px; background:#444; color:white; border:none; padding:8px 16px; border-radius:4px;">BACK TO MAP</button>`;
+    container.innerHTML = html + `<br><button onclick="this.parentElement.style.display='none'" style="margin-top:20px; background:#444; color:white; border:none; padding:8px 16px; border-radius:4px;">BACK</button>`;
     container.style.display = 'block';
+}
+
+function showNationalDetails() {
+    const collection = JSON.parse(localStorage.getItem('regFinder_collection')) || [];
+    let html = `<h3 style="color:#f1c40f;">NATIONAL & SPECIAL ISSUES</h3>`;
+    
+    // Group 1: Reserved / Special Issues
+    const reservedPlates = collection.filter(id => plateData[id] && plateData[id].town === "RESERVED");
+    if (reservedPlates.length > 0) {
+        html += `<div style="margin-top:10px;"><strong style="color:#8e44ad;">SPECIAL ISSUES:</strong><br>`;
+        reservedPlates.forEach(id => html += `<span style="font-family:monospace; margin-right:10px;">${id}</span>`);
+        html += `</div>`;
     }
+
+    // Group 2: National Letters (J, T, U, X)
+    const nationalLetters = ['J', 'T', 'U', 'X'];
+    nationalLetters.forEach(letter => {
+        const plates = collection.filter(id => id[0] === letter && plateData[id].town !== "RESERVED");
+        if (plates.length > 0) {
+            html += `<div style="margin-top:10px;"><strong style="color:#3498db;">${letter} SERIES:</strong><br>`;
+            plates.forEach(id => html += `<span style="font-family:monospace; margin-right:10px;">${id}</span>`);
+            html += `</div>`;
+        }
+    });
+
+    const container = document.getElementById('region-detail-view');
+    container.innerHTML = html + `<br><button onclick="this.parentElement.style.display='none'" style="margin-top:20px; background:#444; color:white; border:none; padding:8px 16px; border-radius:4px;">BACK</button>`;
+    container.style.display = 'block';
+}
 
     function updateSplashStats() {
         const collection = JSON.parse(localStorage.getItem('regFinder_collection')) || [];
@@ -665,14 +699,15 @@ function displayLeagueTable(targetId = 'league-display') {
                 </svg>
                 <div style="font-size: 11px; color: #666; margin-top: 10px;">Regions: <span id="region-count" style="color:#f1c40f;">0/19</span></div>
             </div>
-            <div id="special-collection" style="margin-top: 20px; background: #222; padding: 15px; border-radius: 10px; border: 1px solid #444;">
-                <h4 style="color: #aaa; font-size: 10px; text-transform: uppercase; margin-bottom: 10px;">National (JTUX)</h4>
-                <div style="display: flex; justify-content: space-between; font-family: monospace; font-size: 1.2rem;">
-                    <div>J: <span id="count-j">0</span></div>
-                    <div>T: <span id="count-t">0</span></div>
-                    <div>U: <span id="count-u">0</span></div>
-                    <div>X: <span id="count-x">0</span></div>
-                </div>
+    <div id="special-collection" onclick="showNationalDetails()" style="cursor:pointer; margin-top: 20px; background: #222; padding: 15px; border-radius: 10px; border: 1px solid #444;">
+            <h4 style="color: #aaa; font-size: 10px; text-transform: uppercase; margin-bottom: 10px;">National (JTUX) & Special Issues</h4>
+    <div style="display: flex; justify-content: space-between; font-family: monospace; font-size: 1.2rem;">
+        <div>J: <span id="count-j">0</span></div>
+        <div>T: <span id="count-t">0</span></div>
+        <div>U: <span id="count-u">0</span></div>
+        <div>X: <span id="count-x">0</span></div>
+    </div>
+</div>
             </div>
         </div>
     </div>
