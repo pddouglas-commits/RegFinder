@@ -688,9 +688,13 @@ function showNationalDetails() {
 }
 
 // Helper function to handle the HTML generation for each section
-function renderSection(title, color, plates) {
-    if (plates.length === 0) return "";
-    let sorted = [...plates];
+function renderSection(title, color, plates = []) {
+    // Extra safety: if plates is somehow still not an array, force it to be one
+    const safePlates = Array.isArray(plates) ? plates : [];
+    
+    if (safePlates.length === 0) return "";
+
+    let sorted = [...safePlates];
     if (currentPlateSort === 'alpha') sorted.sort();
     
     return `
