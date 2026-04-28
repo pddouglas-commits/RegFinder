@@ -257,20 +257,31 @@
         window.scrollTo(0, 0); 
     }
 
-    hiddenInput.addEventListener('input', (e) => {
-        const val = e.target.value.toUpperCase();
-        slots.forEach((s, i) => s.innerText = val[i] || "");
-        if (val.length === 4) {
+hiddenInput.addEventListener('input', (e) => {
+    const val = e.target.value.toUpperCase();
+    slots.forEach((s, i) => s.innerText = val[i] || "");
+    
+    if (val.length === 4) {
+        // 1. MODERN Pattern: [Letter][Letter][Number][Number] (e.g., AB12)
+        if (/^[A-Z]{2}\d{2}$/.test(val)) {
             const match = plateData[val];
-            if (match){
-                processPlate(match, val);
-        } else {
+            if (match) processPlate(match, val); else showUnknown();
+        } 
+        // 2. PREFIX Pattern: [Letter][Number][Number][Number/*] (e.g., A123, A45*)
+        else if (/^[A-Z][\d\*]{3}$/.test(val)) {
+            processClassicPrefix(val);
+        }
+        // 3. SUFFIX Pattern: [Number/*][Number][Number][Letter] (e.g., 123A, *56B)
+        else if (/^[\d\*]{3}[A-Z]$/.test(val)) {
+            processHeritageSuffix(val);
+        }
+        else {
             showUnknown();
         }
-    }else {
-            resultCard.style.display = 'none';
-        }
-    });
+    } else {
+        resultCard.style.display = 'none';
+    }
+});
 
     function processPlate(data, plateId) {
         const firstLetter = plateId[0];
@@ -295,7 +306,35 @@
             setTimeout(clearInput, 1000);
         }
     }
+function processClassicPrefix(plateId) {
+    const letter = plateId[0];
+    if (['I','O','U','Q','Z'].includes(letter)) { showUnknown(); return; } // Invalid year letters
 
+    let collection = JSON.parse(localStorage.getItem('regFinder_classic')) || [];
+    if (!collection.includes(letter)) {
+        collection.push(letter);
+        localStorage.setItem('regFinder_classic', JSON.stringify(collection));
+        displayEraResult(letter, "Classic", "1983-2001");
+    } else {
+        displayEraResult(letter, "Classic", "Already Found", true);
+    }
+    setTimeout(clearInput, 1500);
+}
+
+    function processHeritageSuffix(plateId) {
+    const letter = plateId[3]; // The letter is at the end
+    if (['I','O','U','Q','Z'].includes(letter)) { showUnknown(); return; }
+
+    let collection = JSON.parse(localStorage.getItem('regFinder_heritage')) || [];
+    if (!collection.includes(letter)) {
+        collection.push(letter);
+        localStorage.setItem('regFinder_heritage', JSON.stringify(collection));
+        displayEraResult(letter, "Heritage", "1963-1983");
+    } else {
+        displayEraResult(letter, "Heritage", "Already Found", true);
+    }
+    setTimeout(clearInput, 1500);
+}
     function toggleSettings() {
         const menu = document.getElementById('settings-menu');
         menu.style.display = (menu.style.display === 'none') ? 'flex' : 'none';
@@ -754,6 +793,22 @@ function renderSection(title, color, platesArray = []) {
     <div id="stats-page" class="log-page" style="display:none; padding: 20px; text-align: center;">
         <p>Total Unique Found: <span id="log-total-count">0</span></p>
     </div>
+
+    <div id="classic-page" class="log-page" style="display:none; padding: 20px; overflow-y: auto;">
+    <h3 style="color:#3498db; text-align:center;">CLASSIC ERA (1983-2001)</h3>
+    <div id="classic-progress-bar" style="height:10px; background:#222; border-radius:5px; margin-bottom:20px;">
+        <div id="classic-fill" style="width:0%; height:100%; background:#3498db; border-radius:5px; transition: width 0.5s;"></div>
+    </div>
+    <div id="classic-list"></div>
+</div>
+
+<div id="heritage-page" class="log-page" style="display:none; padding: 20px; overflow-y: auto;">
+    <h3 style="color:#8e44ad; text-align:center;">HERITAGE ERA (1963-1983)</h3>
+    <div id="heritage-progress-bar" style="height:10px; background:#222; border-radius:5px; margin-bottom:20px;">
+        <div id="heritage-fill" style="width:0%; height:100%; background:#8e44ad; border-radius:5px; transition: width 0.5s;"></div>
+    </div>
+    <div id="heritage-list"></div>
+</div>
 </div>
 </body>
 </html>
