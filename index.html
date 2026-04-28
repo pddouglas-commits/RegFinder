@@ -476,6 +476,28 @@ function updateChainUI() {
     document.getElementById('result-card').style.display = 'block'
 }
 
+function displayEraResult(letter, era, detail, alreadyFound = false) {
+    const year = era === "Classic" ? classicYears[letter] : heritageYears[letter];
+    const color = era === "Classic" ? "#3498db" : "#8e44ad";
+    
+    document.getElementById('res-town').innerText = `${era} Era: ${year}`;
+    
+    const scoreEl = document.getElementById('score-display');
+    if (alreadyFound) {
+        scoreEl.innerHTML = `<span style="color: #666;">ALREADY IN COLLECTION</span>`;
+    } else {
+        totalSessionScore += 50; // Higher reward for older plates
+        document.getElementById('grand-total').innerText = totalSessionScore;
+        scoreEl.innerHTML = `+50 POINTS`;
+    }
+
+    document.getElementById('badges').innerHTML = `<div class="classic-badge" style="background:${color};">${letter} SERIES</div>`;
+    resultCard.style.display = 'block';
+    resultCard.classList.remove('flash-success', 'flash-error');
+    void resultCard.offsetWidth;
+    resultCard.classList.add('flash-success');
+}
+
     function updateGameTimer() {
         const diff = Math.floor((Date.now() - gameStartTime) / 1000);
         document.getElementById('game-timer').innerText = `${Math.floor(diff/60).toString().padStart(2,'0')}:${(diff%60).toString().padStart(2,'0')}`;
