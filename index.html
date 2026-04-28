@@ -219,6 +219,7 @@
     let isGameActive = false;
     let gameStartTime, gameInterval, chainTimer, chainTimeLeft = 0, chainCount = 0;
     let currentSort = 'time'; 
+    let currentPlateSort = 'time'; // Options: 'time' or 'alpha'
 
     const slots = [document.getElementById('slot0'), document.getElementById('slot1'), document.getElementById('slot2'), document.getElementById('slot3')];
     const hiddenInput = document.getElementById('hidden-input');
@@ -468,17 +469,39 @@ function updateChainUI() {
         localStorage.setItem('regFinder_league', JSON.stringify(league.slice(0, 10)));
     }
 
-    function showWinOverlay() {
-        clearInterval(gameInterval); clearInterval(chainTimer);
-        const timeStr = document.getElementById('game-timer').innerText;
-        const [m, s] = timeStr.split(':').map(Number);
-        saveToLeagueTable((m*60)+s, timeStr, totalSessionScore);
-        const winDiv = document.createElement('div');
-        winDiv.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:9000; text-align:center; padding:20px; box-sizing:border-box;";
-        winDiv.innerHTML = `<h1 style="color:#f1c40f;">MISSION COMPLETE</h1><p>TIME: ${timeStr}</p><div id="league-display" style="width:90%; max-width:320px;"></div><button onclick="location.reload()" style="margin-top:20px; padding:15px 40px; background:#f1c40f; border-radius:30px; font-weight:bold;">NEW SPRINT</button>`;
-        document.body.appendChild(winDiv);
-        displayLeagueTable();
-    }
+function showWinOverlay() {
+    clearInterval(gameInterval); 
+    clearInterval(chainTimer);
+    
+    const timeStr = document.getElementById('game-timer').innerText;
+    const [m, s] = timeStr.split(':').map(Number);
+    saveToLeagueTable((m*60)+s, timeStr, totalSessionScore);
+
+    const winDiv = document.createElement('div');
+    winDiv.id = "win-overlay"; // ID for easy removal if needed
+    winDiv.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.98); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:9000; text-align:center; padding:20px; box-sizing:border-box;";
+    
+    // NAVIGATION HEADER FOR WIN PAGE
+    const navHeader = `
+        <div style="position:absolute; top:20px; width:100%; display:flex; justify-content:space-between; padding:0 30px; box-sizing:border-box;">
+            <button onclick="toggleSettings()" style="background:none; border:none; font-size:24px; cursor:pointer;">⚙️</button>
+            <button onclick="openLogbook()" style="background:none; border:none; font-size:24px; cursor:pointer;">📖</button>
+        </div>`;
+
+    winDiv.innerHTML = `
+        ${navHeader}
+        <h1 style="color:#f1c40f; margin-top:40px; font-size:2.5rem; text-shadow: 0 0 15px rgba(241,196,15,0.5);">MISSION COMPLETE</h1>
+        <p style="font-size:1.2rem; color:#fff;">FINAL SCORE: <span style="color:#f1c40f;">${totalSessionScore}</span></p>
+        <p style="color:#aaa;">TIME: ${timeStr}</p>
+        
+        <div id="league-display" style="width:100%; max-width:320px; margin-top:20px;"></div>
+        
+        <button onclick="location.reload()" style="margin-top:30px; padding:15px 50px; background:#f1c40f; border:none; border-radius:30px; font-weight:bold; font-size:1.1rem; box-shadow: 0 4px 15px rgba(241,196,15,0.3);">NEW SPRINT</button>
+    `;
+
+    document.body.appendChild(winDiv);
+    displayLeagueTable(); // Renders the leaderboard into the league-display div
+}
 
 function displayLeagueTable(targetId = 'league-display') {
         const league = JSON.parse(localStorage.getItem('regFinder_league')) || [];
@@ -577,44 +600,51 @@ function updateLogbookData() {
 function showRegionDetails(targetId) {
     const regionName = targetId.replace('region-', '').replace(/-/g, ' ');
     const collection = JSON.parse(localStorage.getItem('regFinder_collection')) || [];
-    
     const regionTowns = {};
      
     Object.values(plateData).forEach(p => {
-        // THE FIX: Use the same cleaning logic as shadeMap
-        let cleanMatch = p.region.trim().toLowerCase()
-            .replace(/\//g, '-')  // Converts Mancs/Mersey to Mancs-Mersey
-            .replace(/&/g, '')
-            .replace(/\s+/g, '-')
-            .replace(/-+/g, '-');
-
+        let cleanMatch = p.region.trim().toLowerCase().replace(/\//g, '-').replace(/&/g, '').replace(/\s+/g, '-').replace(/-+/g, '-');
         if (`region-${cleanMatch}` === targetId) {
             if (!regionTowns[p.town]) regionTowns[p.town] = [];
         }
     });
 
-    let html = `<h3 style="color:#f1c40f; text-transform:uppercase;">${regionName}</h3>`;
+    // HEADER WITH SORT TOGGLE
+    let html = `
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h3 style="color:#f1c40f; text-transform:uppercase; margin:0;">${regionName}</h3>
+            <button onclick="togglePlateSort('${targetId}')" style="background:#333; color:#f1c40f; border:1px solid #f1c40f; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:bold;">
+                SORT: ${currentPlateSort === 'time' ? 'NEWEST' : 'A-Z'}
+            </button>
+        </div>`;
     
     Object.keys(regionTowns).sort().forEach(town => {
-        // THE FIX: Move this to the top of the loop
         if (town === "RESERVED") return;
 
-        // THE FIX: Only declare this once
         const foundInTown = collection.filter(plateId => 
             plateData[plateId] && plateData[plateId].town === town
         );
 
         if (foundInTown.length > 0) {
-            html += `<div style="margin-top:10px;"><strong style="color:#27ae60;">${town}:</strong><br>`;
-            foundInTown.forEach(id => html += `<span style="font-family:monospace; margin-right:10px;">${id}</span>`);
-            html += `</div>`;
+            html += `<div style="margin-top:15px;"><strong style="color:#27ae60;">${town}:</strong><br>`;
+            
+            // APPLY SORT LOGIC
+            let platesToShow = [...foundInTown];
+            if (currentPlateSort === 'alpha') platesToShow.sort(); // Sorts AB12 before AC12
+
+            // FLEX-WRAP CONTAINER
+            html += `<div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 5px;">`;
+            platesToShow.forEach(id => {
+                html += `<span style="font-family:monospace; background:#222; padding:3px 8px; border-radius:4px; border:1px solid #444; font-size:0.9rem;">${id}</span>`;
+            });
+            html += `</div></div>`;
         } else {
             html += `<div style="margin-top:10px; color:#666;"><strong>${town}:</strong> No finds</div>`;
         }
     });
 
     const container = document.getElementById('region-detail-view');
-    container.innerHTML = html + `<br><button onclick="this.parentElement.style.display='none'" style="margin-top:20px; background:#444; color:white; border:none; padding:8px 16px; border-radius:4px;">BACK</button>`;
+    container.innerHTML = html + `<br><button onclick="this.parentElement.style.display='none'" style="margin-top:20px; background:#444; color:white; border:none; padding:10px 20px; border-radius:4px; width:100%;">BACK</button>`;
     container.style.display = 'block';
 }
 
@@ -622,28 +652,36 @@ function showNationalDetails() {
     const collection = JSON.parse(localStorage.getItem('regFinder_collection')) || [];
     let html = `<h3 style="color:#f1c40f;">NATIONAL & SPECIAL ISSUES</h3>`;
     
-    // Group 1: Reserved / Special Issues
-    const reservedPlates = collection.filter(id => plateData[id] && plateData[id].town === "RESERVED");
-    if (reservedPlates.length > 0) {
-        html += `<div style="margin-top:10px;"><strong style="color:#8e44ad;">SPECIAL ISSUES:</strong><br>`;
-        reservedPlates.forEach(id => html += `<span style="font-family:monospace; margin-right:10px;">${id}</span>`);
-        html += `</div>`;
-    }
+    // 1. Reserved / Special Issues (e.g. BY, JX - anything explicitly town: "RESERVED") 
+    const reservedPlates = collection.filter(id => plateData[id] && plateData[id].town === "RESERVED" && !['J','T','U','X'].includes(id[0]));
+    renderSection(html, "SPECIAL ISSUES", "#8e44ad", reservedPlates);
 
-    // Group 2: National Letters (J, T, U, X)
-    const nationalLetters = ['J', 'T', 'U', 'X'];
-    nationalLetters.forEach(letter => {
+    // 2. J Series (The unique Reserved prefix) 
+    const jPlates = collection.filter(id => id[0] === 'J' && plateData[id].town === "RESERVED");
+    renderSection(html, "J SERIES", "#f1c40f", jPlates);
+
+    // 3. Standard National (T, U, X) 
+    ['T', 'U', 'X'].forEach(letter => {
         const plates = collection.filter(id => id[0] === letter && plateData[id].town !== "RESERVED");
-        if (plates.length > 0) {
-            html += `<div style="margin-top:10px;"><strong style="color:#3498db;">${letter} SERIES:</strong><br>`;
-            plates.forEach(id => html += `<span style="font-family:monospace; margin-right:10px;">${id}</span>`);
-            html += `</div>`;
-        }
+        renderSection(html, `${letter} SERIES`, "#3498db", plates);
     });
 
-    const container = document.getElementById('region-detail-view');
-    container.innerHTML = html + `<br><button onclick="this.parentElement.style.display='none'" style="margin-top:20px; background:#444; color:white; border:none; padding:8px 16px; border-radius:4px;">BACK</button>`;
-    container.style.display = 'block';
+    // 4. Non-Geographic "Other" (AL, AH, etc.) 
+    const otherPlates = collection.filter(id => {
+        const data = plateData[id];
+        return data && data.region === "National" && !['J','T','U','X'].includes(id[0]);
+    });
+    renderSection(html, "OTHER NATIONAL", "#2ecc71", otherPlates);
+}
+
+function togglePlateSort(targetId) {
+    currentPlateSort = (currentPlateSort === 'time') ? 'alpha' : 'time';
+    // Re-run the view function to update the list
+    if (targetId === 'national') {
+        showNationalDetails();
+    } else {
+        showRegionDetails(targetId);
+    }
 }
 
     function updateSplashStats() {
@@ -662,6 +700,21 @@ function showNationalDetails() {
         const splashCount = document.getElementById('splash-map-count');
         if (splashCount) splashCount.innerText = `${activePathIds.size}/19`;
     }
+    
+    function renderSection(html, title, color, plates) {
+    if (plates.length === 0) return;
+    html += `<div style="margin-top:15px;"><strong style="color:${color}; font-size: 0.8rem;">${title}:</strong><br>`;
+    html += `<div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 5px;">`;
+    
+    // Apply alphabetical sort if your dev-log toggle is active 
+    const sortedPlates = [...plates].sort(); 
+    
+    sortedPlates.forEach(id => {
+        html += `<span style="font-family:monospace; background:#222; padding:4px 8px; border-radius:4px; border: 1px solid #444;">${id}</span>`;
+    });
+    html += `</div></div>`;
+    }
+
 </script>
 
 <div id="logbook-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#1a1a1a; z-index:6000; flex-direction:column;">
