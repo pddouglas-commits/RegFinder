@@ -653,6 +653,8 @@ function showNationalDetails() {
     if (!container) return;
 
     const collection = JSON.parse(localStorage.getItem('regFinder_collection')) || [];
+    // This ensures we only deal with IDs that exist in our master plateData
+    const validCollection = collection.filter(id => plateData && plateData[id]);
     
     let html = `
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
@@ -662,24 +664,21 @@ function showNationalDetails() {
             </button>
         </div>`;
     
-    // Safety Filter: Ensure the plate actually exists in your data before trying to group it
-    const validCollection = collection.filter(id => plateData[id]);
-
-    // 1. Special Issues (Reserved but not JTUX)
+    // SECTION 1: Special Issues
     const special = validCollection.filter(id => plateData[id].town === "RESERVED" && !['J','T','U','X'].includes(id[0]));
-    html += renderSection("SPECIAL ISSUES", "#8e44ad", special);
+    html += renderSection("SPECIAL ISSUES", "#8e44ad", special); // Titles, Color, then the ARRAY
 
-    // 2. J Series
+    // SECTION 2: J Series
     const jPlates = validCollection.filter(id => id[0] === 'J');
     html += renderSection("J SERIES", "#f1c40f", jPlates);
 
-    // 3. T, U, X National Sets
+    // SECTION 3: T, U, X
     ['T', 'U', 'X'].forEach(l => {
         const plates = validCollection.filter(id => id[0] === l && plateData[id].town !== "RESERVED");
         html += renderSection(`${l} SERIES`, "#3498db", plates);
     });
 
-    // 4. Other National (e.g., AL, AH)
+    // SECTION 4: Others
     const others = validCollection.filter(id => plateData[id].region === "National" && !['J','T','U','X'].includes(id[0]));
     html += renderSection("OTHER NATIONAL", "#2ecc71", others);
 
@@ -687,10 +686,10 @@ function showNationalDetails() {
     container.style.display = 'block';
 }
 
-// Helper function to handle the HTML generation for each section
-function renderSection(title, color, plates = []) {
-    // Extra safety: if plates is somehow still not an array, force it to be one
-    const safePlates = Array.isArray(plates) ? plates : [];
+// THE RENDERER: Must accept exactly (title, color, platesArray)
+function renderSection(title, color, platesArray) {
+    // If the platesArray is missing or not an array, default to empty to prevent .length crash
+    const safePlates = Array.isArray(platesArray) ? platesArray : [];
     
     if (safePlates.length === 0) return "";
 
