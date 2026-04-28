@@ -329,8 +329,8 @@
     document.getElementById(`track-${letter}`).style.color = "#fff";
     document.getElementById(`track-${letter}`).style.textShadow = "0 0 10px #f1c40f";
     
-    // Points and Badge Logic
-let pts = 10;
+   // Points and Badge Logic
+    let pts = 10;
     let badges = [];
 
     if (data.town === "RESERVED") { 
@@ -342,11 +342,13 @@ let pts = 10;
         badges.push('<div class="classic-badge">CLASSIC</div>'); 
     }
 
-    // Use else if to prevent double-badging
+    // Prioritize the Name badge if isName is true
     if (data.isName) {
         pts += 40; // Total 50
-        badges.push(`<div class="word-badge" style="background:#3498db; color:white;">NAME: ${data.word || data.town}</div>`);
-    } else if (data.word) { 
+        badges.push(`<div class="word-badge" style="background:#3498db; color:white;">NAME: ${data.word}</div>`);
+    } 
+    // Only show Word badge if isName is false but a word exists
+    else if (data.word) { 
         pts += 50; // Total 60
         badges.push(`<div class="word-badge">WORD: ${data.word}</div>`); 
     }
@@ -545,6 +547,12 @@ function displayLeagueTable(targetId = 'league-display') {
             }
         });
         document.getElementById('region-count').innerText = `${activePathIds.size}/19`;
+        document.querySelectorAll('#log-map-svg g').forEach(group => {
+        const regionId = group.id.replace('-group', ''); // e.g., "region-anglia"
+        group.style.cursor = 'pointer';
+        group.onclick = () => showRegionDetails(regionId);
+    });
+
     }
 
     function updateLogbookData() {
@@ -559,6 +567,44 @@ function displayLeagueTable(targetId = 'league-display') {
         document.getElementById('count-u').innerText = counts.U;
         document.getElementById('count-x').innerText = counts.X;
         document.getElementById('log-total-count').innerText = collection.length;
+    }
+
+    function showRegionDetails(targetId) {
+    const regionName = targetId.replace('region-', '').replace(/-/g, ' ');
+    const collection = JSON.parse(localStorage.getItem('regFinder_collection')) || [];
+    
+    // 1. Get all towns belonging to this region from master plateData
+    const regionTowns = {}; 
+    Object.values(plateData).forEach(p => {
+        let cleanMatch = p.region.trim().toLowerCase().replace(/\s+/g, '-');
+        if (`region-${cleanMatch}` === targetId) {
+            if (!regionTowns[p.town]) regionTowns[p.town] = [];
+        }
+    });
+
+    // 2. Cross-reference with User Collection
+    let html = `<h3 style="color:#f1c40f; text-transform:uppercase;">${regionName}</h3>`;
+    
+    Object.keys(regionTowns).sort().forEach(town => {
+        const foundInTown = collection.filter(plateId => 
+            plateData[plateId] && plateData[plateId].town === town
+        );
+
+        if (foundInTown.length > 0) {
+            // Found: Green text
+            html += `<div style="margin-top:10px;"><strong style="color:#27ae60;">${town}:</strong><br>`;
+            foundInTown.forEach(id => html += `<span style="font-family:monospace; margin-right:10px;">${id}</span>`);
+            html += `</div>`;
+        } else {
+            // Not Found: Grey text
+            html += `<div style="margin-top:10px; color:#666;"><strong>${town}:</strong> No finds</div>`;
+        }
+    });
+
+    // 3. Inject into a detail overlay
+    const container = document.getElementById('region-detail-view');
+    container.innerHTML = html + `<button onclick="this.parentElement.style.display='none'" style="margin-top:20px; background:#444; color:white; border:none; padding:8px 16px; border-radius:4px;">BACK TO MAP</button>`;
+    container.style.display = 'block';
     }
 
     function updateSplashStats() {
@@ -591,6 +637,9 @@ function displayLeagueTable(targetId = 'league-display') {
     </div>
 
     <div id="map-page" class="log-page" style="padding: 10px; overflow-y: auto;">
+        <div id="region-detail-view" style="display:none; position:absolute; top:0; left:0; width:100%; height:100%; background:#1a1a1a; padding:20px; box-sizing:border-box; z-index:7000; overflow-y:auto;">
+        </div>
+
         <div id="map-ui-container">
             <div id="log-map-svg" style="text-align:center;">
                 <svg viewBox="0 0 200 320" xmlns="http://www.w3.org/2000/svg" style="width: 100%; max-width: 280px; height: auto;">
