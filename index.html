@@ -650,28 +650,56 @@ function showRegionDetails(targetId) {
 
 function showNationalDetails() {
     const collection = JSON.parse(localStorage.getItem('regFinder_collection')) || [];
-    let html = `<h3 style="color:#f1c40f;">NATIONAL & SPECIAL ISSUES</h3>`;
+    const container = document.getElementById('region-detail-view');
     
-    // 1. Reserved / Special Issues (e.g. BY, JX - anything explicitly town: "RESERVED") 
+    // Start the HTML string
+    let html = `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <h3 style="color:#f1c40f; margin:0;">NATIONAL & SPECIAL ISSUES</h3>
+            <button onclick="togglePlateSort('national')" style="background:#333; color:#f1c40f; border:1px solid #f1c40f; padding:4px 8px; border-radius:4px; font-size:10px;">
+                SORT: ${currentPlateSort === 'time' ? 'NEWEST' : 'A-Z'}
+            </button>
+        </div>`;
+    
+    // 1. Reserved / Special Issues
     const reservedPlates = collection.filter(id => plateData[id] && plateData[id].town === "RESERVED" && !['J','T','U','X'].includes(id[0]));
-    renderSection(html, "SPECIAL ISSUES", "#8e44ad", reservedPlates);
+    html += renderSection("SPECIAL ISSUES", "#8e44ad", reservedPlates);
 
-    // 2. J Series (The unique Reserved prefix) 
-    const jPlates = collection.filter(id => id[0] === 'J' && plateData[id].town === "RESERVED");
-    renderSection(html, "J SERIES", "#f1c40f", jPlates);
+    // 2. J Series
+    const jPlates = collection.filter(id => id[0] === 'J');
+    html += renderSection("J SERIES", "#f1c40f", jPlates);
 
     // 3. Standard National (T, U, X) 
     ['T', 'U', 'X'].forEach(letter => {
         const plates = collection.filter(id => id[0] === letter && plateData[id].town !== "RESERVED");
-        renderSection(html, `${letter} SERIES`, "#3498db", plates);
+        html += renderSection(`${letter} SERIES`, "#3498db", plates);
     });
 
-    // 4. Non-Geographic "Other" (AL, AH, etc.) 
+    // 4. Non-Geographic "Other"
     const otherPlates = collection.filter(id => {
         const data = plateData[id];
         return data && data.region === "National" && !['J','T','U','X'].includes(id[0]);
     });
-    renderSection(html, "OTHER NATIONAL", "#2ecc71", otherPlates);
+    html += renderSection("OTHER NATIONAL", "#2ecc71", otherPlates);
+
+    // CRITICAL STEPS: Inject HTML and Show Container
+    container.innerHTML = html + `<button onclick="this.parentElement.style.display='none'" style="margin-top:20px; width:100%; padding:12px; background:#444; color:white; border:none; border-radius:8px; font-weight:bold;">BACK</button>`;
+    container.style.display = 'block';
+}
+
+// Helper function to handle the HTML generation for each section
+function renderSection(title, color, plates) {
+    if (plates.length === 0) return "";
+    let sorted = [...plates];
+    if (currentPlateSort === 'alpha') sorted.sort();
+    
+    return `
+        <div style="margin-top:15px;">
+            <strong style="color:${color}; font-size:0.8rem; text-transform:uppercase;">${title}</strong>
+            <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:5px;">
+                ${sorted.map(id => `<span style="font-family:monospace; background:#222; padding:3px 8px; border-radius:4px; border:1px solid #444; font-size:0.9rem;">${id}</span>`).join('')}
+            </div>
+        </div>`;
 }
 
 function togglePlateSort(targetId) {
