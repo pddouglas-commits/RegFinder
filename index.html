@@ -965,6 +965,28 @@ function renderSection(title, color, platesArray = []) {
         return `<div style="margin-top:15px;"><strong style="color:${color}; font-size:0.8rem; text-transform:uppercase;">${title}</strong><div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:5px;">${sorted.map(id => `<span style="font-family:monospace; background:#222; padding:3px 8px; border-radius:4px; border:1px solid #444; font-size:0.9rem;">${id}</span>`).join('')}</div></div>`;
     }
 
+function renderNIList(era) {
+    const container = document.getElementById(era + '-list'); // Now uses the variable
+    const owned = JSON.parse(localStorage.getItem('regFinder_' + era)) || []; // Now uses the variable[cite: 1]
+    
+    let html = '';
+    // Use niCounties directly since it's a unique object[cite: 1]
+    Object.entries(niCounties).sort((a,b) => a[1].localeCompare(b[1])).forEach(([code, county]) => {
+        const isFound = owned.includes(code);
+        html += `
+            <div style="display:flex; justify-content:space-between; padding:10px; margin-bottom:5px; background:${isFound ? '#27ae6033' : '#222'}; border-radius:8px; border:1px solid ${isFound ? '#27ae60' : '#444'};">
+                <span style="font-weight:bold; color:${isFound ? '#fff' : '#666'};">${code} (${county})</span>
+                <span>${isFound ? '✅' : '🔒'}</span>
+            </div>`;
+    });
+    container.innerHTML = html;
+    
+    const fillEl = document.getElementById(era + '-fill'); // Now uses the variable[cite: 1]
+    if (fillEl) {
+        fillEl.style.width = `${(owned.length / Object.keys(niCounties).length) * 100}%`;
+    }
+}
+
 function switchLogPage(pageId) {
     document.querySelectorAll('.log-page').forEach(p => p.style.display = 'none');
     const target = document.getElementById(pageId + '-page');
@@ -973,6 +995,7 @@ function switchLogPage(pageId) {
     if (pageId === 'league') displayLeagueTable('log-league-container');
     if (pageId === 'classic') renderEraTimeline('classic');
     if (pageId === 'heritage') renderEraTimeline('heritage');
+    if (pageId === 'ni') renderNIList('ni');
 }
 </script>
 
@@ -982,11 +1005,13 @@ function switchLogPage(pageId) {
         <h2 style="color:#f1c40f; margin:0 0 10px 0;">LOGBOOK</h2>
         
         <div class="logbook-nav" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; padding: 10px; background: #222; border-radius: 8px; margin-bottom: 10px;">
-            <button class="tab-btn active" onclick="switchLogPage('modern')" style="flex: 1 1 45%; padding: 10px; border-radius: 5px; border: none; background: #444; color: white;">MODERN</button>
+            <button class="tab-btn active" onclick="switchLogPage('modern')" style="flex: 1 1 45%; padding: 10px; border-radius: 5px; border: none; background: #3a3a3a00; color: rgb(114, 114, 114);">MODERN</button>
             <button class="tab-btn" onclick="switchLogPage('classic')" style="flex: 1 1 45%; padding: 10px; border-radius: 5px; border: none; background: #3498db; color: white;">CLASSIC</button>
             <button class="tab-btn" onclick="switchLogPage('heritage')" style="flex: 1 1 45%; padding: 10px; border-radius: 5px; border: none; background: #8e44ad; color: white;">HERITAGE</button>
+            <button class="tab-btn" onclick="switchLogPage('ni')" style="flex: 1 1 45%; padding: 10px; border-radius: 5px; border: none; background: #27ae60; color: white;">N. IRELAND</button>
             <button class="tab-btn" onclick="switchLogPage('league')" style="flex: 1 1 21%; padding: 10px; border-radius: 5px; border: none; background: #444; color: white;">LEAGUE</button>
             <button class="tab-btn" onclick="switchLogPage('stats')" style="flex: 1 1 21%; padding: 10px; border-radius: 5px; border: none; background: #444; color: white;">STATS</button>
+
         </div>
 
         <button onclick="closeLogbook()" style="background:none; border:1px solid #666; color:#fff; border-radius:4px; padding:5px 20px; font-size:12px;">EXIT LOGBOOK</button>
@@ -1055,12 +1080,21 @@ function switchLogPage(pageId) {
         <div id="heritage-list"></div>
     </div>
 
-    <!-- 6. LEAGUE PAGE -->
+    <!-- 6. Northern Ireland Page-->
+    <div id="ni-page" class="log-page" style="display:none; padding: 20px; overflow-y: auto;">
+        <h3 style="color:#27ae60; text-align:center;">NORTHERN IRELAND</h3>
+        <div id="ni-progress-bar" style="height:10px; background:#222; border-radius:5px; margin-bottom:20px; border: 1px solid #444;">
+            <div id="ni-fill" style="width:0%; height:100%; background:#27ae60; border-radius:5px; transition: width 0.5s;"></div>
+        </div>
+        <div id="ni-list"></div>
+    </div>
+
+    <!-- 7. LEAGUE PAGE -->
     <div id="league-page" class="log-page" style="display:none; padding: 20px;">
     <div id="log-league-container"></div>
     </div>
 
-    <!-- 7. STATS PAGE -->
+    <!-- 8. STATS PAGE -->
     <div id="stats-page" class="log-page" style="display:none; padding: 20px; text-align: center;">
         <p style="font-size: 1.2rem;">Total Unique Found: <span id="log-total-count" style="color:#f1c40f; font-weight:bold;">0</span></p>
     </div>
