@@ -296,14 +296,14 @@ hiddenInput.addEventListener('input', (e) => {
             const match = plateData[val];
             if (match) processPlate(match, val); else showUnknown();
         } 
-        // 2. PREFIX Pattern: [Letter][Number][Number][Number/*] (e.g., A123, A45*)
-        else if (/^[A-Z][\d\*]{3}$/.test(val)) {
-            processClassicPrefix(val);
-        }
-        // 3. SUFFIX Pattern: [Number/*][Number][Number][Letter] (e.g., 123A, *56B)
-        else if (/^[\d\*]{3}[A-Z]$/.test(val)) {
-            processHeritageSuffix(val);
-        }
+// 1. PREFIX Pattern: Letter followed by at least one digit (e.g., A1**, A12*)
+else if (/^[A-Z]\d[\d\*]{2}$/.test(val)) {
+    processClassicPrefix(val);
+}
+// 2. SUFFIX Pattern: At least one digit followed by the Letter (e.g., **1A, *12A)
+else if (/^[\d\*]{2}\d[A-Z]$/.test(val)) {
+    processHeritageSuffix(val);
+}
         else {
             showUnknown();
         }
@@ -599,11 +599,11 @@ function showWinOverlay() {
     
     // NAVIGATION HEADER FOR WIN PAGE
     // NAVIGATION HEADER (Fixes icons)
-    const navHeader = `
-    <div style="position:absolute; top:20px; width:100%; display:flex; justify-content:space-between; padding:0 30px; box-sizing:border-box;">
-        <button onclick="toggleSettings()" style="background:none; border:none; font-size:24px; cursor:pointer;">⚙️</button>
-        <button onclick="openLogbook()" style="background:none; border:none; font-size:24px; cursor:pointer;">📖</button>        
-    </div>`;
+const navHeader = `
+<div style="position:absolute; top:20px; width:100%; display:flex; justify-content:space-between; padding:0 30px; box-sizing:border-box; z-index:10000;">
+    <button onclick="window.toggleSettings()" style="background:none; border:none; font-size:24px; cursor:pointer;">⚙️</button>
+    <button onclick="window.openLogbook()" style="background:none; border:none; font-size:24px; cursor:pointer;">📖</button>        
+</div>`;
 
 // HOME BUTTON (Goes to Splash)
     winDiv.innerHTML = `
@@ -885,22 +885,11 @@ function renderSection(title, color, platesArray = []) {
     }
 
 function switchLogPage(pageId) {
-    // Hide all pages
-    const pages = document.querySelectorAll('.log-page');
-    pages.forEach(p => p.style.display = 'none');
-    
-    // Show selected page
+    document.querySelectorAll('.log-page').forEach(p => p.style.display = 'none');
     const target = document.getElementById(pageId + '-page');
-    if (target) {
-        target.style.display = 'block';
-    }
+    if (target) target.style.display = 'flex'; 
 
-    // Update button visual state
-    const btns = document.querySelectorAll('.tab-btn');
-    btns.forEach(b => b.style.opacity = '0.6');
-    event.currentTarget.style.opacity = '1';
-
-    // Special: If switching to Classic or Heritage, render the lists
+    if (pageId === 'league') displayLeagueTable('log-league-container');
     if (pageId === 'classic') renderEraTimeline('classic');
     if (pageId === 'heritage') renderEraTimeline('heritage');
 }
@@ -987,7 +976,7 @@ function switchLogPage(pageId) {
 
     <!-- 6. LEAGUE PAGE -->
     <div id="league-page" class="log-page" style="display:none; padding: 20px;">
-        <div id="log-league-container"></div>
+    <div id="log-league-container"></div>
     </div>
 
     <!-- 7. STATS PAGE -->
