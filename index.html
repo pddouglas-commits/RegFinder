@@ -20,16 +20,30 @@
 
 .header-stats { 
     position: fixed; 
-    top: 0;
-    left: 0; /* Ensures it starts at the very left */
-    width: 100%; /* Forces it to span the full screen */
-    background: #1a1a1a;
-    padding-top: 10px;
-    z-index: 1000;
-    height: 60px; /* Increased slightly for padding */
-    display: flex;
-    flex-direction: column;
-    align-items: center; /* Keeps the Timer and Score centered */
+    top: 0; left: 0; 
+    width: 100vw; 
+    height: 85px; /* Increased height to stop the overlap */
+    background: #1a1a1a; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    padding: 0 15px; 
+    box-sizing: border-box; 
+    z-index: 10000;
+    border-bottom: 1px solid #333;
+}
+
+.header-center { 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    flex: 2;
+}
+
+.header-side { 
+    flex: 1; 
+    display: flex; 
+    align-items: center;
 }
 
     .timer-row { display: flex; gap: 15px; font-family: monospace; font-size: 12px; color: #aaa; }
@@ -199,22 +213,23 @@
 </div>
 
 <div class="header-stats">
-    <!-- Left Group: Stays pinned 10px from the left -->
-    <div style="position:absolute; top:12px; left:10px; display:flex; gap:15px; align-items:center;">
-        <button onclick="toggleSettings()" style="background:none; border:none; font-size:20px; cursor:pointer; padding:0;">⚙️</button>
-        <button onclick="openLogbook()" style="background:none; border:none; font-size:20px; cursor:pointer; padding:0;">📖</button>
-        <button onclick="togglePause()" id="pause-btn" style="background:none; border:none; font-size:20px; cursor:pointer; padding:0;">⏸️</button>
+    <div class="header-side" style="gap: 12px;">
+        <button onclick="toggleSettings()" style="background:none; border:none; font-size:22px; cursor:pointer;">⚙️</button>
+        <button onclick="openLogbook()" style="background:none; border:none; font-size:22px; cursor:pointer;">📖</button>
+        <button onclick="togglePause()" id="pause-btn" style="background:none; border:none; font-size:22px; cursor:pointer;">⏸️</button>
     </div>
 
-    <!-- Right Group: Stays pinned 10px from the right -->
-    <button onclick="location.reload()" style="position:absolute; top:15px; right:10px; background:none; border:1px solid #444; color:#e90101; border-radius:4px; font-size:9px; padding:4px 6px;">RESTART</button>
-
-    <!-- Center Content: Centered automatically by the Flexbox -->
-    <div class="timer-row" style="margin-top: 2px;">
-        <div>TIME: <span id="game-timer" style="color: white;">00:00</span></div>
-        <div>CHAIN: <span id="timer-display" style="color: #e74c3c;">60s</span> <span id="chain-display" style="color: #3498db;">(0/3)</span></div>
+    <div class="header-center">
+        <div class="timer-row" style="font-size: 11px; margin-bottom: 2px;">
+            <span id="game-timer">00:00</span> | <span id="timer-display" style="color:#e74c3c;">60s</span>
+        </div>
+        <div id="grand-total" style="font-size: 36px; margin: 0;">0</div>
+        <div id="chain-display" style="font-size: 10px; color:#3498db;">CHAIN (0/3)</div>
     </div>
-    <div id="grand-total" style="font-size: 38px;">0</div>
+
+    <div class="header-side" style="justify-content: flex-end;">
+        <button onclick="location.reload()" style="background:none; border:1px solid #e90101; color:#e90101; border-radius:4px; font-size:9px; padding:4px 8px;">RESTART</button>
+    </div>
 </div>
 
 <div id="progress-tracker"></div>
