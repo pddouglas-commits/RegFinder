@@ -274,6 +274,20 @@
     'N': 1995, 'P': 1996, 'R': 1997, 'S': 1998, 'T': 1999, 'V': 1999,
     'W': 2000, 'X': 2000, 'Y': 2001 // X and Y were short-duration 2001 releases
     };
+
+    // NI County Mapping
+    const niCounties = {
+    "AZ": "Belfast", "BZ": "Down", "CZ": "Belfast", "DZ": "Antrim",
+    "EZ": "Belfast", "FZ": "Belfast", "GZ": "Belfast", "HZ": "Tyrone",
+    "IA": "Antrim", "IB": "Armagh", "IG": "Fermanagh", "IJ": "Down",
+    "IL": "Fermanagh", "IW": "Londonderry", "JI": "Tyrone", "JZ": "Down",
+    "KZ": "Antrim", "LZ": "Armagh", "MZ": "Belfast", "NZ": "Londonderry",
+    "OI": "Belfast", "OZ": "Belfast", "PZ": "Belfast", "RZ": "Antrim",
+    "SZ": "Down", "TZ": "Downpatrick", "UI": "City of Derry", "UZ": "Ballymena",
+    "VI": "City of Derry", "VZ": "Tyrone", "WZ": "Armagh", "XI": "Belfast",
+    "XZ": "Armagh", "YZ": "Londonderry"
+    };
+
     let foundLetters = new Set();
     let currentTargetOptions = []; 
     let gameDirection = null; 
@@ -342,6 +356,10 @@ else if (/^[A-Z]\d[\d\*]{2}$/.test(val)) {
 else if (/^[\d\*]{2}\d[A-Z]$/.test(val)) {
     processHeritageSuffix(val);
 }
+// NI Pattern: [Letter][I/Z][Letter] [Number(s)] -> e.g., AUI 1234, BIG 1
+else if (/^[A-Z][IZ][A-Z]\d{1,4}$/.test(val)) {
+    processNIPlate(val);
+}
         else {
             showUnknown();
         }
@@ -405,6 +423,29 @@ function processHeritageSuffix(plateId) {
     displayEraResult(letter, "Heritage", isNew ? "1963-1983" : "Already Found", !isNew);
     setTimeout(clearInput, 1500);
 }
+
+function processNIPlate(plateId) {
+    const countyCode = plateId.substring(1, 3); // Extracts "UI" from "AUI1234"
+    const countyName = niData[countyCode];
+
+    if (countyName) {
+        let niCollection = JSON.parse(localStorage.getItem('regFinder_ni')) || [];
+        const isNew = !niCollection.includes(countyCode);
+
+        if (isNew) {
+            niCollection.push(countyCode);
+            localStorage.setItem('regFinder_ni', JSON.stringify(niCollection));
+            totalSessionScore += 50;
+            document.getElementById('grand-total').innerText = totalSessionScore;
+        }
+
+        displayEraResult(countyCode, "Northern Ireland", countyName, !isNew);
+    } else {
+        showUnknown();
+    }
+    setTimeout(clearInput, 1500);
+}
+
     function toggleSettings() {
         const menu = document.getElementById('settings-menu');
         menu.style.display = (menu.style.display === 'none') ? 'flex' : 'none';
