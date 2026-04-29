@@ -336,32 +336,36 @@ hiddenInput.addEventListener('input', (e) => {
     }
 function processClassicPrefix(plateId) {
     const letter = plateId[0];
-    if (['I','O','U','Q','Z'].includes(letter)) { showUnknown(); return; } // Invalid year letters
+    if (['I','O','U','Q','Z'].includes(letter)) { showUnknown(); return; }
 
-    let collection = JSON.parse(localStorage.getItem('regFinder_classic')) || [];
-    if (!collection.includes(letter)) {
-        collection.push(letter);
-        localStorage.setItem('regFinder_classic', JSON.stringify(collection));
-        displayEraResult(letter, "Classic", "1983-2001");
+    // CRITICAL: Force a fresh read from storage
+    let currentClassic = JSON.parse(localStorage.getItem('regFinder_classic')) || [];
+    
+    if (!currentClassic.includes(letter)) {
+        currentClassic.push(letter);
+        localStorage.setItem('regFinder_classic', JSON.stringify(currentClassic));
+        displayEraResult(letter, "Classic", "1983-2001", false);
     } else {
         displayEraResult(letter, "Classic", "Already Found", true);
     }
-    setTimeout(clearInput, 1500);
+    setTimeout(clearInput, 500); // Faster clear to prevent "hanging"
 }
 
-    function processHeritageSuffix(plateId) {
-    const letter = plateId[3]; // The letter is at the end
+function processHeritageSuffix(plateId) {
+    const letter = plateId[3];
     if (['I','O','U','Q','Z'].includes(letter)) { showUnknown(); return; }
 
-    let collection = JSON.parse(localStorage.getItem('regFinder_heritage')) || [];
-    if (!collection.includes(letter)) {
-        collection.push(letter);
-        localStorage.setItem('regFinder_heritage', JSON.stringify(collection));
-        displayEraResult(letter, "Heritage", "1963-1983");
+    // CRITICAL: Force a fresh read from storage
+    let currentHeritage = JSON.parse(localStorage.getItem('regFinder_heritage')) || [];
+
+    if (!currentHeritage.includes(letter)) {
+        currentHeritage.push(letter);
+        localStorage.setItem('regFinder_heritage', JSON.stringify(currentHeritage));
+        displayEraResult(letter, "Heritage", "1963-1983", false);
     } else {
         displayEraResult(letter, "Heritage", "Already Found", true);
     }
-    setTimeout(clearInput, 1500);
+    setTimeout(clearInput, 500); // Faster clear
 }
     function toggleSettings() {
         const menu = document.getElementById('settings-menu');
@@ -590,6 +594,7 @@ function showWinOverlay() {
     <div style="position:absolute; top:20px; width:100%; display:flex; justify-content:space-between; padding:0 30px; box-sizing:border-box;">
         <button onclick="toggleSettings()" style="background:none; border:none; font-size:24px; cursor:pointer;">⚙️</button>
         <button onclick="openLogbook()" style="background:none; border:none; font-size:24px; cursor:pointer;">📖</button>
+        <button onclick="togglePause()" id="pause-btn" style="background:#444; border:none; border-radius:50%; width:40px; height:40px; color:white; font-size:18px; cursor:pointer;">⏸</button>
     </div>`;
 
 // HOME BUTTON (Goes to Splash)
