@@ -429,8 +429,18 @@ function processHeritageSuffix(plateId) {
 }
 
 function processNIPlate(plateId) {
-    // NI codes are the 2nd and 3rd characters (e.g., AUI -> UI)
-    const countyCode = plateId.substring(1, 3); 
+    // 1. Extract the 3-letter block (e.g., "ADZ" from "ADZ1")
+    const letters = plateId.match(/[A-Z]{3}/)[0];
+    
+    // 2. The county code is always the part containing I or Z plus the letter next to it
+    // In "ADZ", the code is "DZ". In "ZAB", the code is "ZA".
+    let countyCode = "";
+    if (letters[1] === 'I' || letters[1] === 'Z') {
+        countyCode = letters.substring(1, 3); // Standard: A[DZ]1
+    } else if (letters[0] === 'I' || letters[0] === 'Z') {
+        countyCode = letters.substring(0, 2); // Early: [IA]1
+    }
+
     const countyName = niCounties[countyCode];
 
     if (countyName) {
@@ -446,8 +456,7 @@ function processNIPlate(plateId) {
 
         displayEraResult(countyCode, "Northern Ireland", countyName, isAlreadyThere);
     } else {
-        // If it's an I/Z plate but the code doesn't exist (like ZA)
-        showUnknown(); 
+        showUnknown(); // Shows if "AD" or "AZ" was picked up but isn't in your list
     }
     setTimeout(clearInput, 1500);
 }
