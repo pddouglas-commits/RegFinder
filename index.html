@@ -183,6 +183,19 @@
     top: 0;
     z-index: 10;
 }
+
+.tab-btn {
+    transition: all 0.2s ease;
+    filter: brightness(0.8);
+}
+
+.tab-btn.active {
+    filter: brightness(1.2);
+    outline: 3px solid #f1c40f !important;
+    outline-offset: -3px;
+    box-shadow: 0 0 15px rgba(241, 196, 15, 0.4);
+}
+
 #logbook-overlay {
     z-index: 11000 !important; /* Higher than header-stats */
 }
@@ -461,16 +474,17 @@ function processHeritageSuffix(plateId) {
 }
 
 function processNIPlate(plateId) {
-    // 1. Extract the 3-letter block (e.g., "ADZ" from "ADZ1")
-    const letters = plateId.match(/[A-Z]{3}/)[0];
-    
-    // 2. The county code is always the part containing I or Z plus the letter next to it
-    // In "ADZ", the code is "DZ". In "ZAB", the code is "ZA".
+    // Extracts the first 3 characters (the letters)
+    const letters = plateId.substring(0, 3);
     let countyCode = "";
+
+    // If 'I' or 'Z' is the 2nd char (e.g., ADZ), code is 2nd & 3rd (DZ)
     if (letters[1] === 'I' || letters[1] === 'Z') {
-        countyCode = letters.substring(1, 3); // Standard: A[DZ]1
-    } else if (letters[0] === 'I' || letters[0] === 'Z') {
-        countyCode = letters.substring(0, 2); // Early: [IA]1
+        countyCode = letters.substring(1, 3);
+    } 
+    // If 'I' or 'Z' is the 1st char (e.g., ZAB), code is 1st & 2nd (ZA)
+    else if (letters[0] === 'I' || letters[0] === 'Z') {
+        countyCode = letters.substring(0, 2);
     }
 
     const countyName = niCounties[countyCode];
@@ -487,10 +501,11 @@ function processNIPlate(plateId) {
         }
 
         displayEraResult(countyCode, "Northern Ireland", countyName, isAlreadyThere);
+        setTimeout(clearInput, 1500);
     } else {
-        showUnknown(); // Shows if "AD" or "AZ" was picked up but isn't in your list
+        // If it's 4 chars long and we still don't have a match, show unknown
+        if (plateId.length >= 4) showUnknown();
     }
-    setTimeout(clearInput, 1500);
 }
 
     function toggleSettings() {
@@ -1035,15 +1050,38 @@ function renderNIList(era) {
 }
 
 function switchLogPage(pageId) {
+    // 1. Hide all pages first
     document.querySelectorAll('.log-page').forEach(p => p.style.display = 'none');
+    
+    // 2. Clear previous rings and set the new one
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.style.outline = "none";
+        btn.classList.remove('active');
+    });
+
+    // Handle the visual highlight (the ring)
+    const activeBtn = event?.currentTarget;
+    if (activeBtn) {
+        activeBtn.style.outline = "3px solid #f1c40f";
+        activeBtn.style.outlineOffset = "-3px";
+        activeBtn.classList.add('active');
+    }
+
+    // 3. Show the target page
     const target = document.getElementById(pageId + '-page');
     if (target) target.style.display = 'flex'; 
 
-    if (pageId === 'league') displayLeagueTable('log-league-container');
+    // 4. Trigger specific logic/refresh for that page
+    if (pageId === 'modern') {
+        updateLogbookData(); // Fixes the AWOL National Bar counts
+        shadeMap();          // Redraws the map
+    }
     if (pageId === 'classic') renderEraTimeline('classic');
     if (pageId === 'heritage') renderEraTimeline('heritage');
     if (pageId === 'ni') renderNIList('ni');
+    if (pageId === 'league') displayLeagueTable('log-league-container');
 }
+
 </script>
 
 <div id="logbook-overlay">
@@ -1068,8 +1106,8 @@ function switchLogPage(pageId) {
     <div id="region-detail-view" style="display:none; position:absolute; top:0; left:0; width:100%; height:100%; background:#1a1a1a; padding:20px; box-sizing:border-box; z-index:7000; overflow-y:auto;"></div>
 
     <!-- 3. MODERN MAP PAGE -->
-    <div id="modern-page" class="log-page" style="padding: 10px; overflow-y: auto;">
-        <div id="log-map-svg" style="text-align:center;">
+    <div id="modern-page" class="log-page" style="padding: 0 10px; flex-direction: column; align-items: center;">
+        <div id="log-map-svg" style="width: 100%; max-width: 260px; margin-top: -10px;">
                 <svg viewBox="0 0 200 320" xmlns="http://www.w3.org/2000/svg" style="width: 100%; max-width: 280px; height: auto;">
                     <g id="region-scotland-group"><path id="region-scotland" d="M80 20 L120 20 L130 60 L110 100 L70 90 Z" stroke="#555" /><text x="90" y="60" style="fill:white; font-size:10px;">S / TN</text></g>
                     <g id="region-northeast-group"><path id="region-northeast" d="M90 100 L130 100 L140 125 L90 125 Z" stroke="#555" /><text x="110" y="115" style="fill:white; font-size:10px;">N</text></g>
@@ -1098,16 +1136,16 @@ function switchLogPage(pageId) {
             <div style="font-size: 11px; color: #666; margin-top: 10px;">Regions: <span id="region-count" style="color:#f1c40f;">0/19</span></div>
         </div>
         
-        <div id="special-collection" onclick="showNationalDetails()" style="cursor:pointer; margin: 20px 10px; background: #222; padding: 15px; border-radius: 10px; border: 1px solid #444;">
-            <h4 style="color: #aaa; font-size: 10px; text-transform: uppercase; margin-bottom: 10px; text-align: center;">National (JTUX) & Special Issues</h4>
-            <div style="display: flex; justify-content: space-between; font-family: monospace; font-size: 1.2rem;">
-                <div>J: <span id="count-j">0</span></div>
-                <div>T: <span id="count-t">0</span></div>
-                <div>U: <span id="count-u">0</span></div>
-                <div>X: <span id="count-x">0</span></div>
-            </div>
+        <div id="special-collection" onclick="showNationalDetails()" style="cursor:pointer; width: 90%; background: #222; padding: 12px; border-radius: 10px; border: 1px solid #444; margin-top: 5px;">
+        <h4 style="color: #aaa; font-size: 10px; text-transform: uppercase; margin: 0 0 8px 0; text-align: center;">National & Special</h4>
+        <div style="display: flex; justify-content: space-around; font-family: monospace; font-size: 1.1rem;">
+            <div>J:<span id="count-j">0</span></div>
+            <div>T:<span id="count-t">0</span></div>
+            <div>U:<span id="count-u">0</span></div>
+            <div>X:<span id="count-x">0</span></div>
         </div>
     </div>
+</div>
 
     <!-- 4. CLASSIC PAGE -->
     <div id="classic-page" class="log-page" style="display:none; padding: 20px; overflow-y: auto;">
