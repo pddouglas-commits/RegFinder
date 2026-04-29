@@ -169,7 +169,41 @@
     background: #1a1a1a; 
     z-index: 4000; /* Higher than Splash */
     flex-direction: column;
+    padding-top: 100px; /* This ensures the tabs start AFTER the fixed header */
+    display: none; /* Controlled by JS */
+    flex-direction: column;
 }
+.logbook-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 10px;
+    background: #1a1a1a;
+    position: sticky; /* Keeps the tabs visible while scrolling the log */
+    top: 0;
+    z-index: 10;
+}
+#logbook-overlay {
+    z-index: 11000 !important; /* Higher than header-stats */
+}
+
+#modern-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0; /* Remove gaps between map and bars */
+}
+
+#log-map-svg {
+    width: 100%;
+    max-width: 280px;
+    margin: 0 auto; /* Centers the map */
+}
+
+#special-collection {
+    margin: 5px 10px !important; /* Tightens gap below map */
+}
+
 </style>
 
 </head>
@@ -337,33 +371,31 @@
 hiddenInput.addEventListener('input', (e) => {
     // Replace spaces with asterisks before processing
     let val = e.target.value.toUpperCase().replace(/\s/g, '*'); 
-    e.target.value = val; // Reflect the asterisk in the input for consistency
- 
+    e.target.value = val; 
 
     slots.forEach((s, i) => s.innerText = val[i] || "");
     
+    // --- 1. NI DETECTION (Runs regardless of length 4) ---
+    // Detects I or Z in a 3-letter block followed by digits
+    if (/^[A-Z]*[IZ][A-Z]*[\d\*]{1,4}$/.test(val)) {
+        if (/\d/.test(val)) { // Only process if they've typed at least one number
+            processNIPlate(val);
+            return; // Stop here so it doesn't hit "showUnknown"
+        }
+    }
+
+    // --- 2. STANDARD ERA DETECTION (Requires 4 chars) ---
     if (val.length === 4) {
-        // 1. MODERN Pattern: [Letter][Letter][Number][Number] (e.g., AB12)
         if (/^[A-Z]{2}\d{2}$/.test(val)) {
             const match = plateData[val];
             if (match) processPlate(match, val); else showUnknown();
         } 
-// 1. PREFIX Pattern: Letter followed by at least one digit (e.g., A1**, A12*)
-else if (/^[A-Z]\d[\d\*]{2}$/.test(val)) {
-    processClassicPrefix(val);
-}
-// 2. SUFFIX Pattern: At least one digit followed by the Letter (e.g., **1A, *12A)
-else if (/^[\d\*]{2}\d[A-Z]$/.test(val)) {
-    processHeritageSuffix(val);
-}
-// NI Pattern: [Letter][I/Z][Letter] [Number(s)] -> e.g., AUI 1234, BIG 1
-// Matches: [Letter][I/Z][Letter] followed by any combination of 1-4 digits or asterisks
-else if (/^[A-Z][IZ][A-Z][\d\*]{1,4}$/.test(val)) {
-    // Only process if there is at least ONE actual digit
-    if (/\d/.test(val)) {
-        processNIPlate(val);
-    }
-}
+        else if (/^[A-Z]\d[\d\*]{2}$/.test(val)) {
+            processClassicPrefix(val);
+        }
+        else if (/^[\d\*]{2}\d[A-Z]$/.test(val)) {
+            processHeritageSuffix(val);
+        }
         else {
             showUnknown();
         }
