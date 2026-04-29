@@ -474,15 +474,22 @@ function processHeritageSuffix(plateId) {
 }
 
 function processNIPlate(plateId) {
-    // Extracts the first 3 characters (the letters)
-    const letters = plateId.substring(0, 3);
+    // 1. Remove any asterisks to get clean characters
+    const cleanPlate = plateId.replace(/\*/g, '');
+    
+    // 2. Extract ONLY the letters (e.g., "ADZ" from "ADZ1")
+    const letterMatch = cleanPlate.match(/[A-Z]{3}/);
+    if (!letterMatch) return; // Exit if we don't have 3 letters yet
+    
+    const letters = letterMatch[0];
     let countyCode = "";
 
-    // If 'I' or 'Z' is the 2nd char (e.g., ADZ), code is 2nd & 3rd (DZ)
+    // 3. Logic: County code is ALWAYS the part containing I or Z
+    // If 2nd char is I/Z (ADZ, BIZ), code is 2nd & 3rd letters
     if (letters[1] === 'I' || letters[1] === 'Z') {
         countyCode = letters.substring(1, 3);
     } 
-    // If 'I' or 'Z' is the 1st char (e.g., ZAB), code is 1st & 2nd (ZA)
+    // If 1st char is I/Z (IA, BZ), code is 1st & 2nd letters
     else if (letters[0] === 'I' || letters[0] === 'Z') {
         countyCode = letters.substring(0, 2);
     }
@@ -503,8 +510,8 @@ function processNIPlate(plateId) {
         displayEraResult(countyCode, "Northern Ireland", countyName, isAlreadyThere);
         setTimeout(clearInput, 1500);
     } else {
-        // If it's 4 chars long and we still don't have a match, show unknown
-        if (plateId.length >= 4) showUnknown();
+        // Only show unknown if the user has finished typing a 4-char string
+        if (cleanPlate.length >= 4) showUnknown();
     }
 }
 
