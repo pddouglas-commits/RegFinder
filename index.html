@@ -357,8 +357,12 @@ else if (/^[\d\*]{2}\d[A-Z]$/.test(val)) {
     processHeritageSuffix(val);
 }
 // NI Pattern: [Letter][I/Z][Letter] [Number(s)] -> e.g., AUI 1234, BIG 1
-else if (/^[A-Z][IZ][A-Z]\d{1,4}$/.test(val)) {
-    processNIPlate(val);
+// Matches: [Letter][I/Z][Letter] followed by any combination of 1-4 digits or asterisks
+else if (/^[A-Z][IZ][A-Z][\d\*]{1,4}$/.test(val)) {
+    // Only process if there is at least ONE actual digit
+    if (/\d/.test(val)) {
+        processNIPlate(val);
+    }
 }
         else {
             showUnknown();
@@ -425,23 +429,25 @@ function processHeritageSuffix(plateId) {
 }
 
 function processNIPlate(plateId) {
-    const countyCode = plateId.substring(1, 3); // Extracts "UI" from "AUI1234"
-    const countyName = niData[countyCode];
+    // NI codes are the 2nd and 3rd characters (e.g., AUI -> UI)
+    const countyCode = plateId.substring(1, 3); 
+    const countyName = niCounties[countyCode];
 
     if (countyName) {
         let niCollection = JSON.parse(localStorage.getItem('regFinder_ni')) || [];
-        const isNew = !niCollection.includes(countyCode);
+        const isAlreadyThere = niCollection.includes(countyCode);
 
-        if (isNew) {
+        if (!isAlreadyThere) {
             niCollection.push(countyCode);
             localStorage.setItem('regFinder_ni', JSON.stringify(niCollection));
             totalSessionScore += 50;
             document.getElementById('grand-total').innerText = totalSessionScore;
         }
 
-        displayEraResult(countyCode, "Northern Ireland", countyName, !isNew);
+        displayEraResult(countyCode, "Northern Ireland", countyName, isAlreadyThere);
     } else {
-        showUnknown();
+        // If it's an I/Z plate but the code doesn't exist (like ZA)
+        showUnknown(); 
     }
     setTimeout(clearInput, 1500);
 }
