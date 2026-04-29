@@ -541,12 +541,21 @@ function updateGameTimer() {
 }
 
 function togglePause() {
+    if (!isGameActive) return; 
+    
     isPaused = !isPaused;
+    const overlay = document.getElementById('pause-overlay');
+    const pauseBtn = document.getElementById('pause-btn'); // Get the button
+    
     if (isPaused) {
-        clearInterval(chainTimer); // Stop chain clock too
-        // Optionally show a "PAUSED" overlay here
+        overlay.style.display = 'flex';
+        pauseBtn.innerText = '▶'; // Switch to Play
+        clearInterval(chainTimer);
     } else {
-        if (isGameActive) startChainTimer(); // Resume chain clock
+        overlay.style.display = 'none';
+        pauseBtn.innerText = '⏸'; // Switch back to Pause
+        if (chainTimeLeft > 0) startChainTimer();
+        focusInput();
     }
 }
 
@@ -645,6 +654,7 @@ function displayLeagueTable(targetId = 'league-display') {
     function openLogbook() {
         document.getElementById('logbook-overlay').style.display = 'flex';
         updateLogbookData();
+        renderEraLogbook();
         shadeMap(); 
         showLogPage('map-page'); 
     }
@@ -657,6 +667,34 @@ function displayLeagueTable(targetId = 'league-display') {
         document.getElementById(pageId).style.display = 'flex';
         if (pageId === 'league-page') displayLeagueTable('log-league-container');
     }
+
+function renderEraLogbook() {
+    const classicList = document.getElementById('classic-list');
+    const heritageList = document.getElementById('heritage-list');
+    
+    // Fetch latest collections
+    const classicOwned = JSON.parse(localStorage.getItem('regFinder_classic')) || [];
+    const heritageOwned = JSON.parse(localStorage.getItem('regFinder_heritage')) || [];
+
+    // Helper to generate HTML
+    const createRows = (yearsObj, ownedArray, color) => {
+        return Object.entries(yearsObj).map(([letter, year]) => {
+            const isFound = ownedArray.includes(letter);
+            return `
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; margin-bottom:5px; background:${isFound ? color + '33' : '#222'}; border-radius:8px; border:1px solid ${isFound ? color : '#444'};">
+                    <span style="font-weight:bold; color:${isFound ? '#fff' : '#666'};">${letter} - ${year}</span>
+                    <span>${isFound ? '✅' : '🔒'}</span>
+                </div>`;
+        }).join('');
+    };
+
+    classicList.innerHTML = createRows(classicYears, classicOwned, '#3498db');
+    heritageList.innerHTML = createRows(heritageYears, heritageOwned, '#8e44ad');
+    
+    // Update progress bars
+    document.getElementById('classic-fill').style.width = `${(classicOwned.length / 21) * 100}%`;
+    document.getElementById('heritage-fill').style.width = `${(heritageOwned.length / 21) * 100}%`;
+}
 
     function shadeMap() {
         const collection = JSON.parse(localStorage.getItem('regFinder_collection')) || [];
