@@ -14,11 +14,19 @@
         font-family: sans-serif; background: #1a1a1a; color: white;
         display: flex; flex-direction: column; align-items: center;
         justify-content: flex-start; height: 100svh; width: 100vw;
-        margin: 0; padding-top: 5px; overflow: hidden; position: fixed;
+        margin: 0; padding-top: 55px; overflow: hidden; position: fixed;
         touch-action: none;
     }
 
-    .header-stats { display: flex; flex-direction: column; align-items: center; margin-bottom: 5px; width: 100%; }
+   .header-stats { 
+    position: fixed; /* Lock the stats to the very top */
+    top: 0;
+    background: #1a1a1a;
+    padding-top: 10px;
+    z-index: 1000;
+    height: 50px;
+    }
+
     .timer-row { display: flex; gap: 15px; font-family: monospace; font-size: 12px; color: #aaa; }
     #grand-total { font-size: 42px; font-weight: bold; color: #f1c40f; margin: 0; line-height: 1; }
 
@@ -43,6 +51,8 @@
         font-family: 'Charles Wright', sans-serif;
         font-weight: bold;
 	box-shadow: inset 0 -4px 0 rgba(0,0,0,0.2), 0 2px 4px rgba(0,0,0,0.3);
+    user-select: none; /* Prevents the "Copy/Paste" menu from appearing on slots */
+    -webkit-user-select: none;
     }
 
     .slot.active { border-color: #fff; box-shadow: 0 0 10px #f1c40f; }
@@ -184,10 +194,13 @@
 </div>
 
 <div class="header-stats">
-<button onclick="togglePause()" style="position:absolute; top:10px; left:80px; background:none; border:none; font-size:20px; cursor:pointer;">⏸️</button>
-<button onclick="toggleSettings()" style="position:absolute; top:10px; left:10px; background:none; border:none; font-size:20px; cursor:pointer;">⚙️</button>
-<button onclick="openLogbook()" style="position:absolute; top:10px; left:45px; background:none; border:none; font-size:20px; cursor:pointer;">📖</button>
-<button onclick="location.reload()" style="position:absolute; top:10px; right:10px; background:none; border:1px solid #444; color:#e90101; border-radius:4px; font-size:10px; padding:4px 8px;">RESTART</button>
+    <div style="position:absolute; top:10px; left:10px; display:flex; gap:12px;">
+        <button onclick="toggleSettings()" style="background:none; border:none; font-size:22px; cursor:pointer;">⚙️</button>
+        <button onclick="openLogbook()" style="background:none; border:none; font-size:22px; cursor:pointer;">📖</button>
+        <button onclick="togglePause()" id="pause-btn" style="background:none; border:none; font-size:22px; cursor:pointer;">⏸️</button>
+    </div>
+
+    <button onclick="location.reload()" style="position:absolute; top:12px; right:10px; background:none; border:1px solid #444; color:#e90101; border-radius:4px; font-size:10px; padding:4px 8px;">RESTART</button>
 
     <div class="timer-row">
         <div>TIME: <span id="game-timer" style="color: white;">00:00</span></div>
