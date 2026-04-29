@@ -650,13 +650,12 @@ function displayLeagueTable(targetId = 'league-display') {
 
     function toggleSort(type, targetId) { currentSort = type; displayLeagueTable(targetId); }
 
-    function openLogbook() {
-        document.getElementById('logbook-overlay').style.display = 'flex';
-        updateLogbookData();
-        renderEraLogbook();
-        shadeMap(); 
-        showLogPage('map-page'); 
-    }
+function openLogbook() {
+    document.getElementById('logbook-overlay').style.display = 'flex';
+    updateLogbookData();
+    shadeMap(); 
+    switchLogPage('modern'); // Use the new function to ensure clean switching
+}
 
     function closeLogbook() { document.getElementById('logbook-overlay').style.display = 'none'; }
 
@@ -908,25 +907,27 @@ function switchLogPage(pageId) {
 </script>
 
 <div id="logbook-overlay">
-    <div style="padding: 20px 10px 10px; border-bottom: 1px solid #333; text-align: center;">
+    <!-- 1. FIXED HEADER & NAV -->
+    <div style="padding: 20px 10px 10px; border-bottom: 1px solid #333; text-align: center; background: #1a1a1a;">
         <h2 style="color:#f1c40f; margin:0 0 10px 0;">LOGBOOK</h2>
-<div class="logbook-nav" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; padding: 10px; background: #222;">
-    <button class="tab-btn active" onclick="switchLogPage('modern')" style="flex: 1 1 45%; padding: 10px; border-radius: 5px; border: none; background: #444; color: white;">MODERN</button>
-    <button class="tab-btn" onclick="switchLogPage('classic')" style="flex: 1 1 45%; padding: 10px; border-radius: 5px; border: none; background: #3498db; color: white;">CLASSIC</button>
-    <button class="tab-btn" onclick="switchLogPage('heritage')" style="flex: 1 1 45%; padding: 10px; border-radius: 5px; border: none; background: #8e44ad; color: white;">HERITAGE</button>
-    <button class="tab-btn" onclick="switchLogPage('league')" style="flex: 1 1 21%; padding: 10px; border-radius: 5px; border: none; background: #444; color: white;">LEAGUE</button>
-    <button class="tab-btn" onclick="switchLogPage('stats')" style="flex: 1 1 21%; padding: 10px; border-radius: 5px; border: none; background: #444; color: white;">STATS</button>
-</div>
-
-
-
-            <button onclick="closeLogbook()" style="background:none; border:1px solid #666; color:#fff; border-radius:4px; padding:5px 10px; font-size:12px;">EXIT</button>
+        
+        <div class="logbook-nav" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; padding: 10px; background: #222; border-radius: 8px; margin-bottom: 10px;">
+            <button class="tab-btn active" onclick="switchLogPage('modern')" style="flex: 1 1 45%; padding: 10px; border-radius: 5px; border: none; background: #444; color: white;">MODERN</button>
+            <button class="tab-btn" onclick="switchLogPage('classic')" style="flex: 1 1 45%; padding: 10px; border-radius: 5px; border: none; background: #3498db; color: white;">CLASSIC</button>
+            <button class="tab-btn" onclick="switchLogPage('heritage')" style="flex: 1 1 45%; padding: 10px; border-radius: 5px; border: none; background: #8e44ad; color: white;">HERITAGE</button>
+            <button class="tab-btn" onclick="switchLogPage('league')" style="flex: 1 1 21%; padding: 10px; border-radius: 5px; border: none; background: #444; color: white;">LEAGUE</button>
+            <button class="tab-btn" onclick="switchLogPage('stats')" style="flex: 1 1 21%; padding: 10px; border-radius: 5px; border: none; background: #444; color: white;">STATS</button>
         </div>
+
+        <button onclick="closeLogbook()" style="background:none; border:1px solid #666; color:#fff; border-radius:4px; padding:5px 20px; font-size:12px;">EXIT LOGBOOK</button>
     </div>
-<div id="region-detail-view" style="display:none; position:absolute; top:0; left:0; width:100%; height:100%; background:#1a1a1a; padding:20px; box-sizing:border-box; z-index:7000; overflow-y:auto;"></div>
-    <div id="map-page" class="log-page" style="padding: 10px; overflow-y: auto;">
-        <div id="map-ui-container">
-            <div id="log-map-svg" style="text-align:center;">
+
+    <!-- 2. REGION DETAIL VIEW (Stays inside overlay) -->
+    <div id="region-detail-view" style="display:none; position:absolute; top:0; left:0; width:100%; height:100%; background:#1a1a1a; padding:20px; box-sizing:border-box; z-index:7000; overflow-y:auto;"></div>
+
+    <!-- 3. MODERN MAP PAGE -->
+    <div id="modern-page" class="log-page" style="padding: 10px; overflow-y: auto;">
+        <div id="log-map-svg" style="text-align:center;">
                 <svg viewBox="0 0 200 320" xmlns="http://www.w3.org/2000/svg" style="width: 100%; max-width: 280px; height: auto;">
                     <g id="region-scotland-group"><path id="region-scotland" d="M80 20 L120 20 L130 60 L110 100 L70 90 Z" stroke="#555" /><text x="90" y="60" style="fill:white; font-size:10px;">S / TN</text></g>
                     <g id="region-northeast-group"><path id="region-northeast" d="M90 100 L130 100 L140 125 L90 125 Z" stroke="#555" /><text x="110" y="115" style="fill:white; font-size:10px;">N</text></g>
@@ -948,60 +949,52 @@ function switchLogPage(pageId) {
                     <g id="region-hants-dorset-group"><path id="region-hants-dorset" d="M85 225 L125 225 L120 260 L80 255 Z" stroke="#555" /><text x="95" y="248" style="fill:white; font-size:10px;">H</text></g>
                     <g id="region-west-of-england-group"><path id="region-west-of-england" d="M10 215 L75 225 L65 270 L10 250 Z" stroke="#555" /><text x="35" y="248" style="fill:white; font-size:10px;">W</text></g>
                 </svg>
-                <div style="font-size: 11px; color: #666; margin-top: 10px;">Regions: <span id="region-count" style="color:#f1c40f;">0/19</span></div>
-            </div>
-            <div id="special-collection" onclick="showNationalDetails()" style="cursor:pointer; margin-top: 20px; background: #222; padding: 15px; border-radius: 10px; border: 1px solid #444;">
-                <h4 style="color: #aaa; font-size: 10px; text-transform: uppercase; margin-bottom: 10px; text-align: center;">National (JTUX) & Special Issues</h4>
-                <div style="display: flex; justify-content: space-between; font-family: monospace; font-size: 1.2rem;">
-                    <div>J: <span id="count-j">0</span></div>
-                    <div>T: <span id="count-t">0</span></div>
-                    <div>U: <span id="count-u">0</span></div>
-                    <div>X: <span id="count-x">0</span></div>
-                </div>
+
+                <svg viewBox="0 0 200 320" xmlns="http://www.w3.org/2000/svg" style="width: 100%; max-width: 280px; height: auto;">
+                 <!-- ... (Keep your existing map paths) ... -->
+            </svg>
+            <div style="font-size: 11px; color: #666; margin-top: 10px;">Regions: <span id="region-count" style="color:#f1c40f;">0/19</span></div>
+        </div>
+        
+        <div id="special-collection" onclick="showNationalDetails()" style="cursor:pointer; margin: 20px 10px; background: #222; padding: 15px; border-radius: 10px; border: 1px solid #444;">
+            <h4 style="color: #aaa; font-size: 10px; text-transform: uppercase; margin-bottom: 10px; text-align: center;">National (JTUX) & Special Issues</h4>
+            <div style="display: flex; justify-content: space-between; font-family: monospace; font-size: 1.2rem;">
+                <div>J: <span id="count-j">0</span></div>
+                <div>T: <span id="count-t">0</span></div>
+                <div>U: <span id="count-u">0</span></div>
+                <div>X: <span id="count-x">0</span></div>
             </div>
         </div>
     </div>
 
-<!-- Inside your logbook-overlay -->
-<div id="classic-page" class="log-page" style="display:none; padding: 20px; overflow-y: auto; height: 80%;">
-    <h3 style="color:#3498db; text-align:center; margin-bottom:10px;">CLASSIC ERA (1983-2001)</h3>
-    <div id="classic-progress-bar" style="height:12px; background:#222; border-radius:6px; margin-bottom:20px; border: 1px solid #444;">
-        <div id="classic-fill" style="width:0%; height:100%; background:#3498db; border-radius:6px; transition: width 0.5s;"></div>
+    <!-- 4. CLASSIC PAGE -->
+    <div id="classic-page" class="log-page" style="display:none; padding: 20px; overflow-y: auto;">
+        <h3 style="color:#3498db; text-align:center;">CLASSIC ERA (1983-2001)</h3>
+        <div id="classic-progress-bar" style="height:10px; background:#222; border-radius:5px; margin-bottom:20px; border: 1px solid #444;">
+            <div id="classic-fill" style="width:0%; height:100%; background:#3498db; border-radius:5px; transition: width 0.5s;"></div>
+        </div>
+        <div id="classic-list"></div>
     </div>
-    <div id="classic-list"></div> <!-- Data injected here -->
-</div>
 
-<div id="heritage-page" class="log-page" style="display:none; padding: 20px; overflow-y: auto; height: 80%;">
-    <h3 style="color:#8e44ad; text-align:center; margin-bottom:10px;">HERITAGE ERA (1963-1983)</h3>
-    <div id="heritage-progress-bar" style="height:12px; background:#222; border-radius:6px; margin-bottom:20px; border: 1px solid #444;">
-        <div id="heritage-fill" style="width:0%; height:100%; background:#8e44ad; border-radius:6px; transition: width 0.5s;"></div>
+    <!-- 5. HERITAGE PAGE -->
+    <div id="heritage-page" class="log-page" style="display:none; padding: 20px; overflow-y: auto;">
+        <h3 style="color:#8e44ad; text-align:center;">HERITAGE ERA (1963-1983)</h3>
+        <div id="heritage-progress-bar" style="height:10px; background:#222; border-radius:5px; margin-bottom:20px; border: 1px solid #444;">
+            <div id="heritage-fill" style="width:0%; height:100%; background:#8e44ad; border-radius:5px; transition: width 0.5s;"></div>
+        </div>
+        <div id="heritage-list"></div>
     </div>
-    <div id="heritage-list"></div> <!-- Data injected here -->
-</div>
 
+    <!-- 6. LEAGUE PAGE -->
     <div id="league-page" class="log-page" style="display:none; padding: 20px;">
         <div id="log-league-container"></div>
     </div>
 
+    <!-- 7. STATS PAGE -->
     <div id="stats-page" class="log-page" style="display:none; padding: 20px; text-align: center;">
-        <p>Total Unique Found: <span id="log-total-count">0</span></p>
+        <p style="font-size: 1.2rem;">Total Unique Found: <span id="log-total-count" style="color:#f1c40f; font-weight:bold;">0</span></p>
     </div>
+</div> <!-- Correctly closes logbook-overlay -->
 
-    <div id="classic-page" class="log-page" style="display:none; padding: 20px; overflow-y: auto;">
-    <h3 style="color:#3498db; text-align:center;">CLASSIC ERA (1983-2001)</h3>
-    <div id="classic-progress-bar" style="height:10px; background:#222; border-radius:5px; margin-bottom:20px;">
-        <div id="classic-fill" style="width:0%; height:100%; background:#3498db; border-radius:5px; transition: width 0.5s;"></div>
-    </div>
-    <div id="classic-list"></div>
-</div>
-
-<div id="heritage-page" class="log-page" style="display:none; padding: 20px; overflow-y: auto;">
-    <h3 style="color:#8e44ad; text-align:center;">HERITAGE ERA (1963-1983)</h3>
-    <div id="heritage-progress-bar" style="height:10px; background:#222; border-radius:5px; margin-bottom:20px;">
-        <div id="heritage-fill" style="width:0%; height:100%; background:#8e44ad; border-radius:5px; transition: width 0.5s;"></div>
-    </div>
-    <div id="heritage-list"></div>
-</div>
-</div>
 </body>
 </html>
