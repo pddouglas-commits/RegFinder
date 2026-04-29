@@ -144,6 +144,13 @@
 
 </head>
 <body>
+
+<div id="pause-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(26,26,26,0.95); z-index:8000; flex-direction:column; align-items:center; justify-content:center;">
+    <h2 style="color:#f1c40f; letter-spacing:4px;">GAME PAUSED</h2>
+    <p style="color:#aaa; margin-bottom:30px; font-size:0.9rem;">The clock is stopped.</p>
+    <button onclick="togglePause()" style="padding:15px 40px; background:#f1c40f; border:none; border-radius:30px; font-weight:bold; font-size:1.1rem; cursor:pointer; box-shadow: 0 4px 15px rgba(241, 196, 15, 0.3);">RESUME</button>
+</div>
+
 <div id="splash-screen" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#1a1a1a; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:2000;">
     <div style="position:absolute; top:20px; width:100%; display:flex; justify-content:space-between; padding:0 20px; box-sizing:border-box;">
         <button onclick="toggleSettings()" style="background:none; border:none; font-size:24px; cursor:pointer;">⚙️</button>
@@ -232,6 +239,7 @@
     let currentTargetOptions = []; 
     let gameDirection = null; 
     let isGameActive = false;
+    let isPaused = false;
     let gameStartTime, gameInterval, chainTimer, chainTimeLeft = 0, chainCount = 0;
     let currentSort = 'time'; 
     let currentPlateSort = 'time'; // Options: 'time' or 'alpha'
@@ -274,7 +282,11 @@
     }
 
 hiddenInput.addEventListener('input', (e) => {
-    const val = e.target.value.toUpperCase();
+    // Replace spaces with asterisks before processing
+    let val = e.target.value.toUpperCase().replace(/\s/g, '*'); 
+    e.target.value = val; // Reflect the asterisk in the input for consistency
+ 
+
     slots.forEach((s, i) => s.innerText = val[i] || "");
     
     if (val.length === 4) {
@@ -517,10 +529,21 @@ function displayEraResult(letter, era, detail, alreadyFound = false) {
     card.classList.add('flash-success');
 }
 
-    function updateGameTimer() {
-        const diff = Math.floor((Date.now() - gameStartTime) / 1000);
-        document.getElementById('game-timer').innerText = `${Math.floor(diff/60).toString().padStart(2,'0')}:${(diff%60).toString().padStart(2,'0')}`;
+function updateGameTimer() {
+    if (isPaused || !isGameActive) return; // Timer freeze logic
+    const diff = Math.floor((Date.now() - gameStartTime) / 1000);
+    document.getElementById('game-timer').innerText = `${Math.floor(diff/60).toString().padStart(2,'0')}:${(diff%60).toString().padStart(2,'0')}`;
+}
+
+function togglePause() {
+    isPaused = !isPaused;
+    if (isPaused) {
+        clearInterval(chainTimer); // Stop chain clock too
+        // Optionally show a "PAUSED" overlay here
+    } else {
+        if (isGameActive) startChainTimer(); // Resume chain clock
     }
+}
 
     function highlightTargets() {
         alphabet.forEach(l => {
@@ -562,22 +585,23 @@ function showWinOverlay() {
     winDiv.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.98); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:9000; text-align:center; padding:20px; box-sizing:border-box;";
     
     // NAVIGATION HEADER FOR WIN PAGE
+    // NAVIGATION HEADER (Fixes icons)
     const navHeader = `
-        <div style="position:absolute; top:20px; width:100%; display:flex; justify-content:space-between; padding:0 30px; box-sizing:border-box;">
-            <button onclick="toggleSettings()" style="background:none; border:none; font-size:24px; cursor:pointer;">⚙️</button>
-            <button onclick="openLogbook()" style="background:none; border:none; font-size:24px; cursor:pointer;">📖</button>
-        </div>`;
+    <div style="position:absolute; top:20px; width:100%; display:flex; justify-content:space-between; padding:0 30px; box-sizing:border-box;">
+        <button onclick="toggleSettings()" style="background:none; border:none; font-size:24px; cursor:pointer;">⚙️</button>
+        <button onclick="openLogbook()" style="background:none; border:none; font-size:24px; cursor:pointer;">📖</button>
+    </div>`;
 
+// HOME BUTTON (Goes to Splash)
     winDiv.innerHTML = `
-        ${navHeader}
-        <h1 style="color:#f1c40f; margin-top:40px; font-size:2.5rem; text-shadow: 0 0 15px rgba(241,196,15,0.5);">MISSION COMPLETE</h1>
-        <p style="font-size:1.2rem; color:#fff;">FINAL SCORE: <span style="color:#f1c40f;">${totalSessionScore}</span></p>
-        <p style="color:#aaa;">TIME: ${timeStr}</p>
-        
-        <div id="league-display" style="width:100%; max-width:320px; margin-top:20px;"></div>
-        
-        <button onclick="location.reload()" style="margin-top:30px; padding:15px 50px; background:#f1c40f; border:none; border-radius:30px; font-weight:bold; font-size:1.1rem; box-shadow: 0 4px 15px rgba(241,196,15,0.3);">NEW SPRINT</button>
-    `;
+    ${navHeader}
+    <h1 style="color:#f1c40f; margin-top:40px; font-size:2.5rem;">MISSION COMPLETE</h1>
+    <p style="font-size:1.2rem; color:#fff;">FINAL SCORE: <span style="color:#f1c40f;">${totalSessionScore}</span></p>
+    
+    <div id="league-display" style="width:100%; max-width:320px; margin-top:20px;"></div>
+    
+    <button onclick="location.reload()" style="margin-top:30px; padding:15px 50px; background:#f1c40f; border:none; border-radius:30px; font-weight:bold; font-size:1.1rem;">HOME</button>
+`;
 
     document.body.appendChild(winDiv);
     displayLeagueTable(); // Renders the leaderboard into the league-display div
