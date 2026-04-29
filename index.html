@@ -184,7 +184,7 @@
 </div>
 
 <div class="header-stats">
-<button onclick="togglePause()" id="pause-btn" style="position:fixed; top:20px; right:80px; z-index:5000; background:rgba(68,68,68,0.8); border:2px solid #f1c40f; border-radius:50%; width:45px; height:45px; color:white; font-size:20px; cursor:pointer; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(5px);">⏸</button>
+<button onclick="togglePause()" style="position:absolute; top:10px; left:80px; background:none; border:none; font-size:20px; cursor:pointer;">⏸️</button>
 <button onclick="toggleSettings()" style="position:absolute; top:10px; left:10px; background:none; border:none; font-size:20px; cursor:pointer;">⚙️</button>
 <button onclick="openLogbook()" style="position:absolute; top:10px; left:45px; background:none; border:none; font-size:20px; cursor:pointer;">📖</button>
 <button onclick="location.reload()" style="position:absolute; top:10px; right:10px; background:none; border:1px solid #444; color:#e90101; border-radius:4px; font-size:10px; padding:4px 8px;">RESTART</button>
@@ -339,34 +339,33 @@ function processClassicPrefix(plateId) {
     const letter = plateId[0];
     if (['I','O','U','Q','Z'].includes(letter)) { showUnknown(); return; }
 
-    // CRITICAL: Force a fresh read from storage
-    let currentClassic = JSON.parse(localStorage.getItem('regFinder_classic')) || [];
-    
-    if (!currentClassic.includes(letter)) {
-        currentClassic.push(letter);
-        localStorage.setItem('regFinder_classic', JSON.stringify(currentClassic));
-        displayEraResult(letter, "Classic", "1983-2001", false);
-    } else {
-        displayEraResult(letter, "Classic", "Already Found", true);
+    // Logic Fix: Get the collection fresh
+    let collection = JSON.parse(localStorage.getItem('regFinder_classic')) || [];
+    const isNew = !collection.includes(letter);
+
+    if (isNew) {
+        collection.push(letter);
+        localStorage.setItem('regFinder_classic', JSON.stringify(collection));
     }
-    setTimeout(clearInput, 500); // Faster clear to prevent "hanging"
+    
+    displayEraResult(letter, "Classic", isNew ? "1983-2001" : "Already Found", !isNew);
+    setTimeout(clearInput, 1500);
 }
 
 function processHeritageSuffix(plateId) {
     const letter = plateId[3];
     if (['I','O','U','Q','Z'].includes(letter)) { showUnknown(); return; }
 
-    // CRITICAL: Force a fresh read from storage
-    let currentHeritage = JSON.parse(localStorage.getItem('regFinder_heritage')) || [];
+    let collection = JSON.parse(localStorage.getItem('regFinder_heritage')) || [];
+    const isNew = !collection.includes(letter);
 
-    if (!currentHeritage.includes(letter)) {
-        currentHeritage.push(letter);
-        localStorage.setItem('regFinder_heritage', JSON.stringify(currentHeritage));
-        displayEraResult(letter, "Heritage", "1963-1983", false);
-    } else {
-        displayEraResult(letter, "Heritage", "Already Found", true);
+    if (isNew) {
+        collection.push(letter);
+        localStorage.setItem('regFinder_heritage', JSON.stringify(collection));
     }
-    setTimeout(clearInput, 500); // Faster clear
+    
+    displayEraResult(letter, "Heritage", isNew ? "1963-1983" : "Already Found", !isNew);
+    setTimeout(clearInput, 1500);
 }
     function toggleSettings() {
         const menu = document.getElementById('settings-menu');
@@ -696,6 +695,31 @@ function renderEraLogbook() {
     document.getElementById('heritage-fill').style.width = `${(heritageOwned.length / 21) * 100}%`;
 }
 
+function renderEraTimeline(era) {
+    const container = document.getElementById(era + '-list');
+    const years = era === 'classic' ? classicYears : heritageYears;
+    const collection = JSON.parse(localStorage.getItem('regFinder_' + era)) || [];
+    const color = era === 'classic' ? '#3498db' : '#8e44ad';
+    
+    let html = '';
+    Object.keys(years).sort().forEach(letter => {
+        const isFound = collection.includes(letter);
+        html += `
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; margin-bottom: 5px; background: ${isFound ? '#333' : '#111'}; border-radius: 8px; border-left: 5px solid ${isFound ? color : '#222'};">
+                <span style="font-size: 1.2rem; font-weight: bold; color: ${isFound ? '#fff' : '#444'};">${letter}</span>
+                <span style="color: ${isFound ? color : '#444'};">${years[letter]}</span>
+                <span>${isFound ? '✅' : '🔒'}</span>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+    
+    // Update progress bar
+    const percent = (collection.length / 21) * 100;
+    document.getElementById(era + '-fill').style.width = percent + '%';
+}
+
     function shadeMap() {
         const collection = JSON.parse(localStorage.getItem('regFinder_collection')) || [];
         const activePathIds = new Set();
@@ -860,19 +884,38 @@ function renderSection(title, color, platesArray = []) {
         let sorted = [...platesArray]; if (currentPlateSort === 'alpha') sorted.sort();
         return `<div style="margin-top:15px;"><strong style="color:${color}; font-size:0.8rem; text-transform:uppercase;">${title}</strong><div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:5px;">${sorted.map(id => `<span style="font-family:monospace; background:#222; padding:3px 8px; border-radius:4px; border:1px solid #444; font-size:0.9rem;">${id}</span>`).join('')}</div></div>`;
     }
+
+function switchLogPage(pageId) {
+    // Hide all pages
+    const pages = document.querySelectorAll('.log-page');
+    pages.forEach(p => p.style.display = 'none');
+    
+    // Show selected page
+    const target = document.getElementById(pageId + '-page');
+    if (target) {
+        target.style.display = 'block';
+    }
+
+    // Update button visual state
+    const btns = document.querySelectorAll('.tab-btn');
+    btns.forEach(b => b.style.opacity = '0.6');
+    event.currentTarget.style.opacity = '1';
+
+    // Special: If switching to Classic or Heritage, render the lists
+    if (pageId === 'classic') renderEraTimeline('classic');
+    if (pageId === 'heritage') renderEraTimeline('heritage');
+}
 </script>
 
 <div id="logbook-overlay">
     <div style="padding: 20px 10px 10px; border-bottom: 1px solid #333; text-align: center;">
         <h2 style="color:#f1c40f; margin:0 0 10px 0;">LOGBOOK</h2>
-        <div style="display: flex; justify-content: center; gap: 8px;">
-            <button onclick="showLogPage('map-page')" class="log-nav-btn">MAP</button>
-            <button onclick="showLogPage('league-page')" class="log-nav-btn">LEAGUE</button>
-            <button onclick="showLogPage('stats-page')" class="log-nav-btn">STATS</button>
-<div class="logbook-tabs" style="display:flex; justify-content:center; gap:10px; margin-bottom:15px; padding-top:10px;">
-    <button onclick="showEraPage('modern')" style="background:#444; color:white; border:none; padding:8px 15px; border-radius:20px; cursor:pointer;">MODERN</button>
-    <button onclick="showEraPage('classic')" style="background:#3498db; color:white; border:none; padding:8px 15px; border-radius:20px; cursor:pointer;">CLASSIC</button>
-    <button onclick="showEraPage('heritage')" style="background:#8e44ad; color:white; border:none; padding:8px 15px; border-radius:20px; cursor:pointer;">HERITAGE</button>
+<div class="logbook-nav" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; padding: 10px; background: #222;">
+    <button class="tab-btn active" onclick="switchLogPage('modern')" style="flex: 1 1 45%; padding: 10px; border-radius: 5px; border: none; background: #444; color: white;">MODERN</button>
+    <button class="tab-btn" onclick="switchLogPage('classic')" style="flex: 1 1 45%; padding: 10px; border-radius: 5px; border: none; background: #3498db; color: white;">CLASSIC</button>
+    <button class="tab-btn" onclick="switchLogPage('heritage')" style="flex: 1 1 45%; padding: 10px; border-radius: 5px; border: none; background: #8e44ad; color: white;">HERITAGE</button>
+    <button class="tab-btn" onclick="switchLogPage('league')" style="flex: 1 1 21%; padding: 10px; border-radius: 5px; border: none; background: #444; color: white;">LEAGUE</button>
+    <button class="tab-btn" onclick="switchLogPage('stats')" style="flex: 1 1 21%; padding: 10px; border-radius: 5px; border: none; background: #444; color: white;">STATS</button>
 </div>
 
 
