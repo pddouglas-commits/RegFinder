@@ -808,7 +808,24 @@ function showNationalDetails() {
         container.style.display = 'block';
     }
 
+function showEraPage(era) {
+    // 1. Hide all pages
+    document.querySelectorAll('.log-page').forEach(p => p.style.display = 'none');
+    
+    // 2. Identify the Modern sub-nav container
+    const modernSubNav = document.querySelector('#logbook-overlay > div:nth-child(1) > div:nth-child(3)');
 
+    if (era === 'modern') {
+        document.getElementById('map-page').style.display = 'block';
+        modernSubNav.style.display = 'flex'; // Show Map/League/Stats
+    } else {
+        modernSubNav.style.display = 'none'; // Hide sub-nav for older eras
+        if (era === 'classic') document.getElementById('classic-page').style.display = 'block';
+        if (era === 'heritage') document.getElementById('heritage-page').style.display = 'block';
+    }
+    
+    renderEraLogbook(); // Refresh the list checkmarks
+}
 
 function togglePlateSort(targetId) {
     currentPlateSort = (currentPlateSort === 'time') ? 'alpha' : 'time';
@@ -852,6 +869,14 @@ function renderSection(title, color, platesArray = []) {
             <button onclick="showLogPage('map-page')" class="log-nav-btn">MAP</button>
             <button onclick="showLogPage('league-page')" class="log-nav-btn">LEAGUE</button>
             <button onclick="showLogPage('stats-page')" class="log-nav-btn">STATS</button>
+<div class="logbook-tabs" style="display:flex; justify-content:center; gap:10px; margin-bottom:15px; padding-top:10px;">
+    <button onclick="showEraPage('modern')" style="background:#444; color:white; border:none; padding:8px 15px; border-radius:20px; cursor:pointer;">MODERN</button>
+    <button onclick="showEraPage('classic')" style="background:#3498db; color:white; border:none; padding:8px 15px; border-radius:20px; cursor:pointer;">CLASSIC</button>
+    <button onclick="showEraPage('heritage')" style="background:#8e44ad; color:white; border:none; padding:8px 15px; border-radius:20px; cursor:pointer;">HERITAGE</button>
+</div>
+
+
+
             <button onclick="closeLogbook()" style="background:none; border:1px solid #666; color:#fff; border-radius:4px; padding:5px 10px; font-size:12px;">EXIT</button>
         </div>
     </div>
@@ -893,6 +918,23 @@ function renderSection(title, color, platesArray = []) {
             </div>
         </div>
     </div>
+
+<!-- Inside your logbook-overlay -->
+<div id="classic-page" class="log-page" style="display:none; padding: 20px; overflow-y: auto; height: 80%;">
+    <h3 style="color:#3498db; text-align:center; margin-bottom:10px;">CLASSIC ERA (1983-2001)</h3>
+    <div id="classic-progress-bar" style="height:12px; background:#222; border-radius:6px; margin-bottom:20px; border: 1px solid #444;">
+        <div id="classic-fill" style="width:0%; height:100%; background:#3498db; border-radius:6px; transition: width 0.5s;"></div>
+    </div>
+    <div id="classic-list"></div> <!-- Data injected here -->
+</div>
+
+<div id="heritage-page" class="log-page" style="display:none; padding: 20px; overflow-y: auto; height: 80%;">
+    <h3 style="color:#8e44ad; text-align:center; margin-bottom:10px;">HERITAGE ERA (1963-1983)</h3>
+    <div id="heritage-progress-bar" style="height:12px; background:#222; border-radius:6px; margin-bottom:20px; border: 1px solid #444;">
+        <div id="heritage-fill" style="width:0%; height:100%; background:#8e44ad; border-radius:6px; transition: width 0.5s;"></div>
+    </div>
+    <div id="heritage-list"></div> <!-- Data injected here -->
+</div>
 
     <div id="league-page" class="log-page" style="display:none; padding: 20px;">
         <div id="log-league-container"></div>
