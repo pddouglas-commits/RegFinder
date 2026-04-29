@@ -220,6 +220,7 @@
     let plateData = {};
     let totalSessionScore = 0;
     let lastScoredPlate = "";
+    let pauseStartTime = 0;
     const alphabet = "ABCDEFGHJKLMNOPRSTUVWXY".split(""); 
     // Chronological Mapping for Heritage (Suffix)
     const heritageYears = { 
@@ -540,19 +541,21 @@ function updateGameTimer() {
 }
 
 function togglePause() {
-    if (!isGameActive) return; 
+    if (!isGameActive) return;
     
     isPaused = !isPaused;
     const overlay = document.getElementById('pause-overlay');
-    const pauseBtn = document.getElementById('pause-btn'); // Get the button
     
     if (isPaused) {
+        pauseStartTime = Date.now(); // Record when the pause began
         overlay.style.display = 'flex';
-        pauseBtn.innerText = '▶'; // Switch to Play
-        clearInterval(chainTimer);
+        if (chainTimer) clearInterval(chainTimer);
     } else {
+        // Calculate how long we were paused and push the gameStartTime forward by that amount
+        const pauseDuration = Date.now() - pauseStartTime;
+        gameStartTime += pauseDuration;
+        
         overlay.style.display = 'none';
-        pauseBtn.innerText = '⏸'; // Switch back to Pause
         if (chainTimeLeft > 0) startChainTimer();
         focusInput();
     }
