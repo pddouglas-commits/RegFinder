@@ -22,28 +22,29 @@
     position: fixed; 
     top: 0; left: 0; 
     width: 100vw; 
-    height: 85px; /* Increased height to stop the overlap */
+    height: 90px; /* Increased height to stop the overlap */
     background: #1a1a1a; 
     display: flex; 
     justify-content: space-between; 
     align-items: center; 
-    padding: 0 15px; 
+    padding: 0 10px; 
     box-sizing: border-box; 
     z-index: 10000;
     border-bottom: 1px solid #333;
 }
 
-.header-center { 
-    display: flex; 
-    flex-direction: column; 
-    align-items: center; 
-    flex: 2;
+/* This part defines the behavior for both side lanes and the center lane */
+.header-side, .header-center { 
+    flex: 1; 
+    width: 33.33%;
+    display: flex;
+    align-items: center;
 }
 
-.header-side { 
-    flex: 1; 
-    display: flex; 
-    align-items: center;
+/* This part adds vertical stacking specifically to the center lane */
+.header-center {
+    flex-direction: column;
+    justify-content: center;
 }
 
     .timer-row { display: flex; gap: 15px; font-family: monospace; font-size: 12px; color: #aaa; }
@@ -270,8 +271,8 @@
     const classicYears = {
     'A': 1983, 'B': 1984, 'C': 1985, 'D': 1986, 'E': 1987, 'F': 1988,
     'G': 1989, 'H': 1990, 'J': 1991, 'K': 1992, 'L': 1993, 'M': 1994,
-    'N': 1995, 'P': 1996, 'R': 1997, 'S': 1998, 'T': 1999, 'V': 2000,
-    'W': 2001, 'X': 2001, 'Y': 2001 // X and Y were short-duration 2001 releases
+    'N': 1995, 'P': 1996, 'R': 1997, 'S': 1998, 'T': 1999, 'V': 1999,
+    'W': 2000, 'X': 2000, 'Y': 2001 // X and Y were short-duration 2001 releases
     };
     let foundLetters = new Set();
     let currentTargetOptions = []; 
