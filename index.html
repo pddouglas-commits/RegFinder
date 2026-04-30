@@ -445,12 +445,17 @@ hiddenInput.addEventListener('input', (e) => {
     slots.forEach((s, i) => s.innerText = val[i] || "");
 
     // --- MODE 1: INTERNATIONAL (Blue Mode) ---
-    if (inputMode === 'INT') {
-    // Strip the asterisks so "D***" becomes just "D"
-    const cleanChars = val.replace(/\*/g, '');
-    
-    if (cleanChars.length > 0) {
-        processInternationalCode(cleanChars);
+if (inputMode === 'INT') {
+    // Only process once the user has filled 4 slots (chars or spaces)
+    if (val.length === 4) {
+        const cleanChars = val.replace(/\*/g, '');
+        
+        if (cleanChars.length > 0) {
+            processInternationalCode(cleanChars);
+        } else {
+            // Optional: hide card if they just typed spaces
+            resultCard.style.display = 'none';
+        }
     }
     return; 
 }
@@ -607,17 +612,21 @@ function processInternationalCode(code) {
             document.getElementById('grand-total').innerText = totalSessionScore;
         }
 
-        // Blue "International Oval" Style Badge
         document.getElementById('res-town').innerText = countryName;
         const scoreEl = document.getElementById('score-display');
         scoreEl.innerHTML = isNew ? `+75 POINTS` : `<span style="color: #666;">ALREADY VISITED</span>`;
+        
         document.getElementById('badges').innerHTML = `<div class="classic-badge" style="background:#003399; border-radius: 50px; padding: 4px 15px;">INTL: ${code}</div>`;
         
         const card = document.getElementById('result-card');
         card.style.display = 'block';
+        card.classList.remove('flash-error');
         card.classList.add('flash-success');
         
         setTimeout(clearInput, 1500);
+    } else {
+        // If they filled 4 slots but the code (e.g. "ZZZ") isn't recognized
+        showUnknown();
     }
 }
 
