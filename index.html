@@ -26,8 +26,6 @@
     padding: 5px;
 }
 
-
-
 .header-stats { 
     position: fixed; 
     top: 0; left: 0; 
@@ -130,6 +128,25 @@ h2 {
     }
 
     .slot.active { border-color: #fff; box-shadow: 0 0 10px #f1c40f; }
+
+    #mode-toggle {
+    height: 69px; /* Matches 65px height + 4px total border */
+    width: 50px;
+    background: #333;
+    border: 2px solid #555;
+    border-radius: 6px;
+    color: #f1c40f;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    box-sizing: border-box; /* Ensures the height includes the border */
+    padding: 0;
+    margin: 0;
+    }
 
     #restart-btn {
     display: none; /* Only show once game starts */
@@ -372,10 +389,10 @@ h2 {
         <div id="slot3" class="slot"></div>
     </div>
     
-    <button id="mode-toggle" onclick="toggleInputMode()" style="height: 65px; width: 50px; background: #333; border: 2px solid #555; border-radius: 6px; color: #f1c40f; font-weight: bold; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px;">
-        <span id="mode-label">GB</span>
-        <span style="font-size: 18px;">🌐</span>
-    </button>
+<button id="mode-toggle" onclick="toggleInputMode()">
+    <span id="mode-label">GB</span>
+    <span style="font-size: 18px;">🌐</span>
+</button>
 </div>
 
 <input type="text" id="hidden-input" maxlength="4" autocomplete="off" autocorrect="off" spellcheck="false" autocapitalize="characters" inputmode="text">
