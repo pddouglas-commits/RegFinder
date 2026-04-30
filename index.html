@@ -418,7 +418,8 @@ h2 {
     "AND": { name: "Andorra", pts: 75},
     "B": { name: "Belgium", pts: 50},
     "BIH": { name: "Bosnia and Herzegovinia", pts: 75},
-    "BY": { name: "Bulgaria", pts: 75},
+    "BG": { name: "Bulgaria", pts: 75},
+    "CY": { name: "Cyprus", pts: 75},
     "CH": { name: "Switzerland", pts: 75},
     "HR": { name: "Croatia", pts: 75},
     "CZ": { name: "Czech Republic", pts: 75},
@@ -427,9 +428,17 @@ h2 {
     "EST": { name: "Estonia", pts: 50 },
     "E": { name: "Spain", pts: 75},
     "F":  { name: "France", pts: 20 },
-    "I": { name: "Italy", pts: 75},
-    "IRL": { name: "Ireland", pts: 30 },
+    "FIN":  { name: "Finland", pts: 100 },
+    "FL":  { name: "Liectenstein", pts: 100 },
+    "GR":  { name: "Greece", pts: 100 },
+    "I": { name: "Italy", pts: 25},
+    "IRL": { name: "Ireland", pts: 25 },
+    "L": { name: "Luxembourg", pts: 50 },
+    "LT": { name: "Lithuania", pts: 75 },
+    "LV": { name: "Latvia", pts: 75 },
+    "M": { name: "Malta", pts: 200 },
     "MC": { name: "Monaco", pts: 150 },
+    "MD": { name: "Moldova", pts: 150 },
     "MK": { name: "North Macedonia | Legacy", pts: 200},
     "MNE": { name: "Montenegro", pts: 75},
     "N": { name: "Norway", pts: 75},
@@ -442,6 +451,7 @@ h2 {
     "S": { name: "Sweden", pts: 75},
     "SK": { name: "Slovakia", pts: 100},
     "SLO": { name: "Slovenia", pts: 100},
+    "SRB": { name: "Serbia", pts: 75},
     "UA": { name: "Ukraine", pts: 75},
     "UK": { name: "United Kingdom", pts: 5},
     "V":  { name: "Vatican City", pts: 200 }, // The ultra-rare find!
@@ -1307,7 +1317,7 @@ function renderIntlPassport() {
     "I": "🇮🇹", "IRL": "🇮🇪", "MC": "🇲🇨", "MK": "🇲🇰", "MNE": "🇲🇪", 
     "N": "🇳🇴", "NL": "🇳🇱", "NMK": "🇲🇰", "P": "🇵🇹", "PL": "🇵🇱", 
     "RO": "🇷🇴", "RSM": "🇸🇲", "S": "🇸🇪", "SK": "🇸🇰", "SLO": "🇸🇮", 
-    "UA": "🇺🇦", "UK": "🇬🇧", "V": "🇻🇦"
+    "UA": "🇺🇦", "UK": "🇬🇧", "V": "🇻🇦", "BIH": "🇧🇦", "BY": "🇧🇬", "EST": "🇪🇪", "HR": "🇭🇷"
 };
 
     let html = '';
@@ -1479,7 +1489,7 @@ function switchLogPage(pageId) {
                 <div id="intl-fill" style="width:0%; height:100%; background:#003399; border-radius:5px;"></div>
             </div>
         </div>
-        <div style="flex: 1; overflow-y: auto; padding: 0 20px 150px; -webkit-overflow-scrolling: touch; touch-action: pan-y !important;">
+        <div style="flex: 1; overflow-y: auto; padding: 0 20px 20px; -webkit-overflow-scrolling: touch; touch-action: pan-y !important;">
             <div id="intl-list" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;"></div>
         </div>
     </div>
