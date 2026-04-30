@@ -381,18 +381,20 @@ h2 {
 
 <h2>SPOT THE REG</h2>
 
-<div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-    <div class="plate-input-container" onclick="focusInput()">
+<div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 20px;">
+    <!-- We set margin-bottom: 0 on the slots so they don't push up away from the button -->
+    <div class="plate-input-container" onclick="focusInput()" style="margin-bottom: 0;">
         <div id="slot0" class="slot active"></div>
         <div id="slot1" class="slot"></div>
         <div id="slot2" class="slot"></div>
         <div id="slot3" class="slot"></div>
     </div>
     
-<button id="mode-toggle" onclick="toggleInputMode()">
-    <span id="mode-label">GB</span>
-    <span style="font-size: 18px;">🌐</span>
-</button>
+    <!-- Clean button with NO inline styles -->
+    <button id="mode-toggle" onclick="toggleInputMode()">
+        <span id="mode-label">GB</span>
+        <span style="font-size: 18px;">🌐</span>
+    </button>
 </div>
 
 <input type="text" id="hidden-input" maxlength="4" autocomplete="off" autocorrect="off" spellcheck="false" autocapitalize="characters" inputmode="text">
