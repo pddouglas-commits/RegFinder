@@ -390,6 +390,8 @@
         inputMode = (inputMode === 'GB') ? 'INT' : 'GB';
         const btn = document.getElementById('mode-toggle');
         const label = document.getElementById('mode-label');
+        const slotsContainer = document.querySelector('.plate-input-container');
+        slotsContainer.style.background = (inputMode === 'INT') ? '#003399' : 'transparent';
     
         if (inputMode === 'INT') {
             btn.style.borderColor = '#003399'; // International Blue
@@ -497,44 +499,43 @@ function processHeritageSuffix(plateId) {
 }
 
 function processNIPlate(plateId) {
-    // 1. Remove any asterisks to get clean characters
-    const cleanPlate = plateId.replace(/\*/g, '');
+    const clean = plateId.replace(/\*/g, '');
+    const letterMatch = clean.match(/[A-Z]{2,3}/);
     
-    // 2. Extract ONLY the letters (e.g., "ADZ" from "ADZ1")
-    const letterMatch = cleanPlate.match(/[A-Z]{3}/);
-    if (!letterMatch) return; // Exit if we don't have 3 letters yet
+    if (!letterMatch) return;
     
     const letters = letterMatch[0];
-    let countyCode = "";
+    let code = "";
 
-    // 3. Logic: County code is ALWAYS the part containing I or Z
-    // If 2nd char is I/Z (ADZ, BIZ), code is 2nd & 3rd letters
-    if (letters[1] === 'I' || letters[1] === 'Z') {
-        countyCode = letters.substring(1, 3);
-    } 
-    // If 1st char is I/Z (IA, BZ), code is 1st & 2nd letters
-    else if (letters[0] === 'I' || letters[0] === 'Z') {
-        countyCode = letters.substring(0, 2);
+    // Extract the 2-letter county code based on I/Z position
+    if (letters.length === 3) {
+        // Current format: A[UI] 1234 or [BI]G 1
+        code = (letters[1] === 'I' || letters[1] === 'Z') ? letters.substring(1, 3) : letters.substring(0, 2);
+    } else {
+        // Older/Reversed format: [IA] 1234 or [BZ] 1
+        code = letters;
     }
 
-    const countyName = niCounties[countyCode];
+    console.log("NI Debug - Raw:", plateId, "Code Found:", code);
+
+    const countyName = niCounties[code];
 
     if (countyName) {
         let niCollection = JSON.parse(localStorage.getItem('regFinder_ni')) || [];
-        const isAlreadyThere = niCollection.includes(countyCode);
+        const isAlreadyThere = niCollection.includes(code);
 
         if (!isAlreadyThere) {
-            niCollection.push(countyCode);
+            niCollection.push(code);
             localStorage.setItem('regFinder_ni', JSON.stringify(niCollection));
             totalSessionScore += 50;
             document.getElementById('grand-total').innerText = totalSessionScore;
         }
 
-        displayEraResult(countyCode, "Northern Ireland", countyName, isAlreadyThere);
+        displayEraResult(code, "Northern Ireland", countyName, isAlreadyThere);
         setTimeout(clearInput, 1500);
-    } else {
-        // Only show unknown if the user has finished typing a 4-char string
-        if (cleanPlate.length >= 4) showUnknown();
+    } else if (clean.length >= 4) {
+        // Only show unknown if it failed to match a real county after 4 chars
+        showUnknown();
     }
 }
 
