@@ -387,23 +387,26 @@
     }
 
     function toggleInputMode() {
-        inputMode = (inputMode === 'GB') ? 'INT' : 'GB';
-        const btn = document.getElementById('mode-toggle');
-        const label = document.getElementById('mode-label');
-        const slotsContainer = document.querySelector('.plate-input-container');
-        slotsContainer.style.background = (inputMode === 'INT') ? '#003399' : 'transparent';
+    inputMode = (inputMode === 'GB') ? 'INT' : 'GB';
+    const btn = document.getElementById('mode-toggle');
+    const label = document.getElementById('mode-label');
     
-        if (inputMode === 'INT') {
-            btn.style.borderColor = '#003399'; // International Blue
-            label.innerText = 'INT';
-            // Clear slots to prepare for new mode
-        clearInput();
-        } else {
-            btn.style.borderColor = '#555';
-            label.innerText = 'GB';
-            clearInput();
-        }
+    // Target all slots to change their background color
+    const allSlots = document.querySelectorAll('.slot');
+    
+    if (inputMode === 'INT') {
+        btn.style.borderColor = '#003399';
+        label.innerText = 'INT';
+        allSlots.forEach(s => s.style.background = '#003399'); // International Blue
+        allSlots.forEach(s => s.style.color = 'white');
+    } else {
+        btn.style.borderColor = '#555';
+        label.innerText = 'GB';
+        allSlots.forEach(s => s.style.background = '#f1c40f'); // GB Yellow
+        allSlots.forEach(s => s.style.color = 'black');
     }
+    clearInput();
+}
 
     function focusInput() { 
         hiddenInput.focus({ preventScroll: true }); 
@@ -411,36 +414,52 @@
     }
 
 hiddenInput.addEventListener('input', (e) => {
+    // 1. Standardize input (Space becomes *)
     let val = e.target.value.toUpperCase().replace(/\s/g, '*'); 
     e.target.value = val; 
+    
+    // 2. Update visual slots
     slots.forEach((s, i) => s.innerText = val[i] || "");
 
-    const cleanChars = val.replace(/\*/g, '');
-
-    // --- MODE 1: INTERNATIONAL ---
+    // --- MODE 1: INTERNATIONAL (Blue Mode) ---
     if (inputMode === 'INT') {
+        const cleanChars = val.replace(/\*/g, '');
         if (cleanChars.length > 0) {
             processInternationalCode(cleanChars);
         }
-        return; // Don't run GB logic in INT mode
+        return; // Stop here; do not run GB logic
     }
 
-    // --- MODE 2: GB (Your existing logic) ---
-        if (/\d/.test(val)) {
-            if (/^[A-Z]*[IZ][A-Z]*[\d\*]{1,4}$/.test(val)) {
-                processNIPlate(val); // This should catch ADZ1 now!
-                }
-            else if (val.length === 4) {
-                if (/^[A-Z]{2}\d{2}$/.test(val)) {
-                const match = plateData[val];
-                if (match) processPlate(match, val); else showUnknown();
-            } 
-            else if (/^[A-Z]\d[\d\*]{2}$/.test(val)) processClassicPrefix(val);
-            else if (/^[\d\*]{2}\d[A-Z]$/.test(val)) processHeritageSuffix(val);
-            else showUnknown();
-            }
+    // --- MODE 2: GB (Yellow Mode) ---
+    const hasNumber = /\d/.test(val);
+
+    // 3. PRIORITY CHECK: Northern Ireland (Fixed Logic)
+    // We check this BEFORE the length-4 rule so ADZ1 works immediately.
+    if (hasNumber && /[IZ]/.test(val)) {
+        processNIPlate(val);
+        return; // EXIT EARLY so it doesn't hit "showUnknown"
+    }
+
+    // 4. STANDARD ERA LOGIC (Requires 4 chars and a number)
+    if (val.length === 4 && hasNumber) {
+        if (/^[A-Z]{2}\d{2}$/.test(val)) {
+            const match = plateData[val];
+            if (match) processPlate(match, val); else showUnknown();
+        } 
+        else if (/^[A-Z]\d[\d\*]{2}$/.test(val)) {
+            processClassicPrefix(val);
         }
-    });
+        else if (/^[\d\*]{2}\d[A-Z]$/.test(val)) {
+            processHeritageSuffix(val);
+        }
+        else {
+            showUnknown();
+        }
+    } else if (val.length === 4 && !hasNumber) {
+        // If they filled all slots with letters but it's not a valid combo
+        showUnknown();
+    }
+});
 
     function processPlate(data, plateId) {
         const firstLetter = plateId[0];
