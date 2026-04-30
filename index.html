@@ -360,23 +360,41 @@ h2 {
 
     // INTERNATIONAL  mapping
     const internationalCodes = {
-    "A": "Austria", 
-    "AL": "Albania",
-    "AND": "Andorra",
-    "D": "Germany", 
-    "F": "France", 
-    "I": "Italy", 
-    "E": "Spain",
-    "B": "Belgium", 
-    "NL": "Netherlands", 
-    "CH": "Switzerland",    
-    "IRL": "Ireland", 
-    "PL": "Poland", 
-    "P": "Portugal",
-    "CZ": "Czech Republic", 
-    "DK": "Denmark", 
-    "S": "Sweden", 
-    "N": "Norway"
+    "D":   { name: "Germany", pts: 20 },
+    "F":   { name: "France", pts: 20 },
+    "V":   { name: "Vatican City", pts: 200 }, // The ultra-rare find!
+    "IRL": { name: "Ireland", pts: 30 },
+    "NL":  { name: "Netherlands", pts: 25 },
+    "DK":  { name: "Denmark", pts: 40 },
+    "MC":  { name: "Monaco", pts: 150 },
+    "A":   { name: "Austria", pts: 50 },
+    "AL":  { name: "Albania", pts: 50 },
+    "AND": { name: "Andorra", pts: 75},
+    "D": { name: "Germany", pts: 75},
+    "F": { name: "France", pts: 75},
+    "I": { name: "Italy", pts: 75},
+    "E": { name: "Spain", pts: 75},
+    "B": { name: "Belgium", pts: 75},
+    "MC": { name: "Monaco", pts: 75},
+    "MNE": { name: "Montenegro", pts: 75},
+    "NMK": { name: "North Macedonia", pts: 200},
+    "MK": { name: "North Macedonia | Legacy", pts: 200},
+    "RO": { name: "Romania", pts: 75},
+    "RSM": { name: "San Marino", pts: 500},
+    "SK": { name: "Slovakia", pts: 100},
+    "SLO": { name: "Slovenia", pts: 100},
+    "UA": { name: "Ukraine", pts: 75},
+    "UK": { name: "United Kingdom", pts: 5},
+    "V": { name: "Vatican City", pts: 75},
+    "NL": { name: "Netherlands", pts: 25},
+    "CH": { name: "Switzerland", pts: 75},
+    "IRL": { name: "Ireland", pts: 25},
+    "PL": { name: "Poland", pts: 75},
+    "P": { name: "Portugal", pts: 75},
+    "CZ": { name: "Czech Republic", pts: 75},
+    "DK": { name: "Denmark", pts: 75},
+    "S": { name: "Sweden", pts: 75},
+    "N": { name: "Norway", pts: 75},
     };
 
     let foundLetters = new Set();
@@ -613,23 +631,27 @@ function processNIPlate(plateId) {
 }
 
 function processInternationalCode(code) {
-    const countryName = internationalCodes[code];
+    const data = internationalCodes[code];
 
-    if (countryName) {
+    if (data) {
         let intlCollection = JSON.parse(localStorage.getItem('regFinder_intl')) || [];
         const isNew = !intlCollection.includes(code);
 
         if (isNew) {
             intlCollection.push(code);
             localStorage.setItem('regFinder_intl', JSON.stringify(intlCollection));
-            totalSessionScore += 75;
+            
+            // Use the points from the data object, or default to 50 if missing
+            const pointsAwarded = data.pts || 50; 
+            totalSessionScore += pointsAwarded;
             document.getElementById('grand-total').innerText = totalSessionScore;
+            
+            document.getElementById('score-display').innerHTML = `+${pointsAwarded} POINTS`;
+        } else {
+            document.getElementById('score-display').innerHTML = `<span style="color: #666;">ALREADY VISITED</span>`;
         }
 
-        document.getElementById('res-town').innerText = countryName;
-        const scoreEl = document.getElementById('score-display');
-        scoreEl.innerHTML = isNew ? `+75 POINTS` : `<span style="color: #666;">ALREADY VISITED</span>`;
-        
+        document.getElementById('res-town').innerText = data.name;
         document.getElementById('badges').innerHTML = `<div class="classic-badge" style="background:#003399; border-radius: 50px; padding: 4px 15px;">INTL: ${code}</div>`;
         
         const card = document.getElementById('result-card');
@@ -639,7 +661,6 @@ function processInternationalCode(code) {
         
         setTimeout(clearInput, 1500);
     } else {
-        // If they filled 4 slots but the code (e.g. "ZZZ") isn't recognized
         showUnknown();
     }
 }
@@ -1203,6 +1224,38 @@ function renderNIList(era) {
     }
 }
 
+function renderIntlPassport() {
+    const container = document.getElementById('intl-list');
+    const owned = JSON.parse(localStorage.getItem('regFinder_intl')) || [];
+    
+    // Emoji flag mapping for the passport look
+    const flags = {
+        "D": "🇩🇪", "F": "🇫🇷", "V": "🇻🇦", "IRL": "🇮🇪", "NL": "🇳🇱", 
+        "DK": "🇩🇰", "MC": "🇲🇨", "I": "🇮🇹", "E": "🇪🇸"
+    };
+
+    let html = '';
+    Object.entries(internationalCodes).forEach(([code, data]) => {
+        const isFound = owned.includes(code);
+        html += `
+            <div style="padding:10px 5px; background:${isFound ? '#00339944' : '#222'}; border-radius:8px; border:1px solid ${isFound ? '#003399' : '#444'}; text-align:center; transition: all 0.3s;">
+                <div style="font-size:1.5rem; filter: ${isFound ? 'none' : 'grayscale(100%) opacity(0.3)'};">
+                    ${flags[code] || '🚩'}
+                </div>
+                <div style="font-weight:bold; font-size:11px; margin-top:5px; color:${isFound ? '#fff' : '#444'};">${code}</div>
+                <div style="font-size:9px; color:#f1c40f; font-weight:bold;">${data.pts} PTS</div>
+                <div style="font-size:8px; color:#888; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${data.name}</div>
+            </div>`;
+    });
+    container.innerHTML = html;
+    
+    // Update the blue international progress bar
+    const fillEl = document.getElementById('intl-fill');
+    if (fillEl) {
+        fillEl.style.width = `${(owned.length / Object.keys(internationalCodes).length) * 100}%`;
+    }
+}
+
 function switchLogPage(pageId) {
     // 1. Hide all pages first
     document.querySelectorAll('.log-page').forEach(p => p.style.display = 'none');
@@ -1233,6 +1286,7 @@ function switchLogPage(pageId) {
     if (pageId === 'classic') renderEraTimeline('classic');
     if (pageId === 'heritage') renderEraTimeline('heritage');
     if (pageId === 'ni') renderNIList('ni');
+    if (pageId ==='intl') renderIntlPassport ();
     if (pageId === 'league') displayLeagueTable('log-league-container');
 }
 
@@ -1323,6 +1377,16 @@ function switchLogPage(pageId) {
             <div id="ni-fill" style="width:0%; height:100%; background:#27ae60; border-radius:5px; transition: width 0.5s;"></div>
         </div>
         <div id="ni-list"></div>
+    </div>
+
+    <!-- 6. International Passport Page -->
+    <div id="intl-page" class="log-page" style="display:none; padding: 20px; overflow-y: auto;">
+    <h3 style="color:#3498db; text-align:center;">EUROPEAN PASSPORT</h3>
+    <div id="intl-progress-bar" style="height:10px; background:#222; border-radius:5px; margin-bottom:20px; border: 1px solid #444;">
+        <div id="intl-fill" style="width:0%; height:100%; background:#003399; border-radius:5px; transition: width 0.5s;"></div>
+    </div>
+    <!-- 3-column grid to maximize mobile space -->
+    <div id="intl-list" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;"></div>
     </div>
 
     <!-- 7. LEAGUE PAGE -->
