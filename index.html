@@ -284,11 +284,18 @@
 
 <h2>SPOT THE REG</h2>
 
-<div class="plate-input-container" onclick="focusInput()">
-    <div id="slot0" class="slot active"></div>
-    <div id="slot1" class="slot"></div>
-    <div id="slot2" class="slot"></div>
-    <div id="slot3" class="slot"></div>
+<div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+    <div class="plate-input-container" onclick="focusInput()">
+        <div id="slot0" class="slot active"></div>
+        <div id="slot1" class="slot"></div>
+        <div id="slot2" class="slot"></div>
+        <div id="slot3" class="slot"></div>
+    </div>
+    
+    <button id="mode-toggle" onclick="toggleInputMode()" style="height: 65px; width: 50px; background: #333; border: 2px solid #555; border-radius: 6px; color: #f1c40f; font-weight: bold; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px;">
+        <span id="mode-label">GB</span>
+        <span style="font-size: 18px;">🌐</span>
+    </button>
 </div>
 
 <input type="text" id="hidden-input" maxlength="4" autocomplete="off" autocorrect="off" spellcheck="false" autocapitalize="characters" inputmode="text">
@@ -347,7 +354,10 @@
     const slots = [document.getElementById('slot0'), document.getElementById('slot1'), document.getElementById('slot2'), document.getElementById('slot3')];
     const hiddenInput = document.getElementById('hidden-input');
     const resultCard = document.getElementById('result-card');
-    
+
+    let inputMode = 'GB'; // 'GB' or 'INT'
+
+  
 
     const trackerContainer = document.getElementById('progress-tracker');
     alphabet.forEach(l => {
@@ -376,46 +386,59 @@
         setTimeout(() => focusInput(), 300);
     }
 
+    function toggleInputMode() {
+        inputMode = (inputMode === 'GB') ? 'INT' : 'GB';
+        const btn = document.getElementById('mode-toggle');
+        const label = document.getElementById('mode-label');
+    
+        if (inputMode === 'INT') {
+            btn.style.borderColor = '#003399'; // International Blue
+            label.innerText = 'INT';
+            // Clear slots to prepare for new mode
+        clearInput();
+        } else {
+            btn.style.borderColor = '#555';
+            label.innerText = 'GB';
+            clearInput();
+        }
+    }
+
     function focusInput() { 
         hiddenInput.focus({ preventScroll: true }); 
         window.scrollTo(0, 0); 
     }
 
 hiddenInput.addEventListener('input', (e) => {
-    // Replace spaces with asterisks before processing
     let val = e.target.value.toUpperCase().replace(/\s/g, '*'); 
     e.target.value = val; 
-
     slots.forEach((s, i) => s.innerText = val[i] || "");
-    
-    // --- 1. NI DETECTION (Runs regardless of length 4) ---
-    // Detects I or Z in a 3-letter block followed by digits
-    if (/^[A-Z]*[IZ][A-Z]*[\d\*]{1,4}$/.test(val)) {
-        if (/\d/.test(val)) { // Only process if they've typed at least one number
-            processNIPlate(val);
-            return; // Stop here so it doesn't hit "showUnknown"
+
+    const cleanChars = val.replace(/\*/g, '');
+
+    // --- MODE 1: INTERNATIONAL ---
+    if (inputMode === 'INT') {
+        if (cleanChars.length > 0) {
+            processInternationalCode(cleanChars);
         }
+        return; // Don't run GB logic in INT mode
     }
 
-    // --- 2. STANDARD ERA DETECTION (Requires 4 chars) ---
-    if (val.length === 4) {
-        if (/^[A-Z]{2}\d{2}$/.test(val)) {
-            const match = plateData[val];
-            if (match) processPlate(match, val); else showUnknown();
-        } 
-        else if (/^[A-Z]\d[\d\*]{2}$/.test(val)) {
-            processClassicPrefix(val);
+    // --- MODE 2: GB (Your existing logic) ---
+        if (/\d/.test(val)) {
+            if (/^[A-Z]*[IZ][A-Z]*[\d\*]{1,4}$/.test(val)) {
+                processNIPlate(val); // This should catch ADZ1 now!
+                }
+            else if (val.length === 4) {
+                if (/^[A-Z]{2}\d{2}$/.test(val)) {
+                const match = plateData[val];
+                if (match) processPlate(match, val); else showUnknown();
+            } 
+            else if (/^[A-Z]\d[\d\*]{2}$/.test(val)) processClassicPrefix(val);
+            else if (/^[\d\*]{2}\d[A-Z]$/.test(val)) processHeritageSuffix(val);
+            else showUnknown();
+            }
         }
-        else if (/^[\d\*]{2}\d[A-Z]$/.test(val)) {
-            processHeritageSuffix(val);
-        }
-        else {
-            showUnknown();
-        }
-    } else {
-        resultCard.style.display = 'none';
-    }
-});
+    });
 
     function processPlate(data, plateId) {
         const firstLetter = plateId[0];
