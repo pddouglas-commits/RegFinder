@@ -18,19 +18,59 @@
         touch-action: auto;
     }
 
+.header-side button {
+    outline: none !important; /* Removes the yellow box seen in the screenshot */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px;
+}
+
+
+
 .header-stats { 
     position: fixed; 
     top: 0; left: 0; 
     width: 100vw; 
-    height: 90px; /* Increased height to stop the overlap */
+    height: 70px; /* Increased height to stop the overlap */
     background: #1a1a1a; 
     display: flex; 
     justify-content: space-between; 
     align-items: center; 
-    padding: 0 10px; 
+    padding: 0 15px; 
     box-sizing: border-box; 
     z-index: 10000;
     border-bottom: 1px solid #333;
+}
+
+/* Vertical stacking for the center stats lane */
+.header-center {
+    flex-direction: column;
+    justify-content: center;
+}
+
+/* New wrapper to hide game data on splash screen */
+#active-stats {
+    display: none; /* Changed to flex via JS in startGame */
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+.timer-row { 
+    display: flex; 
+    gap: 15px; 
+    font-family: monospace; 
+    font-size: 12px; 
+    color: #aaa; 
+}
+
+#grand-total { 
+    font-size: 42px; 
+    font-weight: bold; 
+    color: #f1c40f; 
+    margin: 0; 
+    line-height: 1; 
 }
 
 /* This part defines the behavior for both side lanes and the center lane */
@@ -39,7 +79,7 @@
     width: 33.33%;
     display: flex;
     align-items: center;
-}
+} 
 
 /* This part adds vertical stacking specifically to the center lane */
 .header-center {
@@ -90,6 +130,11 @@ h2 {
     }
 
     .slot.active { border-color: #fff; box-shadow: 0 0 10px #f1c40f; }
+
+    #restart-btn {
+    display: none; /* Only show once game starts */
+    }
+
 
     #result-card { 
         width: 92%; padding: 12px; background: #2c3e50; border-radius: 12px;
@@ -286,11 +331,12 @@ h2 {
         <button onclick="togglePause()" id="pause-btn" style="background:none; border:none; font-size:22px; cursor:pointer; display:none">⏸️</button>
     </div>
 
-    <div class="header-center">
-        <div class="timer-row" style="font-size: 11px; margin-bottom: 2px;">
+<div class="header-center">
+    <div id="active-stats">
+        <div class="timer-row">
             <span id="game-timer">00:00</span> | <span id="timer-display" style="color:#e74c3c;">60s</span>
         </div>
-        <div id="grand-total" style="font-size: 36px; margin: 0;">0</div>
+        <div id="grand-total">0</div>
         <div id="chain-display" style="font-size: 10px; color:#3498db;">CHAIN (0/3)</div>
     </div>
 
@@ -681,6 +727,10 @@ function processInternationalCode(code) {
         isGameActive = true;
         gameStartTime = Date.now();
         gameInterval = setInterval(updateGameTimer, 1000);
+        document.getElementById('active-stats').style.display = 'flex';
+        document.getElementById('pause-btn').style.display = 'inline-block';
+        document.getElementById('restart-btn').style.display = 'block';
+
         const pauseBtn = document.getElementById('pause-btn');
         if (pauseBtn) pauseBtn.style.display = 'inline-block';
         const idx = alphabet.indexOf(letter);
@@ -899,7 +949,10 @@ function showWinOverlay() {
 
     //HIDE THE PAUSE BUTTON
     const pauseBtn = document.getElementById('pause-btn');
-    if (pauseBtn) pauseBtn.style.display = 'none';
+    //if (pauseBtn) pauseBtn.style.display = 'none';
+    document.getElementById('active-stats').style.display = 'none';
+    document.getElementById('pause-btn').style.display = 'none';
+    document.getElementById('restart-btn').style.display = 'none';
     
     const timeStr = document.getElementById('game-timer').innerText;
     const [m, s] = timeStr.split(':').map(Number);
