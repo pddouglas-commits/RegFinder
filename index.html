@@ -413,7 +413,7 @@ h2 {
 
     // INTERNATIONAL  mapping
     const internationalCodes = {
-     "A":  { name: "Austria", pts: 50 },
+    "A":  { name: "Austria", pts: 50 },
     "AL": { name: "Albania", pts: 50 },
     "AND": { name: "Andorra", pts: 75},
     "B": { name: "Belgium", pts: 50},
@@ -1298,6 +1298,7 @@ function renderNIList(era) {
                 <span>${isFound ? '✅' : '🔒'}</span>
             </div>`;
     });
+    html += `<div class="scroll-spacer" style="height: 200px; width: 100%; clear: both; display: block !important;"></div>`;
     container.innerHTML = html;
     
     const fillEl = document.getElementById(era + '-fill'); // Now uses the variable[cite: 1]
@@ -1312,12 +1313,15 @@ function renderIntlPassport() {
     
     // Emoji flag mapping for the passport look
     const flags = {
-    "A": "🇦🇹", "AL": "🇦🇱", "AND": "🇦🇩", "B": "🇧🇪", "CH": "🇨🇭", 
-    "CZ": "🇨🇿", "D": "🇩🇪", "DK": "🇩🇰", "E": "🇪🇸", "F": "🇫🇷", 
-    "I": "🇮🇹", "IRL": "🇮🇪", "MC": "🇲🇨", "MK": "🇲🇰", "MNE": "🇲🇪", 
-    "N": "🇳🇴", "NL": "🇳🇱", "NMK": "🇲🇰", "P": "🇵🇹", "PL": "🇵🇱", 
-    "RO": "🇷🇴", "RSM": "🇸🇲", "S": "🇸🇪", "SK": "🇸🇰", "SLO": "🇸🇮", 
-    "UA": "🇺🇦", "UK": "🇬🇧", "V": "🇻🇦", "BIH": "🇧🇦", "BY": "🇧🇬", "EST": "🇪🇪", "HR": "🇭🇷"
+    "A": "🇦🇹", "AL": "🇦🇱", "AND": "🇦🇩", "B": "🇧🇪", "BG": "🇧🇬", 
+    "BIH": "🇧🇦", "CH": "🇨🇭", "CY": "🇨🇾", "CZ": "🇨🇿", "D": "🇩🇪", 
+    "DK": "🇩🇰", "E": "🇪🇸", "EST": "🇪🇪", "F": "🇫🇷", "FIN": "🇫🇮", 
+    "FL": "🇱🇮", "GR": "🇬🇷", "HR": "🇭🇷", "I": "🇮🇹", "IRL": "🇮🇪", 
+    "L": "🇱🇺", "LT": "🇱🇹", "LV": "🇱🇻", "M": "🇲🇹", "MC": "🇲🇨", 
+    "MD": "🇲🇩", "MK": "🇲🇰", "MNE": "🇲🇪", "N": "🇳🇴", "NL": "🇳🇱", 
+    "NMK": "🇲🇰", "P": "🇵🇹", "PL": "🇵🇱", "RO": "🇷🇴", "RSM": "🇸🇲", 
+    "S": "🇸🇪", "SK": "🇸🇰", "SLO": "🇸🇮", "SRB": "🇷🇸", "UA": "🇺🇦", 
+    "UK": "🇬🇧", "V": "🇻🇦"
 };
 
     let html = '';
@@ -1334,7 +1338,8 @@ html += `
         <div style="font-size:8px; color:#888; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${data.name}</div>
     </div>`;
     });
-    html += `<div style="height: 120px; width: 100%;"></div>`;
+    html += `<div class="scroll-spacer" style="height: 200px; width: 100%; clear: both; display: block !important;"></div>`;
+
     container.innerHTML = html;
     
     // Update the blue international progress bar
