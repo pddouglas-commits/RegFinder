@@ -119,9 +119,13 @@ h2 {
 }
 
 .log-page {
-    flex: 1;
-    display: flex;
+    flex: 1; /* Takes up all remaining vertical space */
+    display: none; /* Switched to 'flex' by JS when active */
     flex-direction: column;
+    overflow-y: auto; /* Enables vertical scrolling */
+    padding: 20px 10px 80px; /* 80px bottom padding protects the last row */
+    -webkit-overflow-scrolling: touch; /* Smooth scroll for mobile */
+    touch-action: pan-y !important; /* This allows vertical swiping only */
 }
 
     /* --- Animations --- */
