@@ -975,9 +975,17 @@ function openLogbook() {
 }
 
 function closeLogbook() { 
-    // Bring the game header back
+    // Show game elements
     document.querySelector('.header-stats').style.display = 'flex';    
+    
+    // RESTORE THE TRACKER
+    const tracker = document.getElementById('progress-tracker');
+    if (tracker) tracker.style.display = 'flex'; 
+
+    // Hide the logbook
     document.getElementById('logbook-overlay').style.display = 'none'; 
+    
+    focusInput();
 }
 
     function showLogPage(pageId) {
@@ -1261,10 +1269,14 @@ html += `
 }
 
 function switchLogPage(pageId) {
-    // 1. Hide all pages first
-    document.querySelectorAll('.log-page').forEach(p => p.style.display = 'none');
+    // 1. Hide all pages and reset their heights
+    document.querySelectorAll('.log-page').forEach(p => {
+        p.style.display = 'none';
+        p.style.height = 'auto'; 
+        p.style.minHeight = '100%';
+    });
     
-    // 2. Clear previous rings and set the new one
+    // 2. Clear visual highlights on buttons
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.style.outline = "none";
         btn.classList.remove('active');
@@ -1278,17 +1290,19 @@ function switchLogPage(pageId) {
         activeBtn.classList.add('active');
     }
 
-    // 3. Show the target page
+    // 3. Show and Reset Scroll for the target page
     const target = document.getElementById(pageId + '-page');
-    if (target) target.style.display = 'flex'; 
-    target.scrollTop = 0; // <--- ADD THIS: Resets scroll to top on tab change
+    if (target) {
+        target.style.display = 'flex'; 
+        target.scrollTop = 0; 
+    }
 
     // 4. Trigger specific logic/refresh for that page
-    if (pageId === 'modern') {updateLogbookData();shadeMap();}
+    if (pageId === 'modern') { updateLogbookData(); shadeMap(); }
     if (pageId === 'classic') renderEraTimeline('classic');
     if (pageId === 'heritage') renderEraTimeline('heritage');
     if (pageId === 'ni') renderNIList('ni');
-    if (pageId ==='intl') renderIntlPassport ();
+    if (pageId === 'intl') renderIntlPassport();
     if (pageId === 'league') displayLeagueTable('log-league-container');
 }
 
@@ -1378,7 +1392,7 @@ function switchLogPage(pageId) {
         <div id="ni-list"></div>
     </div>
 
-    <!-- 6. International Passport Page -->
+<!-- 6. International Passport Page -->
 <div id="intl-page" class="log-page" style="display:none; flex-direction:column; height:100%; overflow:hidden; padding:20px 10px 0;">
     <!-- FIXED HEADER SECTION -->
     <div style="flex-shrink: 0;">
@@ -1388,10 +1402,10 @@ function switchLogPage(pageId) {
         </div>
     </div>
 
-    <!-- SCROLLABLE CONTENT SECTION (The "League Table" Treatment) -->
-    <div id="intl-scroll-container" style="flex: 1; overflow-y: auto; padding-bottom: 100px; -webkit-overflow-scrolling: touch;">
+    <!-- SCROLLABLE CONTENT SECTION (This is what makes it work) -->
+    <div style="flex: 1; overflow-y: auto; padding-bottom: 100px; -webkit-overflow-scrolling: touch; touch-action: pan-y !important;">
         <div id="intl-list" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
-            <!-- Flags will be injected here -->
+            <!-- Flags injected here -->
         </div>
     </div>
 </div>
