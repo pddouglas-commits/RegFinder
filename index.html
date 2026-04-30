@@ -694,6 +694,12 @@ function processInternationalCode(code) {
     const data = internationalCodes[code];
 
     if (data) {
+        if (!isGameActive) {
+            isGameActive = true;
+            gameStartTime = Date.now();
+            gameInterval = setInterval(updateGameTimer, 1000);
+            activateGameGUI();
+        }
         let intlCollection = JSON.parse(localStorage.getItem('regFinder_intl')) || [];
         const isNew = !intlCollection.includes(code);
 
@@ -743,6 +749,7 @@ function processInternationalCode(code) {
         isGameActive = true;
         gameStartTime = Date.now();
         gameInterval = setInterval(updateGameTimer, 1000);
+        activateGameGUI();
         document.getElementById('active-stats').style.display = 'flex';
         document.getElementById('pause-btn').style.display = 'inline-block';
         document.getElementById('restart-btn').style.display = 'block';
@@ -873,6 +880,12 @@ function updateChainUI() {
 }
 
 function displayEraResult(letter, era, detail, alreadyFound = false) {
+    if (!isGameActive) {
+        isGameActive = true;
+        gameStartTime = Date.now();
+        gameInterval = setInterval(updateGameTimer, 1000);
+        activateGameGUI();
+    }
     // 1. Determine Year or Location Display
     let yearDisplay = "";
     if (era === "Classic") yearDisplay = ": " + classicYears[letter];
@@ -1305,6 +1318,16 @@ function renderNIList(era) {
     if (fillEl) {
         fillEl.style.width = `${(owned.length / Object.keys(niCounties).length) * 100}%`;
     }
+}
+
+function activateGameGUI() {
+    const stats = document.getElementById('active-stats');
+    const pause = document.getElementById('pause-btn');
+    const restart = document.getElementById('restart-btn');
+    
+    if (stats) stats.style.display = 'flex';
+    if (pause) pause.style.display = 'inline-block';
+    if (restart) restart.style.display = 'block';
 }
 
 function renderIntlPassport() {
