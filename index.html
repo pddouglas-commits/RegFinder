@@ -59,19 +59,17 @@
     padding: 6px; 
     border-radius: 8px; 
     font-size: 11px; 
-    /* Reduced top margin to keep it tight with the input area */
-    margin: 10px auto; 
+    margin: 100px auto 10px !important; /* This creates the gap below the fixed header */
     max-width: 95%;
     position: relative;
-    z-index: 5; 
+    z-index: 10; /* Ensure it stays above the background but below overlays */
 }
 
 h2 { 
-    margin-top: 105px !important; 
+    margin-top: 5px !important; 
     font-size: 0.8rem; 
     color: #555; 
     text-transform: uppercase;
-    letter-spacing: 1px;
 }
     .plate-input-container { display: flex; flex-direction: row; gap: 8px; margin-bottom: 10px; }
 
@@ -940,9 +938,13 @@ function displayLeagueTable(targetId = 'league-display') {
     function toggleSort(type, targetId) { currentSort = type; displayLeagueTable(targetId); }
 
 function openLogbook() {
-    // Hide the game header to shift everything up
-    document.querySelector('.header-stats').style.display = 'none';    
-    document.getElementById('logbook-overlay').style.display = 'flex';
+    // Hide game elements
+    document.querySelector('.header-stats').style.display = 'none';
+    document.getElementById('progress-tracker').style.display = 'none';
+    // Show Logbook and reset its top padding
+    const logOverlay = document.getElementById('logbook-overlay');
+    logOverlay.style.display = 'flex';
+    logOverlay.style.paddingTop = '10px'; // Shift everything up to the very top
     updateLogbookData();
     shadeMap(); 
     switchLogPage('modern');
