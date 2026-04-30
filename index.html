@@ -197,7 +197,9 @@
 }
 
 #logbook-overlay {
-    z-index: 11000 !important; /* Higher than header-stats */
+    /* ... existing styles ... */
+    padding-top: 20px; /* Reduced from 100px since header is gone */
+    z-index: 11000 !important;
 }
 
 #modern-page {
@@ -344,10 +346,23 @@
 
     // INTERNATIONAL  mapping
     const internationalCodes = {
-    "D": "Germany", "F": "France", "I": "Italy", "E": "Spain",
-    "B": "Belgium", "NL": "Netherlands", "CH": "Switzerland",
-    "A": "Austria", "IRL": "Ireland", "PL": "Poland", "P": "Portugal",
-    "CZ": "Czech Republic", "DK": "Denmark", "S": "Sweden", "N": "Norway"
+    "A": "Austria", 
+    "AL": "Albania",
+    "AND": "Andorra",
+    "D": "Germany", 
+    "F": "France", 
+    "I": "Italy", 
+    "E": "Spain",
+    "B": "Belgium", 
+    "NL": "Netherlands", 
+    "CH": "Switzerland",    
+    "IRL": "Ireland", 
+    "PL": "Poland", 
+    "P": "Portugal",
+    "CZ": "Czech Republic", 
+    "DK": "Denmark", 
+    "S": "Sweden", 
+    "N": "Norway"
     };
 
     let foundLetters = new Set();
@@ -431,12 +446,14 @@ hiddenInput.addEventListener('input', (e) => {
 
     // --- MODE 1: INTERNATIONAL (Blue Mode) ---
     if (inputMode === 'INT') {
-        const cleanChars = val.replace(/\*/g, '');
-        if (cleanChars.length > 0) {
-            processInternationalCode(cleanChars);
-        }
-        return; // Stop here; do not run GB logic
+    // Strip the asterisks so "D***" becomes just "D"
+    const cleanChars = val.replace(/\*/g, '');
+    
+    if (cleanChars.length > 0) {
+        processInternationalCode(cleanChars);
     }
+    return; 
+}
 
     // --- MODE 2: GB (Yellow Mode) ---
     const hasNumber = /\d/.test(val);
@@ -890,13 +907,19 @@ function displayLeagueTable(targetId = 'league-display') {
     function toggleSort(type, targetId) { currentSort = type; displayLeagueTable(targetId); }
 
 function openLogbook() {
+    // Hide the game header to shift everything up
+    document.querySelector('.header-stats').style.display = 'none';    
     document.getElementById('logbook-overlay').style.display = 'flex';
     updateLogbookData();
     shadeMap(); 
-    switchLogPage('modern'); // Use the new function to ensure clean switching
+    switchLogPage('modern');
 }
 
-    function closeLogbook() { document.getElementById('logbook-overlay').style.display = 'none'; }
+function closeLogbook() { 
+    // Bring the game header back
+    document.querySelector('.header-stats').style.display = 'flex';    
+    document.getElementById('logbook-overlay').style.display = 'none'; 
+}
 
     function showLogPage(pageId) {
         document.querySelectorAll('.log-page').forEach(p => p.style.display = 'none');
