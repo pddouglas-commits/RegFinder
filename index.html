@@ -325,25 +325,29 @@ h2 {
 </div>
 
 <div class="header-stats">
+    <!-- LEFT: Tools -->
     <div class="header-side" style="gap: 12px;">
         <button onclick="toggleSettings()" style="background:none; border:none; font-size:22px; cursor:pointer;">⚙️</button>
         <button onclick="openLogbook()" style="background:none; border:none; font-size:22px; cursor:pointer;">📖</button>
-        <button onclick="togglePause()" id="pause-btn" style="background:none; border:none; font-size:22px; cursor:pointer; display:none">⏸️</button>
+        <button onclick="togglePause()" id="pause-btn" style="background:none; border:none; font-size:22px; cursor:pointer; display:none;">⏸️</button>
     </div>
 
-<div class="header-center">
-    <div id="active-stats">
-        <div class="timer-row">
-            <span id="game-timer">00:00</span> | <span id="timer-display" style="color:#e74c3c;">60s</span>
+    <!-- CENTER: Game Stats (Hidden on Splash) -->
+    <div class="header-center">
+        <div id="active-stats" style="display: none;">
+            <div class="timer-row">
+                <span id="game-timer">00:00</span> | <span id="timer-display" style="color:#e74c3c;">60s</span>
+            </div>
+            <div id="grand-total">0</div>
+            <div id="chain-display" style="font-size: 10px; color:#3498db;">CHAIN (0/3)</div>
         </div>
-        <div id="grand-total">0</div>
-        <div id="chain-display" style="font-size: 10px; color:#3498db;">CHAIN (0/3)</div>
     </div>
 
+    <!-- RIGHT: Restart -->
     <div class="header-side" style="justify-content: flex-end;">
-        <button onclick="location.reload()" style="background:none; border:1px solid #e90101; color:#e90101; border-radius:4px; font-size:9px; padding:4px 8px;">RESTART</button>
+        <button id="restart-btn" onclick="location.reload()" style="background:none; border:1px solid #e90101; color:#e90101; border-radius:4px; font-size:9px; padding:4px 8px; display:none;">RESTART</button>
     </div>
-</div>
+</div> <!-- Correctly closes the entire header bar -->
 
 <div id="progress-tracker"></div>
 
@@ -409,36 +413,38 @@ h2 {
 
     // INTERNATIONAL  mapping
     const internationalCodes = {
-    "D":   { name: "Germany", pts: 20 },
-    "F":   { name: "France", pts: 20 },
-    "V":   { name: "Vatican City", pts: 200 }, // The ultra-rare find!
-    "IRL": { name: "Ireland", pts: 30 },
-    "NL":  { name: "Netherlands", pts: 25 },
-    "DK":  { name: "Denmark", pts: 40 },
-    "MC":  { name: "Monaco", pts: 150 },
-    "A":   { name: "Austria", pts: 50 },
-    "AL":  { name: "Albania", pts: 50 },
-    "AND": { name: "Andorra", pts: 75},     
-    "I": { name: "Italy", pts: 75},
+     "A":  { name: "Austria", pts: 50 },
+    "AL": { name: "Albania", pts: 50 },
+    "AND": { name: "Andorra", pts: 75},
+    "B": { name: "Belgium", pts: 50},
+    "BIH": { name: "Bosnia and Herzegovinia", pts: 75},
+    "BY": { name: "Bulgaria", pts: 75},
+    "CH": { name: "Switzerland", pts: 75},
+    "HR": { name: "Croatia", pts: 75},
+    "CZ": { name: "Czech Republic", pts: 75},
+    "D":  { name: "Germany", pts: 20 },
+    "DK": { name: "Denmark", pts: 40 },
+    "EST": { name: "Estonia", pts: 50 },
     "E": { name: "Spain", pts: 75},
-    "B": { name: "Belgium", pts: 75},
-    "MC": { name: "Monaco", pts: 75},
-    "MNE": { name: "Montenegro", pts: 75},
-    "NMK": { name: "North Macedonia", pts: 200},
+    "F":  { name: "France", pts: 20 },
+    "I": { name: "Italy", pts: 75},
+    "IRL": { name: "Ireland", pts: 30 },
+    "MC": { name: "Monaco", pts: 150 },
     "MK": { name: "North Macedonia | Legacy", pts: 200},
+    "MNE": { name: "Montenegro", pts: 75},
+    "N": { name: "Norway", pts: 75},
+    "NL": { name: "Netherlands", pts: 25 },
+    "NMK": { name: "North Macedonia", pts: 200},
+    "P": { name: "Portugal", pts: 75},
+    "PL": { name: "Poland", pts: 75},
     "RO": { name: "Romania", pts: 75},
     "RSM": { name: "San Marino", pts: 500},
+    "S": { name: "Sweden", pts: 75},
     "SK": { name: "Slovakia", pts: 100},
     "SLO": { name: "Slovenia", pts: 100},
     "UA": { name: "Ukraine", pts: 75},
     "UK": { name: "United Kingdom", pts: 5},
-    "CH": { name: "Switzerland", pts: 75},
-    "PL": { name: "Poland", pts: 75},
-    "P": { name: "Portugal", pts: 75},
-    "CZ": { name: "Czech Republic", pts: 75},
-    "DK": { name: "Denmark", pts: 75},
-    "S": { name: "Sweden", pts: 75},
-    "N": { name: "Norway", pts: 75},
+    "V":  { name: "Vatican City", pts: 200 }, // The ultra-rare find!
     };
 
     let foundLetters = new Set();
