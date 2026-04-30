@@ -994,6 +994,8 @@ function togglePause() {
     }
 
 function showWinOverlay() {
+    hiddenInput.blur(); // THIS forces the mobile keyboard to retract immediately
+
     clearInterval(gameInterval); 
     clearInterval(chainTimer);
 
@@ -1079,7 +1081,7 @@ function displayLeagueTable(targetId = 'league-display') {
                 <button onclick="toggleSort('time', '${targetId}')" style="font-size:10px; background:${currentSort==='time'?'#f1c40f':'#444'}; color:${currentSort==='time'?'#000':'#fff'}; border:none; padding:5px 12px; border-radius:4px;">TIME</button>
                 <button onclick="toggleSort('score', '${targetId}')" style="font-size:10px; background:${currentSort==='score'?'#f1c40f':'#444'}; color:${currentSort==='score'?'#000':'#fff'}; border:none; padding:5px 12px; border-radius:4px;">SCORE</button>
             </div>
-            <div style="max-height:180px; overflow-y:auto;">
+            <div style="max-height:300px; overflow-y:auto;">
                 ${html || '<p style="color:#444; font-size:0.8rem; text-align:center;">No records yet</p>'}
             </div>
         `;
