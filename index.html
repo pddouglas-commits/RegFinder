@@ -1241,9 +1241,13 @@ function renderIntlPassport() {
     
     // Emoji flag mapping for the passport look
     const flags = {
-        "D": "🇩🇪", "F": "🇫🇷", "V": "🇻🇦", "IRL": "🇮🇪", "NL": "🇳🇱", 
-        "DK": "🇩🇰", "MC": "🇲🇨", "I": "🇮🇹", "E": "🇪🇸"
-    };
+    "A": "🇦🇹", "AL": "🇦🇱", "AND": "🇦🇩", "B": "🇧🇪", "CH": "🇨🇭", 
+    "CZ": "🇨🇿", "D": "🇩🇪", "DK": "🇩🇰", "E": "🇪🇸", "F": "🇫🇷", 
+    "I": "🇮🇹", "IRL": "🇮🇪", "MC": "🇲🇨", "MK": "🇲🇰", "MNE": "🇲🇪", 
+    "N": "🇳🇴", "NL": "🇳🇱", "NMK": "🇲🇰", "P": "🇵🇹", "PL": "🇵🇱", 
+    "RO": "🇷🇴", "RSM": "🇸🇲", "S": "🇸🇪", "SK": "🇸🇰", "SLO": "🇸🇮", 
+    "UA": "🇺🇦", "UK": "🇬🇧", "V": "🇻🇦"
+};
 
     let html = '';
     Object.entries(internationalCodes).forEach(([code, data]) => {
