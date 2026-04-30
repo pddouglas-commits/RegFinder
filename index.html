@@ -1313,7 +1313,6 @@ function switchLogPage(pageId) {
     <div style="padding: 20px 10px 10px; border-bottom: 1px solid #333; text-align: center; background: #1a1a1a;">
         <h2 style="color:#f1c40f; margin:0 0 10px 0;">LOGBOOK</h2>
         
-        <!-- FIXED: Added closing div for the nav grid -->
         <div class="logbook-nav" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; padding: 10px; background: #222; border-radius: 8px; margin-bottom: 10px;">
             <button class="tab-btn active" onclick="switchLogPage('modern')" style="padding: 10px; border-radius: 5px; border: none; background: #5d00a8fa; color: white; font-size: 10px;">MODERN</button>
             <button class="tab-btn" onclick="switchLogPage('classic')" style="padding: 10px; border-radius: 5px; border: none; background: #ce9702; color: white; font-size: 10px;">CLASSIC</button>
@@ -1321,7 +1320,7 @@ function switchLogPage(pageId) {
             <button class="tab-btn" onclick="switchLogPage('ni')" style="padding: 10px; border-radius: 5px; border: none; background: #27ae60; color: white; font-size: 10px;">N. IRELAND</button>
             <button class="tab-btn" onclick="switchLogPage('intl')" style="padding: 10px; border-radius: 5px; border: none; background: #003399; color: rgb(251, 255, 0); font-size: 10px;">EU</button>
             <button class="tab-btn" onclick="switchLogPage('league')" style="padding: 10px; border-radius: 5px; border: none; background: #444; color: white; font-size: 10px;">LEAGUE</button>
-        </div> <!-- This was the missing closer -->
+        </div>
 
         <button onclick="closeLogbook()" style="background:none; border:1px solid #666; color:#fff; border-radius:4px; padding:5px 20px; font-size:12px;">EXIT LOGBOOK</button>
     </div>
@@ -1330,46 +1329,42 @@ function switchLogPage(pageId) {
     <div id="region-detail-view" style="display:none; position:absolute; top:0; left:0; width:100%; height:100%; background:#1a1a1a; padding:20px; box-sizing:border-box; z-index:7000; overflow-y:auto;"></div>
 
     <!-- 3. MODERN MAP PAGE -->
-    <div id="modern-page" class="log-page">
-
-    <!-- 3. MODERN MAP PAGE -->
     <div id="modern-page" class="log-page" style="padding: 0 10px; flex-direction: column; align-items: center;">
         <div id="log-map-svg" style="width: 100%; max-width: 260px; margin-top: -10px;">
-                <svg viewBox="0 0 200 320" xmlns="http://www.w3.org/2000/svg" style="width: 100%; max-width: 280px; height: auto;">
-                    <g id="region-scotland-group"><path id="region-scotland" d="M80 20 L120 20 L130 60 L110 100 L70 90 Z" stroke="#555" /><text x="90" y="60" style="fill:white; font-size:10px;">S / TN</text></g>
-                    <g id="region-northeast-group"><path id="region-northeast" d="M90 100 L130 100 L140 125 L90 125 Z" stroke="#555" /><text x="110" y="115" style="fill:white; font-size:10px;">N</text></g>
-                    <g id="region-preston-group"><path id="region-preston" d="M65 125 L90 125 L90 150 L65 150 Z" stroke="#555" /><text x="73" y="142" style="fill:white; font-size:10px;">P</text></g>
-                    <g id="region-mancs-mersey-group"><path id="region-mancs-mersey" d="M90 125 L115 125 L115 150 L90 150 Z" stroke="#555" /><text x="95" y="142" style="fill:white; font-size:10px;">M</text></g>
-                    <g id="region-yorkshire-group"><path id="region-yorkshire" d="M115 125 L145 125 L155 160 L115 160 Z" stroke="#555" /><text x="125" y="145" style="fill:white; font-size:10px;">Y</text></g>
-                    <g id="region-deeside-group"><path id="region-deeside" d="M60 150 L85 150 L85 180 L55 180 Z" stroke="#555" /><text x="65" y="170" style="fill:white; font-size:10px;">D</text></g>
-                    <g id="region-birmingham-group"><path id="region-birmingham" d="M85 150 L115 150 L115 180 L85 180 Z" stroke="#555" /><text x="95" y="170" style="fill:white; font-size:10px;">B</text></g>
-                    <g id="region-forest-fens-group"><path id="region-forest-fens" d="M115 160 L150 160 L155 190 L115 190 Z" stroke="#555" /><text x="125" y="180" style="fill:white; font-size:10px;">F</text></g>
-                    <g id="region-anglia-group"><path id="region-anglia" d="M150 160 L185 170 L190 200 L155 200 Z" stroke="#555" /><text x="165" y="185" style="fill:white; font-size:10px;">A</text></g>
-                    <g id="region-cymru-group"><path id="region-cymru" d="M25 170 L60 170 L55 220 L15 210 Z" stroke="#555" /><text x="35" y="200" style="fill:white; font-size:10px;">C</text></g>
-                    <g id="region-severn-valley-group"><path id="region-severn-valley" d="M75 180 L110 180 L110 220 L75 220 Z" stroke="#555" /><text x="85" y="205" style="fill:white; font-size:10px;">V</text></g>
-                    <g id="region-oxford-group"><path id="region-oxford" d="M110 180 L135 180 L135 210 L110 210 Z" stroke="#555" /><text x="115" y="200" style="fill:white; font-size:10px;">O</text></g>
-                    <g id="region-reading-group"><path id="region-reading" d="M135 180 L155 180 L155 210 L135 210 Z" stroke="#555" /><text x="140" y="200" style="fill:white; font-size:10px;">R</text></g>
-                    <g id="region-london-group"><path id="region-london" d="M115 210 L140 210 L140 235 L115 235 Z" stroke="#555" /><text x="122" y="228" style="fill:white; font-size:10px;">L</text></g>
-                    <g id="region-essex-group"><path id="region-essex" d="M140 200 L175 205 L170 230 L140 225 Z" stroke="#555" /><text x="152" y="220" style="fill:white; font-size:10px;">E</text></g>
-                    <g id="region-home-counties-group"><path id="region-home-counties" d="M110 235 L150 235 L145 255 L105 255 Z" stroke="#555" /><text x="122" y="250" style="fill:white; font-size:10px;">K</text></g>
-                    <g id="region-garden-of-england-group"><path id="region-garden-of-england" d="M140 240 L180 245 L170 275 L135 270 Z" stroke="#555" /><text x="152" y="262" style="fill:white; font-size:10px;">G</text></g>
-                    <g id="region-hants-dorset-group"><path id="region-hants-dorset" d="M85 225 L125 225 L120 260 L80 255 Z" stroke="#555" /><text x="95" y="248" style="fill:white; font-size:10px;">H</text></g>
-                    <g id="region-west-of-england-group"><path id="region-west-of-england" d="M10 215 L75 225 L65 270 L10 250 Z" stroke="#555" /><text x="35" y="248" style="fill:white; font-size:10px;">W</text></g>
-                </svg>
-
-            <div style="font-size: 11px; color: #666; margin-top: 10px;">Regions: <span id="region-count" style="color:#f1c40f;">0/19</span></div>
+            <svg viewBox="0 0 200 320" xmlns="http://www.w3.org/2000/svg" style="width: 100%; max-width: 280px; height: auto;">
+                <g id="region-scotland-group"><path id="region-scotland" d="M80 20 L120 20 L130 60 L110 100 L70 90 Z" stroke="#555" /><text x="90" y="60" style="fill:white; font-size:10px;">S / TN</text></g>
+                <g id="region-northeast-group"><path id="region-northeast" d="M90 100 L130 100 L140 125 L90 125 Z" stroke="#555" /><text x="110" y="115" style="fill:white; font-size:10px;">N</text></g>
+                <g id="region-preston-group"><path id="region-preston" d="M65 125 L90 125 L90 150 L65 150 Z" stroke="#555" /><text x="73" y="142" style="fill:white; font-size:10px;">P</text></g>
+                <g id="region-mancs-mersey-group"><path id="region-mancs-mersey" d="M90 125 L115 125 L115 150 L90 150 Z" stroke="#555" /><text x="95" y="142" style="fill:white; font-size:10px;">M</text></g>
+                <g id="region-yorkshire-group"><path id="region-yorkshire" d="M115 125 L145 125 L155 160 L115 160 Z" stroke="#555" /><text x="125" y="145" style="fill:white; font-size:10px;">Y</text></g>
+                <g id="region-deeside-group"><path id="region-deeside" d="M60 150 L85 150 L85 180 L55 180 Z" stroke="#555" /><text x="65" y="170" style="fill:white; font-size:10px;">D</text></g>
+                <g id="region-birmingham-group"><path id="region-birmingham" d="M85 150 L115 150 L115 180 L85 180 Z" stroke="#555" /><text x="95" y="170" style="fill:white; font-size:10px;">B</text></g>
+                <g id="region-forest-fens-group"><path id="region-forest-fens" d="M115 160 L150 160 L155 190 L115 190 Z" stroke="#555" /><text x="125" y="180" style="fill:white; font-size:10px;">F</text></g>
+                <g id="region-anglia-group"><path id="region-anglia" d="M150 160 L185 170 L190 200 L155 200 Z" stroke="#555" /><text x="165" y="185" style="fill:white; font-size:10px;">A</text></g>
+                <g id="region-cymru-group"><path id="region-cymru" d="M25 170 L60 170 L55 220 L15 210 Z" stroke="#555" /><text x="35" y="200" style="fill:white; font-size:10px;">C</text></g>
+                <g id="region-severn-valley-group"><path id="region-severn-valley" d="M75 180 L110 180 L110 220 L75 220 Z" stroke="#555" /><text x="85" y="205" style="fill:white; font-size:10px;">V</text></g>
+                <g id="region-oxford-group"><path id="region-oxford" d="M110 180 L135 180 L135 210 L110 210 Z" stroke="#555" /><text x="115" y="200" style="fill:white; font-size:10px;">O</text></g>
+                <g id="region-reading-group"><path id="region-reading" d="M135 180 L155 180 L155 210 L135 210 Z" stroke="#555" /><text x="140" y="200" style="fill:white; font-size:10px;">R</text></g>
+                <g id="region-london-group"><path id="region-london" d="M115 210 L140 210 L140 235 L115 235 Z" stroke="#555" /><text x="122" y="228" style="fill:white; font-size:10px;">L</text></g>
+                <g id="region-essex-group"><path id="region-essex" d="M140 200 L175 205 L170 230 L140 225 Z" stroke="#555" /><text x="152" y="220" style="fill:white; font-size:10px;">E</text></g>
+                <g id="region-home-counties-group"><path id="region-home-counties" d="M110 235 L150 235 L145 255 L105 255 Z" stroke="#555" /><text x="122" y="250" style="fill:white; font-size:10px;">K</text></g>
+                <g id="region-garden-of-england-group"><path id="region-garden-of-england" d="M140 240 L180 245 L170 275 L135 270 Z" stroke="#555" /><text x="152" y="262" style="fill:white; font-size:10px;">G</text></g>
+                <g id="region-hants-dorset-group"><path id="region-hants-dorset" d="M85 225 L125 225 L120 260 L80 255 Z" stroke="#555" /><text x="95" y="248" style="fill:white; font-size:10px;">H</text></g>
+                <g id="region-west-of-england-group"><path id="region-west-of-england" d="M10 215 L75 225 L65 270 L10 250 Z" stroke="#555" /><text x="35" y="248" style="fill:white; font-size:10px;">W</text></g>
+            </svg>
+            <div style="font-size: 11px; color: #666; margin-top: 10px; text-align: center;">Regions: <span id="region-count" style="color:#f1c40f;">0/19</span></div>
         </div>
         
         <div id="special-collection" onclick="showNationalDetails()" style="cursor:pointer; width: 90%; background: #222; padding: 12px; border-radius: 10px; border: 1px solid #444; margin-top: 5px;">
-        <h4 style="color: #aaa; font-size: 10px; text-transform: uppercase; margin: 0 0 8px 0; text-align: center;">National & Special</h4>
-        <div style="display: flex; justify-content: space-around; font-family: monospace; font-size: 1.1rem;">
-            <div>J:<span id="count-j">0</span></div>
-            <div>T:<span id="count-t">0</span></div>
-            <div>U:<span id="count-u">0</span></div>
-            <div>X:<span id="count-x">0</span></div>
+            <h4 style="color: #aaa; font-size: 10px; text-transform: uppercase; margin: 0 0 8px 0; text-align: center;">National & Special</h4>
+            <div style="display: flex; justify-content: space-around; font-family: monospace; font-size: 1.1rem;">
+                <div>J:<span id="count-j">0</span></div>
+                <div>T:<span id="count-t">0</span></div>
+                <div>U:<span id="count-u">0</span></div>
+                <div>X:<span id="count-x">0</span></div>
+            </div>
         </div>
-    </div>
-
+    </div> <!-- END MODERN PAGE -->
 
     <!-- 4. CLASSIC PAGE -->
     <div id="classic-page" class="log-page" style="display:none; flex-direction:column; height:100%; overflow:hidden;">
@@ -1384,7 +1379,7 @@ function switchLogPage(pageId) {
         </div>
     </div>
 
-    <!-- 5. HERITAGE PAGE (Now with Scroll Wrapper) -->
+    <!-- 5. HERITAGE PAGE -->
     <div id="heritage-page" class="log-page" style="display:none; flex-direction:column; height:100%; overflow:hidden;">
         <div style="flex-shrink: 0; padding: 20px 10px 0;">
             <h3 style="color:#8e44ad; text-align:center;">HERITAGE ERA</h3>
@@ -1397,7 +1392,7 @@ function switchLogPage(pageId) {
         </div>
     </div>
 
-    <!-- 6. NI PAGE (Now with Scroll Wrapper) -->
+    <!-- 6. NI PAGE -->
     <div id="ni-page" class="log-page" style="display:none; flex-direction:column; height:100%; overflow:hidden;">
         <div style="flex-shrink: 0; padding: 20px 10px 0;">
             <h3 style="color:#27ae60; text-align:center;">NORTHERN IRELAND</h3>
@@ -1410,7 +1405,7 @@ function switchLogPage(pageId) {
         </div>
     </div>
 
-    <!-- 7. INTL PAGE (Already has Scroll Wrapper) -->
+    <!-- 7. INTL PAGE -->
     <div id="intl-page" class="log-page" style="display:none; flex-direction:column; height:100%; overflow:hidden;">
         <div style="flex-shrink: 0; padding: 20px 10px 0;">
             <h3 style="color:#3498db; text-align:center;">EUROPEAN PASSPORT</h3>
@@ -1423,10 +1418,17 @@ function switchLogPage(pageId) {
         </div>
     </div>
 
-    <!-- LEAGUE & STATS -->
-    <div id="league-page" class="log-page" style="display:none; padding: 20px;"><div id="log-league-container"></div></div>
-    <div id="stats-page" class="log-page" style="display:none; padding: 20px; text-align: center;"><p>Total: <span id="log-total-count">0</span></p></div>
-</div>
+    <!-- 8. LEAGUE PAGE -->
+    <div id="league-page" class="log-page" style="display:none; padding: 20px;">
+        <div id="log-league-container"></div>
+    </div>
+
+    <!-- 9. STATS PAGE -->
+    <div id="stats-page" class="log-page" style="display:none; padding: 20px; text-align: center;">
+        <p style="font-size: 1.2rem;">Total Unique Found: <span id="log-total-count" style="color:#f1c40f; font-weight:bold;">0</span></p>
+    </div>
+
+</div> <!-- THIS CLOSES LOGBOOK-OVERLAY -->
 
 </body>
 </html>
