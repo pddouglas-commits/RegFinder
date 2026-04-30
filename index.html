@@ -211,6 +211,17 @@ h2 {
     100% { transform: scale(1); opacity: 1; }
 }
 
+@keyframes victory-glow {
+    0% { box-shadow: 0 0 20px rgba(241, 196, 15, 0.2); transform: scale(1); }
+    50% { box-shadow: 0 0 50px rgba(241, 196, 15, 0.6); transform: scale(1.05); }
+    100% { box-shadow: 0 0 20px rgba(241, 196, 15, 0.2); transform: scale(1); }
+}
+
+.victory-text {
+    animation: victory-glow 2s infinite ease-in-out;
+    text-shadow: 0 0 15px #f1c40f;
+}
+
 #settings-menu {
     display: none; 
     position: fixed; 
@@ -585,7 +596,16 @@ if (inputMode === 'INT') {
 
     function processPlate(data, plateId) {
         const firstLetter = plateId[0];
-        if (!isGameActive) { startGame(firstLetter, data, plateId); return; }
+        // If no alphabet letters have been found yet, this plate STARTS the sprint
+        if (foundLetters.size === 0) { 
+            startGame(firstLetter, data, plateId); 
+            return; 
+        }
+
+        //if (!isGameActive) { startGame(firstLetter, data, plateId); return; }
+
+
+        //Standard sprint logic
         if (currentTargetOptions.includes(firstLetter) && plateId !== lastScoredPlate) {
             if (gameDirection === null) {
                 const startLetter = Array.from(foundLetters)[0];
@@ -691,6 +711,7 @@ function processNIPlate(plateId) {
 }
 
 function processInternationalCode(code) {
+    ensureGameRunning(); // Wake up GUI on first find
     const data = internationalCodes[code];
 
     if (data) {
@@ -999,19 +1020,41 @@ const navHeader = `
     <button onclick="window.openLogbook()" style="background:none; border:none; font-size:24px; cursor:pointer;">📖</button>        
 </div>`;
 
+
+let currentDisplayScore = 0;
+const targetScore = totalSessionScore;
+const duration = 1500; 
+const increment = targetScore / (duration / 16);
+
+const counter = setInterval(() => {
+    currentDisplayScore += increment;
+    const scoreElement = document.getElementById('final-score-roll');
+    
+    if (scoreElement) {
+        if (currentDisplayScore >= targetScore) {
+            scoreElement.innerText = Math.floor(targetScore);
+            clearInterval(counter);
+        } else {
+            scoreElement.innerText = Math.floor(currentDisplayScore);
+        }
+    }
+}, 16);
+
 // HOME BUTTON (Goes to Splash)
     winDiv.innerHTML = `
     ${navHeader}
-    <h1 style="color:#f1c40f; margin-top:40px; font-size:2.5rem;">MISSION COMPLETE</h1>
-    <p style="font-size:1.2rem; color:#fff;">FINAL SCORE: <span style="color:#f1c40f;">${totalSessionScore}</span></p>
+    <h1 class="victory-text" style="color:#f1c40f; margin-top:40px; font-size:2.5rem;">MISSION COMPLETE</h1>
+    <p style="font-size:1.2rem; color:#fff;">FINAL SCORE: <span id="final-score-roll" style="color:#f1c40f;">0</span></p>
     
     <div id="league-display" style="width:100%; max-width:320px; margin-top:20px;"></div>
     
-    <button onclick="location.reload()" style="margin-top:30px; padding:15px 50px; background:#f1c40f; border:none; border-radius:30px; font-weight:bold; font-size:1.1rem;">HOME</button>
+    <button onclick="location.reload()" style="margin-top:30px; padding:15px 50px; background:#f1c40f; border:none; border-radius:30px; font-weight:bold; font-size:1.1rem; cursor:pointer;">HOME</button>
 `;
 
     document.body.appendChild(winDiv);
     displayLeagueTable(); // Renders the leaderboard into the league-display div
+
+
 }
 
 function displayLeagueTable(targetId = 'league-display') {
@@ -1328,6 +1371,15 @@ function activateGameGUI() {
     if (stats) stats.style.display = 'flex';
     if (pause) pause.style.display = 'inline-block';
     if (restart) restart.style.display = 'block';
+}
+
+function ensureGameRunning() {
+    if (!isGameActive) {
+        isGameActive = true;
+        gameStartTime = Date.now();
+        gameInterval = setInterval(updateGameTimer, 1000);
+        activateGameGUI();
+    }
 }
 
 function renderIntlPassport() {
