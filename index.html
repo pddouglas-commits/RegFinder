@@ -342,6 +342,14 @@
     "XZ": "Armagh", "YZ": "Londonderry"
     };
 
+    // INTERNATIONAL  mapping
+    const internationalCodes = {
+    "D": "Germany", "F": "France", "I": "Italy", "E": "Spain",
+    "B": "Belgium", "NL": "Netherlands", "CH": "Switzerland",
+    "A": "Austria", "IRL": "Ireland", "PL": "Poland", "P": "Portugal",
+    "CZ": "Czech Republic", "DK": "Denmark", "S": "Sweden", "N": "Norway"
+    };
+
     let foundLetters = new Set();
     let currentTargetOptions = []; 
     let gameDirection = null; 
@@ -529,6 +537,7 @@ function processNIPlate(plateId) {
     // Extract the 2-letter county code based on I/Z position
     if (letters.length === 3) {
         // Current format: A[UI] 1234 or [BI]G 1
+        // We look for the I or Z to determine the 2-letter pair
         code = (letters[1] === 'I' || letters[1] === 'Z') ? letters.substring(1, 3) : letters.substring(0, 2);
     } else {
         // Older/Reversed format: [IA] 1234 or [BZ] 1
@@ -555,6 +564,34 @@ function processNIPlate(plateId) {
     } else if (clean.length >= 4) {
         // Only show unknown if it failed to match a real county after 4 chars
         showUnknown();
+    }
+}
+
+function processInternationalCode(code) {
+    const countryName = internationalCodes[code];
+
+    if (countryName) {
+        let intlCollection = JSON.parse(localStorage.getItem('regFinder_intl')) || [];
+        const isNew = !intlCollection.includes(code);
+
+        if (isNew) {
+            intlCollection.push(code);
+            localStorage.setItem('regFinder_intl', JSON.stringify(intlCollection));
+            totalSessionScore += 75;
+            document.getElementById('grand-total').innerText = totalSessionScore;
+        }
+
+        // Blue "International Oval" Style Badge
+        document.getElementById('res-town').innerText = countryName;
+        const scoreEl = document.getElementById('score-display');
+        scoreEl.innerHTML = isNew ? `+75 POINTS` : `<span style="color: #666;">ALREADY VISITED</span>`;
+        document.getElementById('badges').innerHTML = `<div class="classic-badge" style="background:#003399; border-radius: 50px; padding: 4px 15px;">INTL: ${code}</div>`;
+        
+        const card = document.getElementById('result-card');
+        card.style.display = 'block';
+        card.classList.add('flash-success');
+        
+        setTimeout(clearInput, 1500);
     }
 }
 
