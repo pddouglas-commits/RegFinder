@@ -1317,15 +1317,24 @@ function renderEraTimeline(era) {
     const years = era === 'classic' ? classicYears : heritageYears;
     const color = era === 'classic' ? '#3498db' : '#8e44ad';
     
-    // PULL REAL DATA
+    // 1. PULL DATA ONCE (Outside the loop)
     const tripData = JSON.parse(localStorage.getItem(`regFinder_trip_${era}`)) || {};
     const odoData = JSON.parse(localStorage.getItem(`regFinder_odo_${era}`)) || {};
+
+    // 2. CALCULATE PROGRESS ONCE
+    const foundCount = Object.keys(odoData).length; 
+    const totalPossible = 21; 
+    const percent = (foundCount / totalPossible) * 100;
+    
+    const fillEl = document.getElementById(era + '-fill');
+    if (fillEl) fillEl.style.width = percent + '%';
 
     let html = `
         <div style="display: grid; grid-template-columns: 1fr 1.5fr 1fr 1fr; gap: 5px; padding: 10px; font-size: 0.7rem; color: #666; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid #333;">
             <div>Series</div><div>Year</div><div style="text-align:center;">Trip</div><div style="text-align:center;">Odo</div>
         </div>`;
 
+    // 3. GENERATE TABLE ROWS
     Object.keys(years).sort().forEach(letter => {
         const tripCount = tripData[letter] || 0;
         const odoCount = odoData[letter] || 0;
@@ -1339,6 +1348,7 @@ function renderEraTimeline(era) {
                 <span style="text-align:center; font-family:monospace; color: ${isFoundEver ? '#fff' : '#333'};">${isFoundEver ? odoCount : '🔒'}</span>
             </div>`;
     });
+    
     container.innerHTML = html + `<div class="scroll-spacer" style="height: 200px;"></div>`;
 }
 
@@ -1510,6 +1520,13 @@ function renderSection(title, color, platesArray = []) {
 function renderNIList(era) {
     const container = document.getElementById(era + '-list'); // Now uses the variable
     const owned = JSON.parse(localStorage.getItem('regFinder_' + era)) || []; // Now uses the variable
+const niOdo = JSON.parse(localStorage.getItem('regFinder_odo_ni')) || {};
+const niCount = Object.keys(niOdo).length;
+const niPercent = (niCount / 34) * 100; // Based on your niCounties object[cite: 1]
+
+//const fillEl = document.getElementById('ni-fill');
+//if (fillEl) fillEl.style.width = niPercent + '%';
+
     
     let html = '';
     // Use niCounties directly since it's a unique object
