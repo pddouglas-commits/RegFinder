@@ -728,14 +728,8 @@ function processClassicPrefix(plateId) {
     const letter = plateId[0];
     if (['I','O','U','Q','Z'].includes(letter)) { showUnknown(); return; }
 
-    // Logic Fix: Get the collection fresh
-    let collection = JSON.parse(localStorage.getItem('regFinder_classic')) || [];
-    const isNew = !collection.includes(letter);
-
-    if (isNew) {
-        collection.push(letter);
-        localStorage.setItem('regFinder_classic', JSON.stringify(collection));
-    }
+// Log to both buckets
+    updateOdoAndTrip(letter, 'classic');
     
     displayEraResult(letter, "Classic", isNew ? "1983-2001" : "Already Found", !isNew);
     setTimeout(clearInput, 1500);
@@ -976,6 +970,19 @@ function clearCollection() {
             if (chainTimeLeft <= 0) { clearInterval(chainTimer); chainCount = 0; updateChainUI(); }
         }, 1000);
     }
+
+    function updateOdoAndTrip(letter, era) {
+    // 1. Update Trip Bucket (Session - clears when you hit Restart/Home)
+    let tripData = JSON.parse(localStorage.getItem(`regFinder_trip_${era}`)) || {};
+    tripData[letter] = (tripData[letter] || 0) + 1;
+    localStorage.setItem(`regFinder_trip_${era}`, JSON.stringify(tripData));
+
+    // 2. Update Odometer Bucket (Lifetime - only clears on Total Cleanse)
+    let odoData = JSON.parse(localStorage.getItem(`regFinder_odo_${era}`)) || {};
+    odoData[letter] = (odoData[letter] || 0) + 1;
+    localStorage.setItem(`regFinder_odo_${era}`, JSON.stringify(odoData));
+    }
+
 
 function updateChain() {
     if (isFreeplayMode) return;
@@ -1287,42 +1294,29 @@ function renderEraTimeline(era) {
     const years = era === 'classic' ? classicYears : heritageYears;
     const color = era === 'classic' ? '#3498db' : '#8e44ad';
     
-    // UI Header for the Table
+    // PULL REAL DATA[cite: 2]
+    const tripData = JSON.parse(localStorage.getItem(`regFinder_trip_${era}`)) || {};
+    const odoData = JSON.parse(localStorage.getItem(`regFinder_odo_${era}`)) || {};
+
     let html = `
         <div style="display: grid; grid-template-columns: 1fr 1.5fr 1fr 1fr; gap: 5px; padding: 10px; font-size: 0.7rem; color: #666; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid #333;">
-            <div>Series</div>
-            <div>Year</div>
-            <div style="text-align:center;">Trip</div>
-            <div style="text-align:center;">Odo</div>
-        </div>
-    `;
+            <div>Series</div><div>Year</div><div style="text-align:center;">Trip</div><div style="text-align:center;">Odo</div>
+        </div>`;
 
     Object.keys(years).sort().forEach(letter => {
-        // These will eventually pull from our new Dual-Stream logic
-        const tripCount = 0; // Placeholder for session data
-        const odoCount = 0;  // Placeholder for lifetime data
+        const tripCount = tripData[letter] || 0;
+        const odoCount = odoData[letter] || 0;
         const isFoundEver = odoCount > 0;
 
         html += `
             <div style="display: grid; grid-template-columns: 1fr 1.5fr 1fr 1fr; align-items: center; padding: 12px 10px; margin-bottom: 2px; background: ${isFoundEver ? '#222' : '#111'}; border-radius: 4px;">
                 <span style="font-size: 1.1rem; font-weight: bold; color: ${isFoundEver ? '#fff' : '#444'};">${letter}</span>
                 <span style="font-size: 0.8rem; color: ${isFoundEver ? color : '#444'};">${years[letter]}</span>
-                
-                <!-- TRIP COUNT: Resettable daily -->
-                <span style="text-align:center; font-family:monospace; color: ${tripCount > 0 ? '#f1c40f' : '#333'};">
-                    ${tripCount > 0 ? 'x' + tripCount : '—'}
-                </span>
-
-                <!-- ODO COUNT: Lifetime mastery -->
-                <span style="text-align:center; font-family:monospace; color: ${isFoundEver ? '#fff' : '#333'};">
-                    ${odoCount > 0 ? odoCount : '🔒'}
-                </span>
-            </div>
-        `;
+                <span style="text-align:center; font-family:monospace; color: ${tripCount > 0 ? '#f1c40f' : '#333'};">${tripCount > 0 ? 'x'+tripCount : '—'}</span>
+                <span style="text-align:center; font-family:monospace; color: ${isFoundEver ? '#fff' : '#333'};">${isFoundEver ? odoCount : '🔒'}</span>
+            </div>`;
     });
-    
-    html += `<div class="scroll-spacer" style="height: 200px;"></div>`;
-    container.innerHTML = html;
+    container.innerHTML = html + `<div class="scroll-spacer" style="height: 200px;"></div>`;
 }
 
     function shadeMap() {
