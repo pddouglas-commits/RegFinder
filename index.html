@@ -1594,7 +1594,8 @@ function ensureGameRunning() {
 
 function renderIntlPassport() {
     const container = document.getElementById('intl-list');
-    
+    if (!container) return; // Safety check
+
     // 1. PULL DATA BUCKETS
     const tripData = JSON.parse(localStorage.getItem('regFinder_trip_intl')) || {};
     const odoData = JSON.parse(localStorage.getItem('regFinder_odo_intl')) || {};
@@ -1613,44 +1614,46 @@ function renderIntlPassport() {
 
     let html = '';
     Object.entries(internationalCodes).forEach(([code, data]) => {
-        // 2. CHECK ODO AND TRIP
         const tripCount = tripData[code] || 0;
         const odoTotal = odoData[code] || 0;
-        const isFound = odoTotal > 0; // LIGHTS UP if Odo > 0
+        const isFound = odoTotal > 0;
 
         html += `
-        <div style="padding:10px 5px; background:${isFound ? '#00339944' : '#222'}; border-radius:8px; border:1px solid ${isFound ? '#003399' : '#444'}; text-align:center; position:relative;">
+        <div style="padding:10px 5px; background:${isFound ? 'rgba(0, 51, 153, 0.3)' : '#222'}; border-radius:8px; border:1px solid ${isFound ? '#003399' : '#444'}; text-align:center; position:relative; min-height:85px; display:flex; flex-direction:column; justify-content:center;">
             
-            <!-- TRIP BADGE (Yellow - only shows if > 0) -->
+            <!-- TRIP BADGE (Yellow) -->
             ${tripCount > 0 ? `
-                <div style="position:absolute; top:-5px; right:-5px; background:#f1c40f; color:#000; font-size:9px; border-radius:50%; width:16px; height:16px; display:flex; align-items:center; justify-content:center; font-weight:bold; border:1px solid #000; z-index:10;">
+                <div style="position:absolute; top:-5px; right:-5px; background:#f1c40f; color:#000; font-size:9px; border-radius:50%; width:18px; height:18px; display:flex; align-items:center; justify-content:center; font-weight:bold; border:1px solid #000; z-index:10; box-shadow:0 2px 4px rgba(0,0,0,0.5);">
                     ${tripCount}
                 </div>
             ` : ''}
 
-            <div style="font-size:1.5rem; filter: ${isFound ? 'none' : 'grayscale(100%) opacity(0.3)'};">
+            <!-- FLAG WITH FORCED FILTER RESET -->
+            <div style="font-size:1.8rem; margin-bottom:2px; line-height:1; filter: ${isFound ? 'none !important' : 'grayscale(100%) opacity(0.3)'};">
                 ${flags[code] || '🚩'}
             </div>
             
-            <div style="font-weight:bold; font-size:11px; margin-top:5px; color:${isFound ? '#fff' : '#444'};">${code}</div>
+            <div style="font-weight:bold; font-size:11px; color:${isFound ? '#fff' : '#555'};">${code}</div>
             
-            <!-- ODOMETER TOTAL -->
-            <div style="font-size:9px; color:#f1c40f;">
-                ${isFound ? odoTotal + ' TOTAL' : data.pts + ' PTS'}
+            <!-- STATS / PTS -->
+            <div style="font-size:9px; font-family:monospace; margin-top:3px; color:#f1c40f;">
+                ${isFound ? odoTotal + ' ODO' : data.pts + ' PTS'}
             </div>
 
-            <div style="font-size:8px; color:#888; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${data.name}</div>
+            <div style="font-size:8px; color:#666; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; margin-top:2px;">
+                ${data.name}
+            </div>
         </div>`;
     });
 
-    html += `<div class="scroll-spacer" style="height: 200px; width: 100%; clear: both; display: block !important;"></div>`;
-    container.innerHTML = html;
+    container.innerHTML = html + `<div class="scroll-spacer" style="height: 150px; width: 100%;"></div>`;
 
-    // Update Progress Bar
+    // 2. PROGRESS BAR UPDATE
     const fillEl = document.getElementById('intl-fill');
     if (fillEl) {
         const uniqueFound = Object.keys(odoData).length;
-        fillEl.style.width = `${(uniqueFound / Object.keys(internationalCodes).length) * 100}%`;
+        const totalCountries = Object.keys(internationalCodes).length;
+        fillEl.style.width = `${(uniqueFound / totalCountries) * 100}%`;
     }
 }
 
