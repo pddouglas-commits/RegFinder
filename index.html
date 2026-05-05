@@ -1316,6 +1316,7 @@ function renderEraTimeline(era) {
     const container = document.getElementById(era + '-list');
     const years = era === 'classic' ? classicYears : heritageYears;
     const color = era === 'classic' ? '#3498db' : '#8e44ad';
+    const tripTotal = Object.values(tripData).reduce((a, b) => a + b, 0);
     
     // 1. PULL DATA ONCE (Outside the loop)
     const tripData = JSON.parse(localStorage.getItem(`regFinder_trip_${era}`)) || {};
@@ -1331,8 +1332,13 @@ function renderEraTimeline(era) {
 
     let html = `
         <div style="display: grid; grid-template-columns: 1fr 1.5fr 1fr 1fr; gap: 5px; padding: 10px; font-size: 0.7rem; color: #666; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid #333;">
-            <div>Series</div><div>Year</div><div style="text-align:center;">Trip</div><div style="text-align:center;">Odo</div>
+            <div>Series</div>
+            <div>Year</div>
+            <div style="text-align:center;">Trip (${tripTotal})</div>
+            <div style="text-align:center;">Odo</div>
         </div>`;
+
+        
 
     // 3. GENERATE TABLE ROWS
     Object.keys(years).sort().forEach(letter => {
@@ -1449,6 +1455,23 @@ function showRegionDetails(targetId) {
     const container = document.getElementById('region-detail-view');
     container.innerHTML = html + `<br><button onclick="this.parentElement.style.display='none'" style="margin-top:20px; background:#444; color:white; border:none; padding:10px 20px; border-radius:4px; width:100%;">BACK</button>`;
     container.style.display = 'block';
+}
+
+function updatePersonalBests(era, currentTripCount) {
+    let records = JSON.parse(localStorage.getItem('regFinder_records')) || {};
+    
+    // Update era-specific record
+    if (currentTripCount > (records[`max_${era}`] || 0)) {
+        records[`max_${era}`] = currentTripCount;
+    }
+    
+    // Update total trip record
+    const totalCurrentTrip = calculateTotalTrip(); 
+    if (totalCurrentTrip > (records.max_total_trip || 0)) {
+        records.max_total_trip = totalCurrentTrip;
+    }
+
+    localStorage.setItem('regFinder_records', JSON.stringify(records));
 }
 
 function showNationalDetails() {
@@ -1568,7 +1591,11 @@ function ensureGameRunning() {
 
 function renderIntlPassport() {
     const container = document.getElementById('intl-list');
-    const owned = JSON.parse(localStorage.getItem('regFinder_intl')) || [];
+    
+    // 1. PULL DATA BUCKETS
+    const owned = JSON.parse(localStorage.getItem('regFinder_intl')) || []; // Legacy array for progress bar
+    const tripData = JSON.parse(localStorage.getItem('regFinder_trip_intl')) || {};
+    const odoData = JSON.parse(localStorage.getItem('regFinder_odo_intl')) || {};
     
     // Emoji flag mapping for the passport look
     const flags = {
@@ -1585,26 +1612,44 @@ function renderIntlPassport() {
 
     let html = '';
     Object.entries(internationalCodes).forEach(([code, data]) => {
-        const isFound = owned.includes(code);
-        // Inside renderIntlPassport, where you generate the HTML:
-html += `
-    <div style="padding:10px 5px; background:${isFound ? '#00339944' : '#222'}; border-radius:8px; border:1px solid ${isFound ? '#003399' : '#444'}; text-align:center;">
-        <div style="font-size:1.5rem; filter: ${isFound ? 'none' : 'grayscale(100%) opacity(0.3)'};">
-            ${flags[code] || '🚩'}
-        </div>
-        <div style="font-weight:bold; font-size:11px; margin-top:5px; color:${isFound ? '#fff' : '#444'};">${code}</div>
-        <div style="font-size:9px; color:#f1c40f;">${data.pts} PTS</div> <!-- Show the points value here -->
-        <div style="font-size:8px; color:#888; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${data.name}</div>
-    </div>`;
-    });
-    html += `<div class="scroll-spacer" style="height: 200px; width: 100%; clear: both; display: block !important;"></div>`;
+        // 2. GET COUNTS FOR THIS SPECIFIC COUNTRY
+        const tripCount = tripData[code] || 0;
+        const odoTotal = odoData[code] || 0;
+        const isFound = odoTotal > 0;
 
+        html += `
+        <div style="padding:10px 5px; background:${isFound ? '#00339944' : '#222'}; border-radius:8px; border:1px solid ${isFound ? '#003399' : '#444'}; text-align:center; position:relative;">
+            
+            <!-- TRIP BADGE (Yellow - only shows if > 0) -->
+            ${tripCount > 0 ? `
+                <div style="position:absolute; top:-5px; right:-5px; background:#f1c40f; color:#000; font-size:9px; border-radius:50%; width:16px; height:16px; display:flex; align-items:center; justify-content:center; font-weight:bold; border:1px solid #000; z-index:10;">
+                    ${tripCount}
+                </div>
+            ` : ''}
+
+            <div style="font-size:1.5rem; filter: ${isFound ? 'none' : 'grayscale(100%) opacity(0.3)'};">
+                ${flags[code] || '🚩'}
+            </div>
+            
+            <div style="font-weight:bold; font-size:11px; margin-top:5px; color:${isFound ? '#fff' : '#444'};">${code}</div>
+            
+            <!-- ODOMETER TOTAL (Lifetime count) -->
+            <div style="font-size:9px; color:#f1c40f;">
+                ${odoTotal > 0 ? odoTotal + ' TOTAL' : data.pts + ' PTS'}
+            </div>
+
+            <div style="font-size:8px; color:#888; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${data.name}</div>
+        </div>`;
+    });
+
+    html += `<div class="scroll-spacer" style="height: 200px; width: 100%; clear: both; display: block !important;"></div>`;
     container.innerHTML = html;
-    
-    // Update the blue international progress bar
+
+    // Update the blue international progress bar based on unique Odo finds
     const fillEl = document.getElementById('intl-fill');
     if (fillEl) {
-        fillEl.style.width = `${(owned.length / Object.keys(internationalCodes).length) * 100}%`;
+        const uniqueFound = Object.keys(odoData).length;
+        fillEl.style.width = `${(uniqueFound / Object.keys(internationalCodes).length) * 100}%`;
     }
 }
 
