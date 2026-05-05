@@ -45,7 +45,7 @@
 .header-center {
     flex-direction: column;
     justify-content: center;
-    pointer-events: none;
+    pointer-events: none; /* This makes the center box "hollow" to clicks */
 }
 
 /* New wrapper to hide game data on splash screen */
@@ -334,7 +334,7 @@ h2 {
     <!-- MODE SELECTOR -->
     <div style="display: flex; gap: 10px; margin-bottom: 20px; background: #222; padding: 5px; border-radius: 30px;">
         <button id="sprint-mode-btn" onclick="setGameMode('sprint')" style="padding: 10px 20px; border-radius: 25px; border: none; background: #f1c40f; color: #000; font-weight: bold; cursor: pointer;">SPRINT</button>
-        <button id="free-mode-btn" onclick="setGameMode('free')" style="padding: 10px 20px; border-radius: 25px; border: none; background: #333; color: #fff; cursor: pointer;">LOGBOOK</button>
+        <button id="free-mode-btn" onclick="setGameMode('free')" style="padding: 10px 20px; border-radius: 25px; border: none; background: #333; color: #fff; cursor: pointer;">FREEPLAY</button>
     </div>
 
     <button id="main-start-btn" onclick="initApp()" style="padding:15px 40px; background:#f1c40f; border:none; border-radius:30px; font-weight:bold; font-size:1.2rem; cursor:pointer; box-shadow: 0 4px 15px rgba(241, 196, 15, 0.3);">START SPRINT</button>
@@ -381,7 +381,7 @@ h2 {
 
     <!-- RIGHT: Restart -->
     <div class="header-side" style="justify-content: flex-end;">
-        <button id="restart-btn" onclick="location.reload()" style="background:none; border:1px solid #e90101; color:#e90101; border-radius:4px; font-size:9px; padding:4px 8px; display:none;">RESTART</button>
+        <button id="restart-btn" onclick="quitGame()" style="background:none; border:1px solid #e90101; color:#e90101; border-radius:4px; font-size:9px; padding:4px 8px; display:none;">RESTART</button>
     </div>
 </div> <!-- Correctly closes the entire header bar -->
 
@@ -835,6 +835,11 @@ function processInternationalCode(code) {
         }
     }
 
+    function quitGame() {
+    localStorage.removeItem('regFinder_activeStartTime'); // Kill the persistence
+    location.reload(); // Now it will find nothing and show the Splash screen
+    }
+
     function startGame(letter, data, plateId) {
         isGameActive = true;
         gameStartTime = Date.now();
@@ -1123,7 +1128,7 @@ const counter = setInterval(() => {
     
     <div id="league-display" style="width:100%; max-width:320px; margin-top:20px;"></div>
     
-    <button onclick="location.reload()" style="margin-top:30px; padding:15px 50px; background:#f1c40f; border:none; border-radius:30px; font-weight:bold; font-size:1.1rem; cursor:pointer;">HOME</button>
+    <button onclick="quitGame()" style="margin-top:30px; padding:15px 50px; background:#f1c40f; border:none; border-radius:30px; font-weight:bold; font-size:1.1rem; cursor:pointer;">HOME</button>
 `;
 
     document.body.appendChild(winDiv);
