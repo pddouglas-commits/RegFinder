@@ -583,16 +583,21 @@ function initApp() {
     document.getElementById('splash-screen').style.display = 'none';
     
     if (isFreeplayMode) {
-        // LOGBOOK MODE: No timer, no chain, no pause needed
+        // --- LOGBOOK/FREEPLAY MODE ---
         isGameActive = true;
-        activateGameGUI();
-        // Explicitly hide the "pressure" UI elements
-        document.getElementById('game-timer').parentElement.style.opacity = '0'; 
-        document.getElementById('chain-display').style.opacity = '0';
+        activateGameGUI(); // Shows the score bar
+        
+        // Motorway Cleanup: Hide pressure elements
         document.getElementById('pause-btn').style.display = 'none';
+        document.querySelector('.timer-row').style.visibility = 'hidden';
+        document.getElementById('chain-display').style.display = 'none';
+        
+        // We do NOT call startGame() here because we don't want a timer
     } else {
-        // SPRINT MODE: Everything active
-        startGame(); 
+        // --- SPRINT MODE ---
+        // We don't call startGame() immediately because it needs a letter to start.
+        // We just show the GUI and wait for the first plate entry.
+        activateGameGUI(); 
     }
     
     setTimeout(() => focusInput(), 300);
@@ -680,13 +685,20 @@ if (inputMode === 'INT') {
     }
 });
 
-    function processPlate(data, plateId) {
-        const firstLetter = plateId[0];
-        // If no alphabet letters have been found yet, this plate STARTS the sprint
-        if (foundLetters.size === 0) { 
-            startGame(firstLetter, data, plateId); 
-            return; 
-        }
+function processPlate(data, plateId) {
+    const firstLetter = plateId[0];
+    
+    // 1. If we are in SPRINT mode and no letters found yet, START the sprint
+    if (!isFreeplayMode && foundLetters.size === 0) { 
+        startGame(firstLetter, data, plateId); 
+        return; 
+    }
+
+    // 2. If we are in FREEPLAY, just log it and skip target/direction checks
+    if (isFreeplayMode) {
+        completeLetter(firstLetter, data, plateId);
+        return;
+    }
 
         //if (!isGameActive) { startGame(firstLetter, data, plateId); return; }
 
