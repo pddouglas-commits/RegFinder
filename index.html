@@ -810,33 +810,27 @@ function processNIPlate(plateId) {
 }
 
 function processInternationalCode(code) {
-    ensureGameRunning(); // Wake up GUI on first find
+    ensureGameRunning(); 
     const data = internationalCodes[code];
 
     if (data) {
-        if (!isGameActive) {
-            isGameActive = true;
-            gameStartTime = Date.now();
-            gameInterval = setInterval(updateGameTimer, 1000);
-            activateGameGUI();
-        }
-        let intlCollection = JSON.parse(localStorage.getItem('regFinder_intl')) || [];
-        const isNew = !intlCollection.includes(code);
+        // 1. Update the new Odo/Trip buckets
+        updateOdoAndTrip(code, 'intl');
 
-        if (isNew) {
-            intlCollection.push(code);
-            localStorage.setItem('regFinder_intl', JSON.stringify(intlCollection));
-            
-            // Use the points from the data object, or default to 50 if missing
+        // 2. Points Logic
+        const odoData = JSON.parse(localStorage.getItem('regFinder_odo_intl')) || {};
+        const isNewDiscovery = odoData[code] === 1; // It's only "New" the very first time
+
+        if (isNewDiscovery) {
             const pointsAwarded = data.pts || 50; 
             totalSessionScore += pointsAwarded;
             document.getElementById('grand-total').innerText = totalSessionScore;
-            
             document.getElementById('score-display').innerHTML = `+${pointsAwarded} POINTS`;
         } else {
             document.getElementById('score-display').innerHTML = `<span style="color: #666;">ALREADY VISITED</span>`;
         }
 
+        // 3. UI Display
         document.getElementById('res-town').innerText = data.name;
         document.getElementById('badges').innerHTML = `<div class="classic-badge" style="background:#003399; border-radius: 50px; padding: 4px 15px;">INTL: ${code}</div>`;
         
