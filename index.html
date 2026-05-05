@@ -516,14 +516,25 @@ h2 {
         trackerContainer.appendChild(span);
     });
 
-    window.onload = () => {
-        fetch('RegFinder.json?v=' + Date.now())
-            .then(r => r.json())
-            .then(data => { 
-                plateData = data; 
-                updateSplashStats();
-            });
-    };
+window.onload = () => {
+    fetch('RegFinder.json?v=' + Date.now())
+        .then(r => r.json())
+        .then(data => { 
+            plateData = data; 
+            updateSplashStats();
+            
+            // RESUME LOGIC: If a start time exists, skip splash and resume
+            const savedStartTime = localStorage.getItem('regFinder_activeStartTime');
+            if (savedStartTime) {
+                gameStartTime = parseInt(savedStartTime);
+                isGameActive = true;
+                document.getElementById('splash-screen').style.display = 'none';
+                activateGameGUI();
+                gameInterval = setInterval(updateGameTimer, 1000);
+                focusInput();
+            }
+        });
+};
 
     function initApp() {
         if (navigator.wakeLock) {
@@ -790,8 +801,12 @@ function processInternationalCode(code) {
     function startGame(letter, data, plateId) {
         isGameActive = true;
         gameStartTime = Date.now();
+        // SAVE STATE: Store the start time so refreshes don't kill the sprint
+        localStorage.setItem('regFinder_activeStartTime', gameStartTime);
+
         gameInterval = setInterval(updateGameTimer, 1000);
         activateGameGUI();
+
         document.getElementById('active-stats').style.display = 'flex';
         document.getElementById('pause-btn').style.display = 'inline-block';
         document.getElementById('restart-btn').style.display = 'block';
