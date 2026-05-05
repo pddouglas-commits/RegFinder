@@ -826,14 +826,21 @@ function processInternationalCode(code) {
         menu.style.display = (menu.style.display === 'none') ? 'flex' : 'none';
     }
 
-    function clearCollection() {
-        if (confirm("Reset everything?")) {
-            localStorage.removeItem('regFinder_collection');
-            localStorage.removeItem('regFinder_league');
-            localStorage.removeItem('regFinder_activeGame');
-            location.reload();
-        }
+function clearCollection() {
+    if (confirm("Reset everything? This wipes all Eras, NI, and International finds.")) {
+        // The "Big Five" keys that hold your lifetime data
+        const keys = [
+            'regFinder_collection', // Modern
+            'regFinder_classic',    // Classic
+            'regFinder_heritage',   // Heritage
+            'regFinder_ni',         // Northern Ireland
+            'regFinder_intl',       // International
+            'regFinder_activeStartTime' // Current Sprint
+        ];
+        keys.forEach(k => localStorage.removeItem(k));
+        location.reload();
     }
+}
 
     function quitGame() {
     localStorage.removeItem('regFinder_activeStartTime'); // Kill the persistence
