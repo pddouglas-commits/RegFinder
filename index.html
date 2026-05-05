@@ -419,6 +419,9 @@ h2 {
     let totalSessionScore = 0;
     let lastScoredPlate = "";
     let pauseStartTime = 0;
+    let tripStats = { classic: {}, heritage: {}, ni: {}, intl: {}, modern: {} };
+    let odoStats = { classic: {}, heritage: {}, ni: {}, intl: {}, modern: {} };
+
     const alphabet = "ABCDEFGHJKLMNOPRSTUVWXY".split(""); 
     // Chronological Mapping for Heritage (Suffix)
     const heritageYears = { 
@@ -573,13 +576,27 @@ window.onload = () => {
         });
 };
 
-    function initApp() {
-        if (navigator.wakeLock) {
-            navigator.wakeLock.request('screen').catch(e => {});
-        }
-        document.getElementById('splash-screen').style.display = 'none';
-        setTimeout(() => focusInput(), 300);
+function initApp() {
+    if (navigator.wakeLock) {
+        navigator.wakeLock.request('screen').catch(e => {});
     }
+    document.getElementById('splash-screen').style.display = 'none';
+    
+    if (isFreeplayMode) {
+        // LOGBOOK MODE: No timer, no chain, no pause needed
+        isGameActive = true;
+        activateGameGUI();
+        // Explicitly hide the "pressure" UI elements
+        document.getElementById('game-timer').parentElement.style.opacity = '0'; 
+        document.getElementById('chain-display').style.opacity = '0';
+        document.getElementById('pause-btn').style.display = 'none';
+    } else {
+        // SPRINT MODE: Everything active
+        startGame(); 
+    }
+    
+    setTimeout(() => focusInput(), 300);
+}
 
     function toggleInputMode() {
     inputMode = (inputMode === 'GB') ? 'INT' : 'GB';
@@ -949,6 +966,8 @@ function clearCollection() {
     }
 
 function updateChain() {
+    if (isFreeplayMode) return;
+
     chainTimeLeft <= 0 ? (chainCount = 1, startChainTimer()) : chainCount++;
     updateChainUI();
     
@@ -1025,7 +1044,9 @@ function displayEraResult(letter, era, detail, alreadyFound = false) {
 }
 
 function updateGameTimer() {
-    if (isPaused || !isGameActive) return; // Timer freeze logic
+    // If in Freeplay, we don't even run the calculation logic
+    if (isPaused || !isGameActive || isFreeplayMode) return; 
+    
     const diff = Math.floor((Date.now() - gameStartTime) / 1000);
     document.getElementById('game-timer').innerText = `${Math.floor(diff/60).toString().padStart(2,'0')}:${(diff%60).toString().padStart(2,'0')}`;
 }
