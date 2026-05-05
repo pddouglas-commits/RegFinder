@@ -869,24 +869,26 @@ function clearCollection() {
 }
 
     function quitGame() {
-    // 1. The Warning Pop-up
-    const confirmation = confirm("This will end your current session and RESET your 'Trip' counts to zero. Your lifetime Odometer will remain safe. Proceed?");
-    
-    if (confirmation) {
-        // 2. Clear Session Persistence[cite: 1, 2]
-        localStorage.removeItem('regFinder_activeStartTime'); 
-        
-        // 3. Reset Trip Buckets[cite: 1, 2]
-        localStorage.removeItem('regFinder_trip_classic');
-        localStorage.removeItem('regFinder_trip_heritage');
-        localStorage.removeItem('regFinder_trip_ni');
-        localStorage.removeItem('regFinder_trip_intl');
-        localStorage.removeItem('regFinder_trip_modern');
+    // Just kills the sprint timer, keeps the trip counts[cite: 2]
+    localStorage.removeItem('regFinder_activeStartTime'); 
+    location.reload(); 
+}
 
-        // 4. Return to Splash Screen
-        location.reload(); 
+    function resetTripData() {
+    if (confirm("Reset TRIP counts for this journey? Odometer is safe.")) {
+        const eras = ['classic', 'heritage', 'ni', 'intl', 'modern'];
+        eras.forEach(e => localStorage.removeItem(`regFinder_trip_${e}`));
+        location.reload();
     }
 }
+
+function fullOdometerWipe() {
+    if (confirm("DANGER: Wipe ALL lifetime history and trip data?")) {
+        localStorage.clear(); // Wipes everything[cite: 2]
+        location.reload();
+    }
+}
+
     function startGame(letter, data, plateId) {
         isGameActive = true;
         gameStartTime = Date.now();
