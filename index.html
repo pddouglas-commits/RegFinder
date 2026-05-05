@@ -330,8 +330,14 @@ h2 {
 
     <h1 style="color:#f1c40f; margin-bottom:10px;">RegFinder</h1>
     <p style="color:#aaa; margin-bottom:30px;">The Alphabet Sprint</p>
-    
-    <button onclick="initApp()" style="padding:15px 40px; background:#f1c40f; border:none; border-radius:30px; font-weight:bold; font-size:1.2rem; cursor:pointer; box-shadow: 0 4px 15px rgba(241, 196, 15, 0.3);">START SPRINT</button>
+
+    <!-- MODE SELECTOR -->
+    <div style="display: flex; gap: 10px; margin-bottom: 20px; background: #222; padding: 5px; border-radius: 30px;">
+        <button id="sprint-mode-btn" onclick="setGameMode('sprint')" style="padding: 10px 20px; border-radius: 25px; border: none; background: #f1c40f; color: #000; font-weight: bold; cursor: pointer;">SPRINT</button>
+        <button id="free-mode-btn" onclick="setGameMode('free')" style="padding: 10px 20px; border-radius: 25px; border: none; background: #333; color: #fff; cursor: pointer;">LOGBOOK</button>
+    </div>
+
+    <button id="main-start-btn" onclick="initApp()" style="padding:15px 40px; background:#f1c40f; border:none; border-radius:30px; font-weight:bold; font-size:1.2rem; cursor:pointer; box-shadow: 0 4px 15px rgba(241, 196, 15, 0.3);">START SPRINT</button>
     
     <div id="splash-stats" style="margin-top:20px; font-size:12px; color:#555;">
         Map Progress: <span id="splash-map-count" style="color:#f1c40f;">0/19</span>
@@ -504,6 +510,37 @@ h2 {
 
     let inputMode = 'GB'; // 'GB' or 'INT'
 
+    let isFreeplayMode = false; // Default to Sprint[cite: 1]
+
+function setGameMode(mode) {
+    const sprintBtn = document.getElementById('sprint-mode-btn');
+    const freeBtn = document.getElementById('free-mode-btn');
+    const startBtn = document.getElementById('main-start-btn');
+
+    if (mode === 'free') {
+        isFreeplayMode = true;
+        // Visual Toggle
+        freeBtn.style.background = '#f1c40f';
+        freeBtn.style.color = '#000';
+        freeBtn.style.fontWeight = 'bold';
+        sprintBtn.style.background = '#333';
+        sprintBtn.style.color = '#fff';
+        sprintBtn.style.fontWeight = 'normal';
+        // Button Text
+        startBtn.innerText = "START LOGGING";
+    } else {
+        isFreeplayMode = false;
+        // Visual Toggle
+        sprintBtn.style.background = '#f1c40f';
+        sprintBtn.style.color = '#000';
+        sprintBtn.style.fontWeight = 'bold';
+        freeBtn.style.background = '#333';
+        freeBtn.style.color = '#fff';
+        freeBtn.style.fontWeight = 'normal';
+        // Button Text
+        startBtn.innerText = "START SPRINT";
+    }
+}
   
 
     const trackerContainer = document.getElementById('progress-tracker');
@@ -1159,6 +1196,19 @@ function closeLogbook() {
         if (pageId === 'league-page') displayLeagueTable('log-league-container');
     }
 
+function recordCatch(letter, category) {
+    // 1. Update Odometer (Lifetime)
+    let odo = JSON.parse(localStorage.getItem(`regFinder_odo_${category}`)) || {};
+    odo[letter] = (odo[letter] || 0) + 1;
+    localStorage.setItem(`regFinder_odo_${category}`, JSON.stringify(odo));
+
+    // 2. Update Trip (Session)
+    let trip = JSON.parse(localStorage.getItem(`regFinder_trip_${category}`)) || {};
+    trip[letter] = (trip[letter] || 0) + 1;
+    localStorage.setItem(`regFinder_trip_${category}`, JSON.stringify(trip));
+}
+
+
 function renderEraLogbook() {
     const classicList = document.getElementById('classic-list');
     const heritageList = document.getElementById('heritage-list');
@@ -1190,27 +1240,44 @@ function renderEraLogbook() {
 function renderEraTimeline(era) {
     const container = document.getElementById(era + '-list');
     const years = era === 'classic' ? classicYears : heritageYears;
-    const collection = JSON.parse(localStorage.getItem('regFinder_' + era)) || [];
     const color = era === 'classic' ? '#3498db' : '#8e44ad';
     
-    let html = '';
+    // UI Header for the Table
+    let html = `
+        <div style="display: grid; grid-template-columns: 1fr 1.5fr 1fr 1fr; gap: 5px; padding: 10px; font-size: 0.7rem; color: #666; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid #333;">
+            <div>Series</div>
+            <div>Year</div>
+            <div style="text-align:center;">Trip</div>
+            <div style="text-align:center;">Odo</div>
+        </div>
+    `;
+
     Object.keys(years).sort().forEach(letter => {
-        const isFound = collection.includes(letter);
+        // These will eventually pull from our new Dual-Stream logic
+        const tripCount = 0; // Placeholder for session data
+        const odoCount = 0;  // Placeholder for lifetime data
+        const isFoundEver = odoCount > 0;
+
         html += `
-            <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; margin-bottom: 5px; background: ${isFound ? '#333' : '#111'}; border-radius: 8px; border-left: 5px solid ${isFound ? color : '#222'};">
-                <span style="font-size: 1.2rem; font-weight: bold; color: ${isFound ? '#fff' : '#444'};">${letter}</span>
-                <span style="color: ${isFound ? color : '#444'};">${years[letter]}</span>
-                <span>${isFound ? '✅' : '🔒'}</span>
+            <div style="display: grid; grid-template-columns: 1fr 1.5fr 1fr 1fr; align-items: center; padding: 12px 10px; margin-bottom: 2px; background: ${isFoundEver ? '#222' : '#111'}; border-radius: 4px;">
+                <span style="font-size: 1.1rem; font-weight: bold; color: ${isFoundEver ? '#fff' : '#444'};">${letter}</span>
+                <span style="font-size: 0.8rem; color: ${isFoundEver ? color : '#444'};">${years[letter]}</span>
+                
+                <!-- TRIP COUNT: Resettable daily -->
+                <span style="text-align:center; font-family:monospace; color: ${tripCount > 0 ? '#f1c40f' : '#333'};">
+                    ${tripCount > 0 ? 'x' + tripCount : '—'}
+                </span>
+
+                <!-- ODO COUNT: Lifetime mastery -->
+                <span style="text-align:center; font-family:monospace; color: ${isFoundEver ? '#fff' : '#333'};">
+                    ${odoCount > 0 ? odoCount : '🔒'}
+                </span>
             </div>
         `;
     });
     
-    html += `<div class="scroll-spacer" style="height: 200px; width: 100%; clear: both; display: block !important;"></div>`;
+    html += `<div class="scroll-spacer" style="height: 200px;"></div>`;
     container.innerHTML = html;
-    
-    // Update progress bar
-    const percent = (collection.length / 21) * 100;
-    document.getElementById(era + '-fill').style.width = percent + '%';
 }
 
     function shadeMap() {
