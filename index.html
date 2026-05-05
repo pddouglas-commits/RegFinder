@@ -381,7 +381,7 @@ h2 {
 
     <!-- RIGHT: Restart -->
     <div class="header-side" style="justify-content: flex-end;">
-        <button id="restart-btn" onclick="quitGame()" style="background:none; border:1px solid #e90101; color:#e90101; border-radius:4px; font-size:9px; padding:4px 8px; display:none;">RESTART</button>
+        <button id="restart-btn" onclick="quitGame()" style="background:none; border:1px solid #e90101; color:#e90101; border-radius:4px; font-size:9px; padding:4px 8px; display:none;">RESET TRIP</button>
     </div>
 </div> <!-- Correctly closes the entire header bar -->
 
@@ -513,7 +513,7 @@ h2 {
 
     let inputMode = 'GB'; // 'GB' or 'INT'
 
-    let isFreeplayMode = false; // Default to Sprint[cite: 1]
+    let isFreeplayMode = false; // Default to Sprint
 
 function setGameMode(mode) {
     const sprintBtn = document.getElementById('sprint-mode-btn');
@@ -744,16 +744,14 @@ function processHeritageSuffix(plateId) {
     const letter = plateId[3];
     if (['I','O','U','Q','Z'].includes(letter)) { showUnknown(); return; }
 
-    let collection = JSON.parse(localStorage.getItem('regFinder_heritage')) || [];
-    const isNew = !collection.includes(letter);
-
-    if (isNew) {
-        collection.push(letter);
-        localStorage.setItem('regFinder_heritage', JSON.stringify(collection));
-    }
+    // 1. DATA
+    updateOdoAndTrip(letter, 'heritage');
     
-    displayEraResult(letter, "Heritage", isNew ? "1963-1983" : "Already Found", !isNew);
-    setTimeout(clearInput, 1500);
+    // 2. UI
+    displayEraResult(letter, "Heritage", heritageYears[letter], false);
+    
+    // 3. RESET
+    setTimeout(clearInput, 1000);
 }
 
 function processNIPlate(plateId) {
@@ -871,10 +869,24 @@ function clearCollection() {
 }
 
     function quitGame() {
-    localStorage.removeItem('regFinder_activeStartTime'); // Kill the persistence
-    location.reload(); // Now it will find nothing and show the Splash screen
-    }
+    // 1. The Warning Pop-up
+    const confirmation = confirm("This will end your current session and RESET your 'Trip' counts to zero. Your lifetime Odometer will remain safe. Proceed?");
+    
+    if (confirmation) {
+        // 2. Clear Session Persistence[cite: 1, 2]
+        localStorage.removeItem('regFinder_activeStartTime'); 
+        
+        // 3. Reset Trip Buckets[cite: 1, 2]
+        localStorage.removeItem('regFinder_trip_classic');
+        localStorage.removeItem('regFinder_trip_heritage');
+        localStorage.removeItem('regFinder_trip_ni');
+        localStorage.removeItem('regFinder_trip_intl');
+        localStorage.removeItem('regFinder_trip_modern');
 
+        // 4. Return to Splash Screen
+        location.reload(); 
+    }
+}
     function startGame(letter, data, plateId) {
         isGameActive = true;
         gameStartTime = Date.now();
@@ -1299,7 +1311,7 @@ function renderEraTimeline(era) {
     const years = era === 'classic' ? classicYears : heritageYears;
     const color = era === 'classic' ? '#3498db' : '#8e44ad';
     
-    // PULL REAL DATA[cite: 2]
+    // PULL REAL DATA
     const tripData = JSON.parse(localStorage.getItem(`regFinder_trip_${era}`)) || {};
     const odoData = JSON.parse(localStorage.getItem(`regFinder_odo_${era}`)) || {};
 
@@ -1491,10 +1503,10 @@ function renderSection(title, color, platesArray = []) {
 
 function renderNIList(era) {
     const container = document.getElementById(era + '-list'); // Now uses the variable
-    const owned = JSON.parse(localStorage.getItem('regFinder_' + era)) || []; // Now uses the variable[cite: 1]
+    const owned = JSON.parse(localStorage.getItem('regFinder_' + era)) || []; // Now uses the variable
     
     let html = '';
-    // Use niCounties directly since it's a unique object[cite: 1]
+    // Use niCounties directly since it's a unique object
     Object.entries(niCounties).sort((a,b) => a[1].localeCompare(b[1])).forEach(([code, county]) => {
         const isFound = owned.includes(code);
         html += `
@@ -1506,7 +1518,7 @@ function renderNIList(era) {
     html += `<div class="scroll-spacer" style="height: 200px; width: 100%; clear: both; display: block !important;"></div>`;
     container.innerHTML = html;
     
-    const fillEl = document.getElementById(era + '-fill'); // Now uses the variable[cite: 1]
+    const fillEl = document.getElementById(era + '-fill'); // Now uses the variable
     if (fillEl) {
         fillEl.style.width = `${(owned.length / Object.keys(niCounties).length) * 100}%`;
     }
