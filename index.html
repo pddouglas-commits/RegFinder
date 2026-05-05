@@ -1316,13 +1316,13 @@ function renderEraTimeline(era) {
     const container = document.getElementById(era + '-list');
     const years = era === 'classic' ? classicYears : heritageYears;
     const color = era === 'classic' ? '#3498db' : '#8e44ad';
-    const tripTotal = Object.values(tripData).reduce((a, b) => a + b, 0);
     
-    // 1. PULL DATA ONCE (Outside the loop)
+    // 1. PULL DATA ONCE
     const tripData = JSON.parse(localStorage.getItem(`regFinder_trip_${era}`)) || {};
     const odoData = JSON.parse(localStorage.getItem(`regFinder_odo_${era}`)) || {};
 
-    // 2. CALCULATE PROGRESS ONCE
+    // 2. CALCULATE PROGRESS & TOTALS
+    const tripTotal = Object.values(tripData).reduce((a, b) => a + b, 0);
     const foundCount = Object.keys(odoData).length; 
     const totalPossible = 21; 
     const percent = (foundCount / totalPossible) * 100;
@@ -1334,11 +1334,9 @@ function renderEraTimeline(era) {
         <div style="display: grid; grid-template-columns: 1fr 1.5fr 1fr 1fr; gap: 5px; padding: 10px; font-size: 0.7rem; color: #666; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid #333;">
             <div>Series</div>
             <div>Year</div>
-            <div style="text-align:center;">Trip (${tripTotal})</div>
+            <div style="text-align:center; color:#f1c40f;">Trip (${tripTotal})</div>
             <div style="text-align:center;">Odo</div>
         </div>`;
-
-        
 
     // 3. GENERATE TABLE ROWS
     Object.keys(years).sort().forEach(letter => {
@@ -1541,33 +1539,44 @@ function renderSection(title, color, platesArray = []) {
     }
 
 function renderNIList(era) {
-    const container = document.getElementById(era + '-list'); // Now uses the variable
-    const owned = JSON.parse(localStorage.getItem('regFinder_' + era)) || []; // Now uses the variable
-const niOdo = JSON.parse(localStorage.getItem('regFinder_odo_ni')) || {};
-const niCount = Object.keys(niOdo).length;
-const niPercent = (niCount / 34) * 100; // Based on your niCounties object[cite: 1]
-
-//const fillEl = document.getElementById('ni-fill');
-//if (fillEl) fillEl.style.width = niPercent + '%';
-
+    const container = document.getElementById(era + '-list');
     
-    let html = '';
-    // Use niCounties directly since it's a unique object
+    // 1. PULL DATA
+    const niOdo = JSON.parse(localStorage.getItem('regFinder_odo_ni')) || {};
+    const tripData = JSON.parse(localStorage.getItem('regFinder_trip_ni')) || {};
+
+    // 2. CALCULATE PROGRESS
+    const tripTotal = Object.values(tripData).reduce((a, b) => a + b, 0);
+    const niCount = Object.keys(niOdo).length;
+    const niPercent = (niCount / 34) * 100;
+
+    // 3. UPDATE PROGRESS BAR
+    const fillEl = document.getElementById(era + '-fill');
+    if (fillEl) fillEl.style.width = niPercent + '%';
+
+    // 4. GENERATE TABLE HEADER
+    let html = `
+        <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 5px; padding: 10px; font-size: 0.7rem; color: #666; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid #333;">
+            <div>County</div>
+            <div style="text-align:center; color:#f1c40f;">Trip (${tripTotal})</div>
+            <div style="text-align:center;">Odo</div>
+        </div>`;
+
+    // 5. GENERATE ROWS
     Object.entries(niCounties).sort((a,b) => a[1].localeCompare(b[1])).forEach(([code, county]) => {
-        const isFound = owned.includes(code);
+        const tripCount = tripData[code] || 0;
+        const odoCount = niOdo[code] || 0;
+        const isFoundEver = odoCount > 0;
+
         html += `
-            <div style="display:flex; justify-content:space-between; padding:10px; margin-bottom:5px; background:${isFound ? '#27ae6033' : '#222'}; border-radius:8px; border:1px solid ${isFound ? '#27ae60' : '#444'};">
-                <span style="font-weight:bold; color:${isFound ? '#fff' : '#666'};">${code} (${county})</span>
-                <span>${isFound ? '✅' : '🔒'}</span>
+            <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; align-items: center; padding: 12px 10px; margin-bottom: 2px; background: ${isFoundEver ? '#222' : '#111'}; border-radius: 4px;">
+                <span style="font-size: 0.9rem; font-weight: bold; color: ${isFoundEver ? '#fff' : '#444'};">${code} (${county})</span>
+                <span style="text-align:center; font-family:monospace; color: ${tripCount > 0 ? '#f1c40f' : '#333'};">${tripCount > 0 ? 'x'+tripCount : '—'}</span>
+                <span style="text-align:center; font-family:monospace; color: ${isFoundEver ? '#fff' : '#333'};">${isFoundEver ? odoCount : '🔒'}</span>
             </div>`;
     });
-    html += `<div class="scroll-spacer" style="height: 200px; width: 100%; clear: both; display: block !important;"></div>`;
-    container.innerHTML = html;
-    
-    const fillEl = document.getElementById(era + '-fill'); // Now uses the variable
-    if (fillEl) {
-        fillEl.style.width = `${(owned.length / Object.keys(niCounties).length) * 100}%`;
-    }
+
+    container.innerHTML = html + `<div class="scroll-spacer" style="height: 200px;"></div>`;
 }
 
 function activateGameGUI() {
@@ -1593,29 +1602,27 @@ function renderIntlPassport() {
     const container = document.getElementById('intl-list');
     
     // 1. PULL DATA BUCKETS
-    const owned = JSON.parse(localStorage.getItem('regFinder_intl')) || []; // Legacy array for progress bar
     const tripData = JSON.parse(localStorage.getItem('regFinder_trip_intl')) || {};
     const odoData = JSON.parse(localStorage.getItem('regFinder_odo_intl')) || {};
     
-    // Emoji flag mapping for the passport look
     const flags = {
-    "A": "🇦🇹", "AL": "🇦🇱", "AND": "🇦🇩", "B": "🇧🇪", "BG": "🇧🇬", 
-    "BIH": "🇧🇦", "CH": "🇨🇭", "CY": "🇨🇾", "CZ": "🇨🇿", "D": "🇩🇪", 
-    "DK": "🇩🇰", "E": "🇪🇸", "EST": "🇪🇪", "F": "🇫🇷", "FIN": "🇫🇮", 
-    "FL": "🇱🇮", "GR": "🇬🇷", "HR": "🇭🇷", "I": "🇮🇹", "IRL": "🇮🇪", 
-    "L": "🇱🇺", "LT": "🇱🇹", "LV": "🇱🇻", "M": "🇲🇹", "MC": "🇲🇨", 
-    "MD": "🇲🇩", "MK": "🇲🇰", "MNE": "🇲🇪", "N": "🇳🇴", "NL": "🇳🇱", 
-    "NMK": "🇲🇰", "P": "🇵🇹", "PL": "🇵🇱", "RO": "🇷🇴", "RSM": "🇸🇲", 
-    "S": "🇸🇪", "SK": "🇸🇰", "SLO": "🇸🇮", "SRB": "🇷🇸", "UA": "🇺🇦", 
-    "UK": "🇬🇧", "V": "🇻🇦"
-};
+        "A": "🇦🇹", "AL": "🇦🇱", "AND": "🇦🇩", "B": "🇧🇪", "BG": "🇧🇬", 
+        "BIH": "🇧🇦", "CH": "🇨🇭", "CY": "🇨🇾", "CZ": "🇨🇿", "D": "🇩🇪", 
+        "DK": "🇩🇰", "E": "🇪🇸", "EST": "🇪🇪", "F": "🇫🇷", "FIN": "🇫🇮", 
+        "FL": "🇱🇮", "GR": "🇬🇷", "HR": "🇭🇷", "I": "🇮🇹", "IRL": "🇮🇪", 
+        "L": "🇱🇺", "LT": "🇱🇹", "LV": "🇱🇻", "M": "🇲🇹", "MC": "🇲🇨", 
+        "MD": "🇲🇩", "MK": "🇲🇰", "MNE": "🇲🇪", "N": "🇳🇴", "NL": "🇳🇱", 
+        "NMK": "🇲🇰", "P": "🇵🇹", "PL": "🇵🇱", "RO": "🇷🇴", "RSM": "🇸🇲", 
+        "S": "🇸🇪", "SK": "🇸🇰", "SLO": "🇸🇮", "SRB": "🇷🇸", "UA": "🇺🇦", 
+        "UK": "🇬🇧", "V": "🇻🇦"
+    };
 
     let html = '';
     Object.entries(internationalCodes).forEach(([code, data]) => {
-        // 2. GET COUNTS FOR THIS SPECIFIC COUNTRY
+        // 2. CHECK ODO AND TRIP
         const tripCount = tripData[code] || 0;
         const odoTotal = odoData[code] || 0;
-        const isFound = odoTotal > 0;
+        const isFound = odoTotal > 0; // LIGHTS UP if Odo > 0
 
         html += `
         <div style="padding:10px 5px; background:${isFound ? '#00339944' : '#222'}; border-radius:8px; border:1px solid ${isFound ? '#003399' : '#444'}; text-align:center; position:relative;">
@@ -1633,9 +1640,9 @@ function renderIntlPassport() {
             
             <div style="font-weight:bold; font-size:11px; margin-top:5px; color:${isFound ? '#fff' : '#444'};">${code}</div>
             
-            <!-- ODOMETER TOTAL (Lifetime count) -->
+            <!-- ODOMETER TOTAL -->
             <div style="font-size:9px; color:#f1c40f;">
-                ${odoTotal > 0 ? odoTotal + ' TOTAL' : data.pts + ' PTS'}
+                ${isFound ? odoTotal + ' TOTAL' : data.pts + ' PTS'}
             </div>
 
             <div style="font-size:8px; color:#888; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${data.name}</div>
@@ -1645,7 +1652,7 @@ function renderIntlPassport() {
     html += `<div class="scroll-spacer" style="height: 200px; width: 100%; clear: both; display: block !important;"></div>`;
     container.innerHTML = html;
 
-    // Update the blue international progress bar based on unique Odo finds
+    // Update Progress Bar
     const fillEl = document.getElementById('intl-fill');
     if (fillEl) {
         const uniqueFound = Object.keys(odoData).length;
