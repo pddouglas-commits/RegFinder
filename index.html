@@ -724,15 +724,20 @@ function processPlate(data, plateId) {
             setTimeout(clearInput, 1000);
         }
     }
-function processClassicPrefix(plateId) {
+
+    function processClassicPrefix(plateId) {
     const letter = plateId[0];
     if (['I','O','U','Q','Z'].includes(letter)) { showUnknown(); return; }
 
-// Log to both buckets
+    // 1. DATA: Log to both buckets
     updateOdoAndTrip(letter, 'classic');
     
-    displayEraResult(letter, "Classic", isNew ? "1983-2001" : "Already Found", !isNew);
-    setTimeout(clearInput, 1500);
+    // 2. UI: Trigger the banner and card
+    // Note: 'false' here tells the game it's NOT "alreadyFound" so it flashes green
+    displayEraResult(letter, "Classic", classicYears[letter], false);
+    
+    // 3. RESET: Clear the yellow slots for the next find
+    setTimeout(clearInput, 1000);
 }
 
 function processHeritageSuffix(plateId) {
