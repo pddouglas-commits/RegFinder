@@ -1636,19 +1636,33 @@ function renderHallOfFame() {
 }
 
 function updatePersonalBests(era, currentEraCount, grandTotal) {
-    let records = JSON.parse(localStorage.getItem('regFinder_records')) || {};
+    // 1. Force the pull from storage
+    let records = JSON.parse(localStorage.getItem('regFinder_records')) || {
+        max_total_trip: 0,
+        max_classic: 0,
+        max_heritage: 0,
+        max_ni: 0,
+        max_modern: 0,
+        max_intl: 0
+    };
     
-    // Update era-specific record (e.g., Max Classic)
-    if (currentEraCount > (records[`max_${era}`] || 0)) {
-        records[`max_${era}`] = currentEraCount;
+    // 2. Ensure we are comparing Numbers
+    const currentGrand = parseInt(grandTotal) || 0;
+    const currentEra = parseInt(currentEraCount) || 0;
+
+    // 3. Update era-specific record
+    if (currentEra > (parseInt(records[`max_${era}`]) || 0)) {
+        records[`max_${era}`] = currentEra;
     }
     
-    // Update the absolute top record (Max Spots)
-    if (grandTotal > (records.max_total_trip || 0)) {
-        records.max_total_trip = grandTotal;
+    // 4. Update the absolute top record
+    if (currentGrand > (parseInt(records.max_total_trip) || 0)) {
+        records.max_total_trip = currentGrand;
     }
 
+    // 5. Save and IMMEDIATELY re-render
     localStorage.setItem('regFinder_records', JSON.stringify(records));
+    renderHallOfFame(); 
 }
 
 
