@@ -1086,6 +1086,7 @@ function fullOdometerWipe() {
         }, 1000);
     }
 
+    /*
     function updateOdoAndTrip(letter, era) {
     // 1. Update Trip Bucket (Session - clears when you hit Restart/Home)
     let tripData = JSON.parse(localStorage.getItem(`regFinder_trip_${era}`)) || {};
@@ -1097,7 +1098,7 @@ function fullOdometerWipe() {
     odoData[letter] = (odoData[letter] || 0) + 1;
     localStorage.setItem(`regFinder_odo_${era}`, JSON.stringify(odoData));
     }
-
+    */
 
 function updateChain() {
     if (isFreeplayMode) return;
