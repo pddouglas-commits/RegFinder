@@ -1365,25 +1365,43 @@ function closeLogbook() {
     }
 
 function recordCatch(letter, category) {
-    // 1. Update Odometer (Lifetime)
+    // 1. UPDATE ODOMETER (LIFETIME HISTORY)
     let odo = JSON.parse(localStorage.getItem(`regFinder_odo_${category}`)) || {};
     odo[letter] = (odo[letter] || 0) + 1;
     localStorage.setItem(`regFinder_odo_${category}`, JSON.stringify(odo));
 
-    // 2. Update Trip (Session)
+    // 2. UPDATE TRIP (CURRENT JOURNEY)
     let trip = JSON.parse(localStorage.getItem(`regFinder_trip_${category}`)) || {};
     trip[letter] = (trip[letter] || 0) + 1;
     localStorage.setItem(`regFinder_trip_${category}`, JSON.stringify(trip));
-    
+
+    // 3. CALCULATE RECORDS FOR HALL OF FAME
+    // Count spots for this specific era (e.g., just Classic)
+    const categoryTripCount = Object.values(trip).reduce((a, b) => a + b, 0);
+
+    // Calculate the Grand Total across ALL eras for this trip
+    const eras = ['classic', 'heritage', 'ni', 'intl', 'modern'];
+    let grandTripTotal = 0;
+    eras.forEach(e => {
+        const tData = JSON.parse(localStorage.getItem(`regFinder_trip_${e}`)) || {};
+        grandTripTotal += Object.values(tData).reduce((a, b) => a + b, 0);
+    });
+
+    // 4. TRIGGER PERSONAL BESTS UPDATE
+    // This sends the era-specific count and the overall trip total to be checked against records
+    updatePersonalBests(category, categoryTripCount, grandTripTotal);
+
+    // 5. TRIGGER UI UPDATES
+    // Refresh the Hall of Fame stats immediately
+    renderHallOfFame(); 
+
+    // Specific UI refreshes based on what was caught
     if (category === 'ni') {
         renderNIList('ni');
     }
 
-    // --- NEW: THE UI TRIGGERS ---
-    renderHallOfFame(); // Refresh the stats page
-    
     if (category === 'modern') {
-        updateMapColors(); // Repaint the map
+        updateMapColors(); // Repaint the map if the mastery logic is active
     }
 }
 
@@ -1617,22 +1635,23 @@ function renderHallOfFame() {
     displayLeagueTable('log-league-container');
 }
 
-function updatePersonalBests(era, currentTripCount) {
+function updatePersonalBests(era, currentEraCount, grandTotal) {
     let records = JSON.parse(localStorage.getItem('regFinder_records')) || {};
     
-    // Update era-specific record
-    if (currentTripCount > (records[`max_${era}`] || 0)) {
-        records[`max_${era}`] = currentTripCount;
+    // Update era-specific record (e.g., Max Classic)
+    if (currentEraCount > (records[`max_${era}`] || 0)) {
+        records[`max_${era}`] = currentEraCount;
     }
     
-    // Update total trip record
-    const totalCurrentTrip = calculateTotalTrip(); 
-    if (totalCurrentTrip > (records.max_total_trip || 0)) {
-        records.max_total_trip = totalCurrentTrip;
+    // Update the absolute top record (Max Spots)
+    if (grandTotal > (records.max_total_trip || 0)) {
+        records.max_total_trip = grandTotal;
     }
 
     localStorage.setItem('regFinder_records', JSON.stringify(records));
 }
+
+
 let vaultSortMode = 'category'; // 'category' or 'all'
 let vaultOrder = 'time'; // 'time' or 'alpha'
 
