@@ -211,10 +211,10 @@ h2 {
     }
 
     @keyframes flipWord {
-    0%, 40% { opacity: 1; content: attr(data-reg); }
-    45%, 55% { opacity: 0; }
-    60%, 100% { opacity: 1; content: attr(data-word); }
-}
+    0%, 35% { opacity: 1; content: attr(data-reg); }
+    40%, 60% { opacity: 0; transform: scale(0.95); } /* Added a tiny scale pulse */
+    65%, 100% { opacity: 1; content: attr(data-word); }
+    }
 
     .word-lozenge::after {
     content: attr(data-reg);
@@ -1550,32 +1550,49 @@ function updatePersonalBests(era, currentTripCount) {
 
     localStorage.setItem('regFinder_records', JSON.stringify(records));
 }
+let vaultSortMode = 'category'; // 'category' or 'all'
+let vaultOrder = 'time'; // 'time' or 'alpha'
+
+function toggleVaultSort(type) {
+    if (type === 'type') {
+        vaultSortMode = (vaultSortMode === 'category') ? 'all' : 'category';
+        document.getElementById('vault-sort-type').innerText = `SORT: ${vaultSortMode.toUpperCase()}`;
+    } else {
+        vaultOrder = (vaultOrder === 'time') ? 'alpha' : 'time';
+        document.getElementById('vault-sort-alpha').innerText = `SORT: ${vaultOrder === 'time' ? 'NEWEST' : 'A-Z'}`;
+    }
+    renderWordVault();
+}
 
 function renderWordVault() {
     const container = document.getElementById('word-vault-grid');
     const collection = JSON.parse(localStorage.getItem('regFinder_collection')) || [];
     
-    const wordPlates = collection.filter(id => {
+    let wordPlates = collection.filter(id => {
         const data = plateData[id];
         return data && (data.word || data.isName);
     });
 
-    if (wordPlates.length === 0) {
-        container.innerHTML = `<p style="color:#444; margin-top:40px;">No words discovered yet...</p>`;
-        return;
+    // ORDERING LOGIC
+    if (vaultOrder === 'alpha') {
+        wordPlates.sort((a, b) => (plateData[a].word || a).localeCompare(plateData[b].word || b));
+    } else {
+        // 'time' uses the original array order (collection is pushed chronologically)
+        wordPlates.reverse(); 
+    }
+
+    // CATEGORY GROUPING LOGIC
+    if (vaultSortMode === 'category') {
+        wordPlates.sort((a, b) => (plateData[b].isName ? 1 : 0) - (plateData[a].isName ? 1 : 0));
     }
 
     container.innerHTML = wordPlates.map(id => {
         const data = plateData[id];
         const displayWord = data.word || "NAME";
-        
-        // THE TRICK: Color logic based on isName property
-        const bgColor = data.isName ? '#f1c40f' : '#ffffff'; // Yellow for names, White for words
+        const bgColor = data.isName ? '#f1c40f' : '#ffffff';
         
         return `
-            <div class="word-lozenge" 
-                 data-reg="${id}" 
-                 data-word="${displayWord}"
+            <div class="word-lozenge" data-reg="${id}" data-word="${displayWord}"
                  style="background:${bgColor}; color:#000; padding:10px 20px; border-radius:8px; font-family:'Charles Wright', sans-serif; font-weight:bold; font-size:1.2rem; border:2px solid #000; box-shadow:0 4px 0 rgba(0,0,0,0.2); min-width:110px; text-align:center;">
             </div>`;
     }).join('');
@@ -1962,10 +1979,15 @@ function switchLogPage(pageId) {
     </div>
 
     <!-- 10. WORD VAULT PAGE -->
+
+    
 <div id="word-vault-page" class="log-page" style="display:none; flex-direction:column; padding: 15px; height:100%; overflow-y:auto;">
     <h3 style="color:#3498db; text-align:center; margin-top:0;">WORD VAULT</h3>
     <p style="font-size:0.7rem; color:#666; text-align:center; margin-bottom:20px; text-transform:uppercase;">Every "readable" plate you've captured</p>
-    
+    <div style="margin-bottom: 20px; display: flex; justify-content: center; gap: 10px;">
+    <button onclick="toggleVaultSort('type')" id="vault-sort-type" style="font-size: 10px; background: #f1c40f; color: #000; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold;">SORT: CATEGORY</button>
+    <button onclick="toggleVaultSort('alpha')" id="vault-sort-alpha" style="font-size: 10px; background: #444; color: #fff; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold;">SORT: NEWEST</button>
+</div>
     <div id="word-vault-grid" style="display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; padding-bottom: 100px;">
         <!-- Dynamic content goes here -->
     </div>
