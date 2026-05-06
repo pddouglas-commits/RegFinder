@@ -874,6 +874,10 @@ function clearCollection() {
 
     function resetTripData() {
     if (confirm("Reset TRIP counts for this journey? Odometer is safe.")) {
+        // Increment career trips
+        let tripCount = parseInt(localStorage.getItem('regFinder_total_trips_completed') || 0);
+        localStorage.setItem('regFinder_total_trips_completed', tripCount + 1);
+
         const eras = ['classic', 'heritage', 'ni', 'intl', 'modern'];
         eras.forEach(e => localStorage.removeItem(`regFinder_trip_${e}`));
         location.reload();
@@ -1449,6 +1453,49 @@ function showRegionDetails(targetId) {
     container.style.display = 'block';
 }
 
+function renderHallOfFame() {
+    // 1. Calculate Grand Career Total
+    const eras = ['classic', 'heritage', 'ni', 'intl', 'modern'];
+    let grandTotal = 0;
+    
+    // We sum every single digit from every Odo object
+    eras.forEach(e => {
+        const odo = JSON.parse(localStorage.getItem(`regFinder_odo_${e}`)) || {};
+        grandTotal += Object.values(odo).reduce((a, b) => a + b, 0);
+    });
+
+    // 2. Pull Personal Bests & Trip History
+    const records = JSON.parse(localStorage.getItem('regFinder_records')) || {};
+    const tripCount = localStorage.getItem('regFinder_total_trips_completed') || 0;
+
+    // 3. Update UI
+    document.getElementById('career-total-spots').innerText = grandTotal;
+    document.getElementById('career-trip-count').innerText = tripCount;
+
+    const recordsContainer = document.getElementById('hall-of-fame-records');
+    recordsContainer.innerHTML = `
+        <div style="display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid #222;">
+            <span style="color:#aaa;">Max Spots (Trip)</span>
+            <span style="color:#fff;">${records.max_total_trip || 0}</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid #222;">
+            <span style="color:#3498db;">Max Classic (Trip)</span>
+            <span style="color:#fff;">${records.max_classic || 0}</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid #222;">
+            <span style="color:#8e44ad;">Max Heritage (Trip)</span>
+            <span style="color:#fff;">${records.max_heritage || 0}</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; padding:5px 0;">
+            <span style="color:#f1c40f;">Best Sprint Time</span>
+            <span style="color:#fff;">${records.best_sprint_time || '—'}</span>
+        </div>
+    `;
+
+    // 4. Also render the League Table underneath
+    displayLeagueTable('log-league-container');
+}
+
 function updatePersonalBests(era, currentTripCount) {
     let records = JSON.parse(localStorage.getItem('regFinder_records')) || {};
     
@@ -1692,7 +1739,8 @@ function switchLogPage(pageId) {
     if (pageId === 'heritage') renderEraTimeline('heritage');
     if (pageId === 'ni') renderNIList('ni');
     if (pageId === 'intl') renderIntlPassport();
-    if (pageId === 'league') displayLeagueTable('log-league-container');
+    //if (pageId === 'league') displayLeagueTable('log-league-container');
+    if (pageId === 'league') renderHallOfFame();
 }
 
 </script>
@@ -1703,12 +1751,12 @@ function switchLogPage(pageId) {
         <h2 style="color:#f1c40f; margin:0 0 10px 0;">LOGBOOK</h2>
         
         <div class="logbook-nav" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; padding: 10px; background: #222; border-radius: 8px; margin-bottom: 10px;">
-            <button class="tab-btn active" onclick="switchLogPage('modern')" style="padding: 10px; border-radius: 5px; border: none; background: #5d00a8fa; color: white; font-size: 10px;">MODERN</button>
+            <button class="tab-btn active" onclick="switchLogPage('modern')" style="padding: 10px; border-radius: 5px; border: none; background: #fffffffa; color: rgb(10, 10, 10); font-size: 10px;">MODERN</button>
             <button class="tab-btn" onclick="switchLogPage('classic')" style="padding: 10px; border-radius: 5px; border: none; background: #ce9702; color: white; font-size: 10px;">CLASSIC</button>
             <button class="tab-btn" onclick="switchLogPage('heritage')" style="padding: 10px; border-radius: 5px; border: none; background: #000; color: #cecece; font-size: 10px;">HERITAGE</button>
             <button class="tab-btn" onclick="switchLogPage('ni')" style="padding: 10px; border-radius: 5px; border: none; background: #27ae60; color: rgb(253, 252, 252); font-size: 10px;">NIR ELAND</button>
             <button class="tab-btn" onclick="switchLogPage('intl')" style="padding: 10px; border-radius: 5px; border: none; background: #003399; color: rgb(251, 255, 0); font-size: 10px;">EUROPE</button>
-            <button class="tab-btn" onclick="switchLogPage('league')" style="padding: 10px; border-radius: 5px; border: none; background: #444; color: white; font-size: 10px;">LEAGUE</button>
+            <button class="tab-btn" onclick="switchLogPage('league')" style="padding: 10px; border-radius: 5px; border: none; background: #444; color: white; font-size: 10px;">STATS</button>
         </div>
 
         <button onclick="closeLogbook()" style="background:none; border:1px solid #666; color:#fff; border-radius:4px; padding:5px 20px; font-size:12px;">EXIT LOGBOOK</button>
@@ -1807,10 +1855,34 @@ function switchLogPage(pageId) {
         </div>
     </div>
 
-    <!-- 8. LEAGUE PAGE -->
-    <div id="league-page" class="log-page" style="display:none; padding: 20px;">
-        <div id="log-league-container"></div>
+
+<!-- 8. HALL OF FAME PAGE -->
+<div id="league-page" class="log-page" style="display:none; flex-direction:column; padding: 15px; height:100%; overflow-y:auto;">
+    <h3 style="color:#f1c40f; text-align:center; margin-top:0;">HALL OF FAME</h3>
+    
+    <!-- CAREER OVERVIEW -->
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:20px;">
+        <div style="background:#222; padding:10px; border-radius:8px; border:1px solid #444; text-align:center;">
+            <div style="font-size:0.6rem; color:#aaa; text-transform:uppercase;">Total Career Spots</div>
+            <div id="career-total-spots" style="font-size:1.4rem; font-weight:bold; color:#f1c40f;">0</div>
+        </div>
+        <div style="background:#222; padding:10px; border-radius:8px; border:1px solid #444; text-align:center;">
+            <div style="font-size:0.6rem; color:#aaa; text-transform:uppercase;">Trips Completed</div>
+            <div id="career-trip-count" style="font-size:1.4rem; font-weight:bold; color:#f1c40f;">0</div>
+        </div>
     </div>
+
+    <!-- PERSONAL BESTS -->
+    <div style="background:#111; padding:15px; border-radius:10px; border:1px solid #333; margin-bottom:20px;">
+        <h4 style="font-size:0.7rem; color:#666; margin:0 0 10px 0; text-transform:uppercase;">Personal Bests (Single Trip)</h4>
+        <div id="hall-of-fame-records" style="font-family:monospace; font-size:0.85rem;">
+            <!-- Rendered via JS -->
+        </div>
+    </div>
+
+    <!-- SPRINT LEAGUE TABLE -->
+    <div id="log-league-container"></div>
+</div>
 
     <!-- 9. STATS PAGE -->
     <div id="stats-page" class="log-page" style="display:none; padding: 20px; text-align: center;">
