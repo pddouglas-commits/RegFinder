@@ -850,7 +850,7 @@ function processNIPlate(plateId) {
             totalSessionScore += 50;
             document.getElementById('grand-total').innerText = totalSessionScore;
         }
-
+        recordCatch(code, 'ni');
         displayEraResult(code, "Northern Ireland", countyName, isAlreadyThere);
         setTimeout(clearInput, 1500);
     } else if (clean.length >= 4) {
