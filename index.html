@@ -443,6 +443,8 @@ h2 {
 
 <script>
     let plateData = {};
+    let currentScore = 0; 
+    let alphabetProgress = [];      
     let totalSessionScore = 0;
     let lastScoredPlate = "";
     let pauseStartTime = 0;
@@ -610,44 +612,46 @@ window.onload = () => {
         });
 };
 
-    function initApp() {
+function initApp() {
     if (navigator.wakeLock) {
         navigator.wakeLock.request('screen').catch(e => {});
     }
     document.getElementById('splash-screen').style.display = 'none';
 
-    // --- NEW: SESSION RESURRECTION ---
+    // SESSION RESURRECTION
     const savedScore = sessionStorage.getItem('regFinder_active_score');
     const savedAlpha = sessionStorage.getItem('regFinder_active_alpha');
 
     if (savedScore !== null) {
-        currentScore = parseInt(savedScore); // Restore the number
+        currentScore = parseInt(savedScore);
+        totalSessionScore = currentScore; // Sync these two variables
     }
 
     if (savedAlpha !== null) {
-        alphabetProgress = JSON.parse(savedAlpha); // Restore the A-Z array
+        alphabetProgress = JSON.parse(savedAlpha);
+        // Sync to foundLetters Set so the tracker lights up
+        foundLetters = new Set(alphabetProgress);
     }
-    
-    // --- END RESURRECTION ---
 
     if (isFreeplayMode) {
         isGameActive = true;
         activateGameGUI(); 
-        
         document.getElementById('pause-btn').style.display = 'none';
         document.querySelector('.timer-row').style.visibility = 'hidden';
         document.getElementById('chain-display').style.display = 'none';
     } else {
         activateGameGUI(); 
+        // Update the UI immediately
+        document.getElementById('grand-total').innerText = currentScore;
         
-        // Update the UI immediately with restored values
-        if (savedScore !== null) {
-            const scoreEl = document.getElementById('current-score-display');
-            if (scoreEl) scoreEl.innerText = currentScore;
-        }
-        if (savedAlpha !== null) {
-            renderAlphabetUI(); // Draw the restored progress bar
-        }
+        // Re-light the alphabet tracker
+        alphabetProgress.forEach(letter => {
+            const el = document.getElementById(`track-${letter}`);
+            if (el) {
+                el.style.color = "#fff";
+                el.style.textShadow = "0 0 10px #f1c40f";
+            }
+        });
     }
     
     setTimeout(() => focusInput(), 300);
