@@ -1619,15 +1619,15 @@ function renderHallOfFame() {
     const recordsContainer = document.getElementById('hall-of-fame-records');
     recordsContainer.innerHTML = `
         <div style="display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid #222;">
-            <span style="color:#aaa;">Max Spots (Trip)</span>
-            <span style="color:#fff;">${records.max_total_trip || 0}</span>
+            <span style="color:#fff;">Max Spots (Trip)</span>
+            <span style="color:#f1c40f;">${records.max_total_trip || 0}</span>
         </div>
         <div style="display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid #222;">
-            <span style="color:#3498db;">Max Classic (Trip)</span>
+            <span style="color:#ce9702;">Max Classic (Trip)</span>
             <span style="color:#fff;">${records.max_classic || 0}</span>
         </div>
         <div style="display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid #222;">
-            <span style="color:#8e44ad;">Max Heritage (Trip)</span>
+            <span style="color:#cecece;">Max Heritage (Trip)</span>
             <span style="color:#fff;">${records.max_heritage || 0}</span>
         </div>
         <div style="display:flex; justify-content:space-between; padding:5px 0;">
