@@ -335,9 +335,17 @@ h2 {
 }
 
 /* Era Specific Fonts */
-.font-heritage { font-family: 'Courier New', monospace; font-weight: bold; } /* Mechanical Stamp */
-.font-classic { font-family: 'Charles Wright', sans-serif; } /* Plate Font */
-.font-modern { font-family: 'Orbitron', sans-serif; color: #2ecc71; } /* Digital Green */
+/* --- RESULT CARD FONTS (The Big Badges) --- */
+.font-plate-heritage { font-family: 'Courier New', monospace; color: #cecece; font-weight: 900; }
+.font-plate-classic { font-family: 'Charles Wright', sans-serif; color: #ce9702; }
+.font-plate-modern { font-family: 'Charles Wright', sans-serif; color: #fff; } /* Clean White */
+.font-plate-ni { font-family: 'Charles Wright', sans-serif; color: #27ae60; } /* Distinct NI Green */
+
+/* --- ODOMETER SLOT FONTS (The Mechanical Numbers) --- */
+.odo-heritage { font-family: 'Courier New', monospace; color: #fff; font-weight: 900; }
+.odo-classic { font-family: 'Charles Wright', sans-serif; color: #f1c40f; } /* Amber numbers */
+.odo-modern { font-family: monospace; color: #fff; } /* Instrument White */
+.odo-ni { font-family: 'Charles Wright', sans-serif; color: #2ecc71; } /* Bright Green numbers */
 
 
 </style>
@@ -572,13 +580,10 @@ h2 {
 function formatOdo(num, era) {
     if (num === 0 || num === '—' || num === '🔒') return num;
     
-    // Assign font class based on era
-    let fontClass = 'font-modern'; // Default
-    if (era === 'classic') fontClass = 'font-classic';
-    if (era === 'heritage') fontClass = 'font-heritage';
-    if (era === 'ni') fontClass = 'font-ni';
+    // Map the era string to our new Odo classes
+    const odoClass = `odo-${era.toLowerCase()}`;
 
-    return `<span class="odo-digit ${fontClass}">${num}</span>`;
+    return `<span class="odo-digit ${odoClass}">${num}</span>`;
 }
 
 function setGameMode(mode) {
