@@ -809,18 +809,17 @@ function processPlate(data, plateId) {
         }
     }
 
-    function processClassicPrefix(plateId) {
+function processClassicPrefix(plateId) {
     const letter = plateId[0];
     if (['I','O','U','Q','Z'].includes(letter)) { showUnknown(); return; }
 
-    // 1. DATA: Log to both buckets
-    updateOdoAndTrip(letter, 'classic');
+    // 1. DATA: Use the new unified recordCatch
+    recordCatch(letter, 'classic');
     
     // 2. UI: Trigger the banner and card
-    // Note: 'false' here tells the game it's NOT "alreadyFound" so it flashes green
     displayEraResult(letter, "Classic", classicYears[letter], false);
     
-    // 3. RESET: Clear the yellow slots for the next find
+    // 3. RESET
     setTimeout(clearInput, 1000);
 }
 
@@ -828,8 +827,8 @@ function processHeritageSuffix(plateId) {
     const letter = plateId[3];
     if (['I','O','U','Q','Z'].includes(letter)) { showUnknown(); return; }
 
-    // 1. DATA
-    updateOdoAndTrip(letter, 'heritage');
+    // 1. DATA: Use the new unified recordCatch
+    recordCatch(letter, 'heritage');
     
     // 2. UI
     displayEraResult(letter, "Heritage", heritageYears[letter], false);
@@ -1636,33 +1635,23 @@ function renderHallOfFame() {
 }
 
 function updatePersonalBests(era, currentEraCount, grandTotal) {
-    // 1. Force the pull from storage
-    let records = JSON.parse(localStorage.getItem('regFinder_records')) || {
-        max_total_trip: 0,
-        max_classic: 0,
-        max_heritage: 0,
-        max_ni: 0,
-        max_modern: 0,
-        max_intl: 0
-    };
+    let records = JSON.parse(localStorage.getItem('regFinder_records')) || {};
     
-    // 2. Ensure we are comparing Numbers
-    const currentGrand = parseInt(grandTotal) || 0;
-    const currentEra = parseInt(currentEraCount) || 0;
-
-    // 3. Update era-specific record
-    if (currentEra > (parseInt(records[`max_${era}`]) || 0)) {
-        records[`max_${era}`] = currentEra;
+    // Force lowercase so 'Classic' becomes 'classic'
+    const safeEra = era.toLowerCase();
+    
+    // Update era-specific record (e.g., records.max_classic)
+    if (currentEraCount > (records[`max_${safeEra}`] || 0)) {
+        records[`max_${safeEra}`] = currentEraCount;
     }
     
-    // 4. Update the absolute top record
-    if (currentGrand > (parseInt(records.max_total_trip) || 0)) {
-        records.max_total_trip = currentGrand;
+    // Update the absolute top record
+    if (grandTotal > (records.max_total_trip || 0)) {
+        records.max_total_trip = grandTotal;
     }
 
-    // 5. Save and IMMEDIATELY re-render
     localStorage.setItem('regFinder_records', JSON.stringify(records));
-    renderHallOfFame(); 
+    renderHallOfFame();
 }
 
 
