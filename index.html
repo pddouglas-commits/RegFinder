@@ -1555,7 +1555,6 @@ function renderWordVault() {
     const container = document.getElementById('word-vault-grid');
     const collection = JSON.parse(localStorage.getItem('regFinder_collection')) || [];
     
-    // Filter for plates that actually mean something
     const wordPlates = collection.filter(id => {
         const data = plateData[id];
         return data && (data.word || data.isName);
@@ -1569,11 +1568,15 @@ function renderWordVault() {
     container.innerHTML = wordPlates.map(id => {
         const data = plateData[id];
         const displayWord = data.word || "NAME";
+        
+        // THE TRICK: Color logic based on isName property
+        const bgColor = data.isName ? '#f1c40f' : '#ffffff'; // Yellow for names, White for words
+        
         return `
             <div class="word-lozenge" 
                  data-reg="${id}" 
                  data-word="${displayWord}"
-                 style="background:#f1c40f; color:#000; padding:10px 20px; border-radius:8px; font-family:'Charles Wright', sans-serif; font-weight:bold; font-size:1.2rem; border:2px solid #000; box-shadow:0 4px 0 rgba(0,0,0,0.2); min-width:100px; text-align:center;">
+                 style="background:${bgColor}; color:#000; padding:10px 20px; border-radius:8px; font-family:'Charles Wright', sans-serif; font-weight:bold; font-size:1.2rem; border:2px solid #000; box-shadow:0 4px 0 rgba(0,0,0,0.2); min-width:110px; text-align:center;">
             </div>`;
     }).join('');
 }
