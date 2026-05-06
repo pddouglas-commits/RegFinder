@@ -316,6 +316,18 @@ h2 {
 </head>
 <body>
 
+<!-- Safety Overlay -->
+<div id="safety-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:20000; flex-direction:column; align-items:center; justify-content:center; padding:30px; text-align:center;">
+    <div style="font-size:3rem; margin-bottom:20px;">⚠️</div>
+    <h2 style="color:#f1c40f; margin-bottom:10px;">SAFETY FIRST</h2>
+    <p style="color:#eee; line-height:1.6; font-size:0.9rem;">
+        RegFinder is designed for <b>passengers only</b>.<br>
+        Never use this app while operating a vehicle.
+    </p>
+    <button onclick="confirmSafety()" style="margin-top:30px; padding:15px 40px; background:#f1c40f; border:none; border-radius:30px; font-weight:bold; cursor:pointer;">I'M THE PASSENGER</button>
+</div>
+
+
 <div id="pause-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(26,26,26,0.95); z-index:8000; flex-direction:column; align-items:center; justify-content:center;">
     <h2 style="color:#f1c40f; letter-spacing:4px;">GAME PAUSED</h2>
     <p style="color:#aaa; margin-bottom:30px; font-size:0.9rem;">The clock is stopped.</p>
@@ -337,7 +349,7 @@ h2 {
         <button id="free-mode-btn" onclick="setGameMode('free')" style="padding: 10px 20px; border-radius: 25px; border: none; background: #333; color: #fff; cursor: pointer;">FREEPLAY</button>
     </div>
 
-    <button id="main-start-btn" onclick="initApp()" style="padding:15px 40px; background:#f1c40f; border:none; border-radius:30px; font-weight:bold; font-size:1.2rem; cursor:pointer; box-shadow: 0 4px 15px rgba(241, 196, 15, 0.3);">START SPRINT</button>
+    <button id="main-start-btn" onclick="handleStartClick()" style="padding:15px 40px; background:#f1c40f; border:none; border-radius:30px; font-weight:bold; font-size:1.2rem; cursor:pointer; box-shadow: 0 4px 15px rgba(241, 196, 15, 0.3);">START SPRINT</button>
     
     <div id="splash-stats" style="margin-top:20px; font-size:12px; color:#555;">
         Map Progress: <span id="splash-map-count" style="color:#f1c40f;">0/19</span>
@@ -518,6 +530,13 @@ h2 {
     let inputMode = 'GB'; // 'GB' or 'INT'
 
     let isFreeplayMode = false; // Default to Sprint
+
+    function confirmSafety() {
+    sessionStorage.setItem('regFinder_safety_confirmed', 'true');
+    document.getElementById('safety-modal').style.display = 'none';
+    // Now proceed to the actual game init logic
+    initApp(); 
+}
 
 function setGameMode(mode) {
     const sprintBtn = document.getElementById('sprint-mode-btn');
@@ -910,6 +929,14 @@ function fullOdometerWipe() {
         currentTargetOptions = [alphabet[(idx + 1) % alphabet.length], alphabet[(idx - 1 + alphabet.length) % alphabet.length]];
         completeLetter(letter, data, plateId);
     }
+
+    function handleStartClick() {
+    if (sessionStorage.getItem('regFinder_safety_confirmed')) {
+        initApp();
+    } else {
+        document.getElementById('safety-modal').style.display = 'flex';
+    }
+}
 
     function completeLetter(letter, data, plateId) {
     let collection = JSON.parse(localStorage.getItem('regFinder_collection')) || [];
