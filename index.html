@@ -886,7 +886,7 @@ function processNIPlate(plateId) {
         }
         recordCatch(code, 'ni');
         displayEraResult(code, "Northern Ireland", countyName, isAlreadyThere);
-        setTimeout(clearInput, 1500);
+        setTimeout(clearInput, 1000);
     } else if (clean.length >= 4) {
         // Only show unknown if it failed to match a real county after 4 chars
         showUnknown();
@@ -1630,6 +1630,10 @@ function renderHallOfFame() {
             <span style="color:#cecece;">Max Heritage (Trip)</span>
             <span style="color:#fff;">${records.max_heritage || 0}</span>
         </div>
+        <div style="display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid #222;">
+        <span style="color:#27ae60;">Max NI (Trip)</span>
+        <span style="color:#fff;">${records.max_ni || 0}</span>
+        </div>
         <div style="display:flex; justify-content:space-between; padding:5px 0;">
             <span style="color:#f1c40f; font-style: italic;">Best Sprint Time</span>
             <span style="color:#fff;">${records.best_sprint_time || '—'}</span>
@@ -1799,20 +1803,24 @@ function renderNIList(era) {
             <div style="text-align:center;">Odo</div>
         </div>`;
 
-    // 5. GENERATE ROWS
+// 5. GENERATE ROWS
     Object.entries(niCounties).sort((a,b) => a[1].localeCompare(b[1])).forEach(([code, county]) => {
-    // Check if the odo/trip has data for the CODE or the COUNTY NAME
-    const tripCount = tripData[code] || tripData[county] || 0;
-    const odoCount = niOdo[code] || niOdo[county] || 0;
+    // FORCE lookup using only the 2-letter code
+    const tripCount = tripData[code] || 0;
+    const odoCount = niOdo[code] || 0;
     const isFoundEver = odoCount > 0;
 
-        html += `
-            <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; align-items: center; padding: 12px 10px; margin-bottom: 2px; background: ${isFoundEver ? '#222' : '#111'}; border-radius: 4px;">
-                <span style="font-size: 0.9rem; font-weight: bold; color: ${isFoundEver ? '#fff' : '#444'};">${code} (${county})</span>
-                <span style="text-align:center; font-family:monospace; color: ${tripCount > 0 ? '#f1c40f' : '#333'};">${tripCount > 0 ? 'x'+tripCount : '—'}</span>
-                <span style="text-align:center; font-family:monospace; color: ${isFoundEver ? '#fff' : '#333'};">${isFoundEver ? odoCount : '🔒'}</span>
-            </div>`;
-    });
+    // Use the odometer formatter we built
+    const tripUI = formatOdo(tripCount, 'ni');
+    const odoUI = isFoundEver ? formatOdo(odoCount, 'ni') : '🔒';
+
+    html += `
+        <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; align-items: center; padding: 12px 10px; margin-bottom: 2px; background: ${isFoundEver ? '#222' : '#111'}; border-radius: 4px;">
+            <span style="font-size: 0.9rem; font-weight: bold; color: ${isFoundEver ? '#fff' : '#444'};">${code} (${county})</span>
+            <span style="text-align:center;">${tripUI}</span>
+            <span style="text-align:center;">${odoUI}</span>
+        </div>`;
+});
 
     container.innerHTML = html + `<div class="scroll-spacer" style="height: 200px;"></div>`;
 }
