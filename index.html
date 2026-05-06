@@ -210,6 +210,17 @@ h2 {
         100% { background-color: #2c3e50; }
     }
 
+    @keyframes flipWord {
+    0%, 40% { opacity: 1; content: attr(data-reg); }
+    45%, 55% { opacity: 0; }
+    60%, 100% { opacity: 1; content: attr(data-word); }
+}
+
+    .word-lozenge::after {
+    content: attr(data-reg);
+    animation: flipWord 4s infinite alternate ease-in-out;
+}
+
     .flash-success { animation: flash-green 0.5s ease-out; }
     .flash-error { animation: flash-red 0.5s ease-out; }
     .badge-new {
@@ -1540,6 +1551,33 @@ function updatePersonalBests(era, currentTripCount) {
     localStorage.setItem('regFinder_records', JSON.stringify(records));
 }
 
+function renderWordVault() {
+    const container = document.getElementById('word-vault-grid');
+    const collection = JSON.parse(localStorage.getItem('regFinder_collection')) || [];
+    
+    // Filter for plates that actually mean something
+    const wordPlates = collection.filter(id => {
+        const data = plateData[id];
+        return data && (data.word || data.isName);
+    });
+
+    if (wordPlates.length === 0) {
+        container.innerHTML = `<p style="color:#444; margin-top:40px;">No words discovered yet...</p>`;
+        return;
+    }
+
+    container.innerHTML = wordPlates.map(id => {
+        const data = plateData[id];
+        const displayWord = data.word || "NAME";
+        return `
+            <div class="word-lozenge" 
+                 data-reg="${id}" 
+                 data-word="${displayWord}"
+                 style="background:#f1c40f; color:#000; padding:10px 20px; border-radius:8px; font-family:'Charles Wright', sans-serif; font-weight:bold; font-size:1.2rem; border:2px solid #000; box-shadow:0 4px 0 rgba(0,0,0,0.2); min-width:100px; text-align:center;">
+            </div>`;
+    }).join('');
+}
+
 function showNationalDetails() {
         const container = document.getElementById('region-detail-view'); if (!container) return;
         const collection = JSON.parse(localStorage.getItem('regFinder_collection')) || [];
@@ -1768,6 +1806,8 @@ function switchLogPage(pageId) {
     if (pageId === 'intl') renderIntlPassport();
     //if (pageId === 'league') displayLeagueTable('log-league-container');
     if (pageId === 'league') renderHallOfFame();
+    if (pageId === 'word-vault') renderWordVault();
+    
 }
 
 </script>
@@ -1784,6 +1824,7 @@ function switchLogPage(pageId) {
             <button class="tab-btn" onclick="switchLogPage('ni')" style="padding: 10px; border-radius: 5px; border: none; background: #27ae60; color: rgb(253, 252, 252); font-size: 10px;">NIR ELAND</button>
             <button class="tab-btn" onclick="switchLogPage('intl')" style="padding: 10px; border-radius: 5px; border: none; background: #003399; color: rgb(251, 255, 0); font-size: 10px;">EUROPE</button>
             <button class="tab-btn" onclick="switchLogPage('league')" style="padding: 10px; border-radius: 5px; border: none; background: #444; color: white; font-size: 10px;">STATS</button>
+            <button class="tab-btn" onclick="switchLogPage('word-vault')" style="padding: 10px; border-radius: 5px; border: none; background: #3498db; color: white; font-size: 10px;">WORDS</button>
         </div>
 
         <button onclick="closeLogbook()" style="background:none; border:1px solid #666; color:#fff; border-radius:4px; padding:5px 20px; font-size:12px;">EXIT LOGBOOK</button>
@@ -1916,6 +1957,16 @@ function switchLogPage(pageId) {
     <div id="stats-page" class="log-page" style="display:none; padding: 20px; text-align: center;">
         <p style="font-size: 1.2rem;">Total Unique Found: <span id="log-total-count" style="color:#f1c40f; font-weight:bold;">0</span></p>
     </div>
+
+    <!-- 10. WORD VAULT PAGE -->
+<div id="word-vault-page" class="log-page" style="display:none; flex-direction:column; padding: 15px; height:100%; overflow-y:auto;">
+    <h3 style="color:#3498db; text-align:center; margin-top:0;">WORD VAULT</h3>
+    <p style="font-size:0.7rem; color:#666; text-align:center; margin-bottom:20px; text-transform:uppercase;">Every "readable" plate you've captured</p>
+    
+    <div id="word-vault-grid" style="display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; padding-bottom: 100px;">
+        <!-- Dynamic content goes here -->
+    </div>
+</div>
 
 </div> <!-- THIS CLOSES LOGBOOK-OVERLAY -->
 
