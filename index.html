@@ -1385,6 +1385,19 @@ function renderEraLogbook() {
     document.getElementById('heritage-fill').style.width = `${(heritageOwned.length / 21) * 100}%`;
 }
 
+function renderAlphabetUI() {
+    // This function will eventually handle drawing the A-Z bar
+    // For now, it just exists to stop the app from crashing
+    console.log("Rehydrating Alphabet UI...");
+    alphabetProgress.forEach(letter => {
+        const el = document.getElementById(`track-${letter}`);
+        if (el) {
+            el.style.color = "#fff";
+            el.style.textShadow = "0 0 10px #f1c40f";
+        }
+    });
+}
+
 function renderEraTimeline(era) {
     const container = document.getElementById(era + '-list');
     const years = era === 'classic' ? classicYears : heritageYears;
