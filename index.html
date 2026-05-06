@@ -899,7 +899,7 @@ function processInternationalCode(code) {
 
     if (data) {
         // 1. Update the new Odo/Trip buckets
-        updateOdoAndTrip(code, 'intl');
+        recordCatch(code, 'intl');
 
         // 2. Points Logic
         const odoData = JSON.parse(localStorage.getItem('regFinder_odo_intl')) || {};
@@ -1634,6 +1634,10 @@ function renderHallOfFame() {
         <span style="color:#27ae60;">Max NI (Trip)</span>
         <span style="color:#fff;">${records.max_ni || 0}</span>
         </div>
+        <div style="display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid #222;">
+        <span style="color:#3498db;">Max International (Trip)</span>
+        <span style="color:#fff;">${records.max_intl || 0}</span>
+    </div
         <div style="display:flex; justify-content:space-between; padding:5px 0;">
             <span style="color:#f1c40f; font-style: italic;">Best Sprint Time</span>
             <span style="color:#fff;">${records.best_sprint_time || '—'}</span>
