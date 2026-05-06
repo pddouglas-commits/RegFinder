@@ -610,28 +610,44 @@ window.onload = () => {
         });
 };
 
-function initApp() {
+    function initApp() {
     if (navigator.wakeLock) {
         navigator.wakeLock.request('screen').catch(e => {});
     }
     document.getElementById('splash-screen').style.display = 'none';
+
+    // --- NEW: SESSION RESURRECTION ---
+    const savedScore = sessionStorage.getItem('regFinder_active_score');
+    const savedAlpha = sessionStorage.getItem('regFinder_active_alpha');
+
+    if (savedScore !== null) {
+        currentScore = parseInt(savedScore); // Restore the number
+    }
+
+    if (savedAlpha !== null) {
+        alphabetProgress = JSON.parse(savedAlpha); // Restore the A-Z array
+    }
     
+    // --- END RESURRECTION ---
+
     if (isFreeplayMode) {
-        // --- LOGBOOK/FREEPLAY MODE ---
         isGameActive = true;
-        activateGameGUI(); // Shows the score bar
+        activateGameGUI(); 
         
-        // Motorway Cleanup: Hide pressure elements
         document.getElementById('pause-btn').style.display = 'none';
         document.querySelector('.timer-row').style.visibility = 'hidden';
         document.getElementById('chain-display').style.display = 'none';
-        
-        // We do NOT call startGame() here because we don't want a timer
     } else {
-        // --- SPRINT MODE ---
-        // We don't call startGame() immediately because it needs a letter to start.
-        // We just show the GUI and wait for the first plate entry.
         activateGameGUI(); 
+        
+        // Update the UI immediately with restored values
+        if (savedScore !== null) {
+            const scoreEl = document.getElementById('current-score-display');
+            if (scoreEl) scoreEl.innerText = currentScore;
+        }
+        if (savedAlpha !== null) {
+            renderAlphabetUI(); // Draw the restored progress bar
+        }
     }
     
     setTimeout(() => focusInput(), 300);
@@ -1317,6 +1333,16 @@ function recordCatch(letter, category) {
     let trip = JSON.parse(localStorage.getItem(`regFinder_trip_${category}`)) || {};
     trip[letter] = (trip[letter] || 0) + 1;
     localStorage.setItem(`regFinder_trip_${category}`, JSON.stringify(trip));
+
+    if (category === 'ni') {
+        renderNIList('ni');
+
+    // --- NEW: THE UI TRIGGERS ---
+    renderHallOfFame(); // Refresh the stats page
+    
+    if (category === 'modern') {
+        updateMapColors(); // Repaint the map
+    }
 }
 
 
@@ -1690,9 +1716,10 @@ function renderNIList(era) {
 
     // 5. GENERATE ROWS
     Object.entries(niCounties).sort((a,b) => a[1].localeCompare(b[1])).forEach(([code, county]) => {
-        const tripCount = tripData[code] || 0;
-        const odoCount = niOdo[code] || 0;
-        const isFoundEver = odoCount > 0;
+    // Check if the odo/trip has data for the CODE or the COUNTY NAME
+    const tripCount = tripData[code] || tripData[county] || 0;
+    const odoCount = niOdo[code] || niOdo[county] || 0;
+    const isFoundEver = odoCount > 0;
 
         html += `
             <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; align-items: center; padding: 12px 10px; margin-bottom: 2px; background: ${isFoundEver ? '#222' : '#111'}; border-radius: 4px;">
