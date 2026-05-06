@@ -923,6 +923,11 @@ function clearCollection() {
         // Increment career trips
         let tripCount = parseInt(localStorage.getItem('regFinder_total_trips_completed') || 0);
         localStorage.setItem('regFinder_total_trips_completed', tripCount + 1);
+        // Reset the session and scores
+        sessionStorage.removeItem('regFinder_active_score');
+        sessionStorage.removeItem('regFinder_active_alpha');
+        currentScore = 0;
+        alphabetProgress = [];
 
         const eras = ['classic', 'heritage', 'ni', 'intl', 'modern'];
         eras.forEach(e => localStorage.removeItem(`regFinder_trip_${e}`));
@@ -1009,6 +1014,8 @@ function fullOdometerWipe() {
 
     totalSessionScore += pts;
     document.getElementById('grand-total').innerText = totalSessionScore;
+    sessionStorage.setItem('regFinder_active_score', currentScore);
+    sessionStorage.setItem('regFinder_active_alpha', JSON.stringify(alphabetProgress));
 
     // Handle Game Direction and Next Targets
     const idx = alphabet.indexOf(letter);
