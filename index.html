@@ -322,6 +322,24 @@ h2 {
     margin: 5px 10px !important; /* Tightens gap below map */
 }
 
+.odo-digit {
+    background: #000;
+    color: #fff;
+    padding: 2px 6px;
+    border-radius: 3px;
+    border: 1px solid #444;
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.8);
+    display: inline-block;
+    min-width: 14px;
+    text-align: center;
+}
+
+/* Era Specific Fonts */
+.font-heritage { font-family: 'Courier New', monospace; font-weight: bold; } /* Mechanical Stamp */
+.font-classic { font-family: 'Charles Wright', sans-serif; } /* Plate Font */
+.font-modern { font-family: 'Orbitron', sans-serif; color: #2ecc71; } /* Digital Green */
+
+
 </style>
 
 </head>
@@ -549,6 +567,18 @@ h2 {
     document.getElementById('safety-modal').style.display = 'none';
     // Now proceed to the actual game init logic
     initApp(); 
+}
+
+function formatOdo(num, era) {
+    if (num === 0 || num === '—' || num === '🔒') return num;
+    
+    // Assign font class based on era
+    let fontClass = 'font-modern'; // Default
+    if (era === 'classic') fontClass = 'font-classic';
+    if (era === 'heritage') fontClass = 'font-heritage';
+    if (era === 'ni') fontClass = 'font-ni';
+
+    return `<span class="odo-digit ${fontClass}">${num}</span>`;
 }
 
 function setGameMode(mode) {
@@ -1430,15 +1460,17 @@ function renderEraTimeline(era) {
         const tripCount = tripData[letter] || 0;
         const odoCount = odoData[letter] || 0;
         const isFoundEver = odoCount > 0;
+        const tripUI = formatOdo(tripCount, era);
+        const odoUI = isFoundEver ? formatOdo(odoCount, era) : '🔒';
 
         html += `
-            <div style="display: grid; grid-template-columns: 1fr 1.5fr 1fr 1fr; align-items: center; padding: 12px 10px; margin-bottom: 2px; background: ${isFoundEver ? '#222' : '#111'}; border-radius: 4px;">
-                <span style="font-size: 1.1rem; font-weight: bold; color: ${isFoundEver ? '#fff' : '#444'};">${letter}</span>
-                <span style="font-size: 0.8rem; color: ${isFoundEver ? color : '#444'};">${years[letter]}</span>
-                <span style="text-align:center; font-family:monospace; color: ${tripCount > 0 ? '#f1c40f' : '#333'};">${tripCount > 0 ? 'x'+tripCount : '—'}</span>
-                <span style="text-align:center; font-family:monospace; color: ${isFoundEver ? '#fff' : '#333'};">${isFoundEver ? odoCount : '🔒'}</span>
-            </div>`;
-    });
+        <div style="display: grid; grid-template-columns: 1fr 1.5fr 1fr 1fr; align-items: center; padding: 12px 10px; margin-bottom: 2px; background: ${isFoundEver ? '#222' : '#111'}; border-radius: 4px;">
+            <span style="font-size: 1.1rem; font-weight: bold; color: ${isFoundEver ? '#fff' : '#444'};">${letter}</span>
+            <span style="font-size: 0.8rem; color: ${isFoundEver ? color : '#444'};">${years[letter]}</span>
+            <span style="text-align:center; font-family:monospace;">${tripUI}</span>
+            <span style="text-align:center; font-family:monospace;">${odoUI}</span>
+        </div>`;
+});
     
     container.innerHTML = html + `<div class="scroll-spacer" style="height: 200px;"></div>`;
 }
