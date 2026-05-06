@@ -1344,9 +1344,10 @@ function recordCatch(letter, category) {
     let trip = JSON.parse(localStorage.getItem(`regFinder_trip_${category}`)) || {};
     trip[letter] = (trip[letter] || 0) + 1;
     localStorage.setItem(`regFinder_trip_${category}`, JSON.stringify(trip));
-
+    
     if (category === 'ni') {
         renderNIList('ni');
+    }
 
     // --- NEW: THE UI TRIGGERS ---
     renderHallOfFame(); // Refresh the stats page
